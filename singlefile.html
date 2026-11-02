@@ -1,0 +1,740 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>MPCSim Single File Launcher</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<style>
+  :root{--bg:#1e1e2e;--fg:#cdd6f4;--muted:#a6adc8;--accent:#89b4fa;--accent-dim:#5c7ac2;--card:#313244;--border:#494d64;--ok:#a6e3a1;--err:#f38ba8}
+  *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+  html,body{height:100%}
+  body{font-family:system-ui,-apple-system,sans-serif;background:var(--bg);color:var(--fg)}
+  .hidden{display:none!important}
+
+  #start-screen{min-height:100vh;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:2rem;cursor:pointer;text-align:center}
+  #start-screen h1{font-size:clamp(2rem,9vw,3rem);font-weight:800;letter-spacing:.3em;background:linear-gradient(135deg,var(--fg),var(--muted));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+  #start-screen p{margin-top:1rem;font-size:1.2rem;color:var(--muted);letter-spacing:.1em}
+
+  #download-screen{position:relative;z-index:20;min-height:100vh;background:var(--bg);padding:2rem;max-width:860px;margin:auto}
+  #download-screen h2{margin-bottom:.5rem;font-size:1.5rem}
+  #download-screen > p{margin-bottom:1rem;color:var(--muted)}
+  .row{display:flex;gap:.75rem;align-items:center;flex-wrap:wrap;margin-bottom:.75rem}
+  .field{background:var(--card);border:1px solid var(--border);color:var(--fg);border-radius:6px;padding:.45rem .7rem;font-size:.85rem;font-family:inherit}
+  .field:focus{outline:2px solid var(--accent-dim)}
+  #filter{flex:1;min-width:140px}
+  .opt{font-size:.85rem;color:var(--muted);display:flex;align-items:center;gap:.4rem;cursor:pointer}
+  .download-list{max-height:52vh;overflow:auto;font-size:.9rem;padding-right:.25rem}
+  .cat{margin:1rem 0 .4rem;font-size:.75rem;letter-spacing:.12em;text-transform:uppercase;color:var(--muted)}
+  .download-list li{list-style:none;margin-bottom:.5rem;background:var(--card);border:1px solid var(--border);border-radius:8px}
+  .download-list label{display:flex;align-items:center;gap:.75rem;padding:.75rem 1rem;cursor:pointer}
+  .download-list input[type=checkbox]{flex-shrink:0;width:1.1rem;height:1.1rem;cursor:pointer}
+  .download-list .name{flex:0 0 14rem;font-weight:500}
+  .download-list .desc{flex:1;color:var(--muted);font-size:.78rem;overflow:hidden;text-overflow:ellipsis}
+  .download-list .path{color:var(--muted);font-size:.72rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;width:170px;text-align:right}
+  .badge{font-size:.68rem;padding:.1rem .45rem;border-radius:99px;border:1px solid var(--border);color:var(--muted);white-space:nowrap}
+  .badge.ok{color:var(--ok);border-color:var(--ok)}
+  @media(max-width:640px){.download-list .path{display:none}.download-list .name{flex-basis:8rem}}
+  .actions{margin-top:1.25rem;display:flex;gap:.6rem;justify-content:flex-end;flex-wrap:wrap}
+  .btn{padding:.6rem 1.1rem;border:none;border-radius:6px;font-size:.9rem;font-weight:500;cursor:pointer;transition:background .2s,opacity .2s;font-family:inherit}
+  .btn:disabled{opacity:.5;cursor:default}
+  .btn-primary{background:var(--accent);color:var(--bg)}
+  .btn-primary:hover:not(:disabled){background:var(--accent-dim)}
+  .btn-secondary{background:var(--border);color:var(--fg)}
+  .btn-secondary:hover:not(:disabled){background:#5a5e74}
+  .info{color:var(--muted);font-size:.8rem}
+  #status{margin-top:1rem;font-size:.85rem;color:var(--muted);min-height:1.2em;white-space:pre-wrap}
+  #status.err{color:var(--err)}
+
+  #app-frame{position:fixed;inset:0;width:100%;height:100%;border:0;background:#000;z-index:10}
+  #handle-box{position:fixed;left:0;bottom:0;z-index:30;display:flex;opacity:.15;transition:opacity .2s}
+  #handle-box:hover,#handle-box:focus-within{opacity:1}
+  #handle-box button{width:30px;height:30px;border:none;background:var(--card);color:var(--fg);cursor:pointer;font-size:15px}
+  #handle-box button:first-child{border-radius:0 8px 0 0}
+  #progress-bar{position:fixed;top:0;left:0;height:3px;background:var(--accent);width:0;z-index:50;transition:width .15s}
+</style>
+</head>
+<body>
+  <div id="start-screen">
+    <h1>MPCSim</h1>
+    <p>Click anywhere to begin</p>
+  </div>
+
+  <div id="download-screen" class="hidden">
+    <h2>Select What to Download</h2>
+    <p>main.html is always pulled fresh from jsDelivr and run as a blob. Every local app is rewritten on load: the files it needs are downloaded into the local database (IndexedDB) and served from there, with the app's own folder as the base URL. Tick apps below to pre-download them. Apps that are not downloaded (and apps that can't be, because they need a ?query) are embedded in an iframe from a random domain listed in the repo's domains.txt, and the Mirror Refresh app pinned to the taskbar reloads the active app from another random one.</p>
+    <div class="row">
+      <input class="field" id="filter" placeholder="Filter…" aria-label="Filter list">
+    </div>
+    <p class="info" id="download-count">0 selected</p>
+    <div class="download-list" id="download-list"></div>
+    <div class="row" style="margin-top:1rem">
+      <label class="opt"><input type="checkbox" id="full-tab"> Open in this tab instead of embedding</label>
+    </div>
+    <div class="actions">
+      <button class="btn btn-secondary hidden" id="back-to-app">Back to app</button>
+      <button class="btn btn-secondary" id="clear-cache">Clear cache</button>
+      <button class="btn btn-secondary" id="select-all">Select all</button>
+      <button class="btn btn-secondary" id="select-none">Select none</button>
+      <button class="btn btn-secondary" id="launch-now">Launch without downloading</button>
+      <button class="btn btn-primary" id="start-download">Download &amp; Launch</button>
+    </div>
+    <div id="status" role="status"></div>
+  </div>
+
+  <div id="handle-box" class="hidden">
+    <button id="handle" title="Launcher / downloads">&#9776;</button>
+    <button id="fs" title="Toggle fullscreen">&#9974;</button>
+  </div>
+  <div id="progress-bar"></div>
+
+<script>
+'use strict';
+/* ==========================================================================
+   mpcCore - the whole file system / rewriting engine.
+   It is used by this launcher AND serialised (toString) into every page the
+   launcher builds (main.html and every local app), so it must stay
+   self-contained. Nothing here may reference outer variables.
+
+   - Files live in IndexedDB ('mpcsim-db' / 'files'), keyed by repo path.
+   - file(path) = DB first, else download (mc/index.zip is unzipped) and store.
+   - prepare(html, dir) downloads every static resource a page needs
+     (<script src>, <link rel=stylesheet>, <img|audio|video|source src>),
+     stores them, and swaps them for inline code / blob: URLs from the DB.
+   - pageHtml() puts <base href=app-folder> and the runtime into the page.
+   - install() (runs inside the page) routes fetch() / XHR / app iframes
+     through the same database.
+   ========================================================================== */
+function mpcCore(BASE) {
+  var nativeFetch = window.fetch.bind(window);
+  var ZIPPED = { 'mc/index.html': 'mc/index.zip' };   // wanted path -> zip that holds it
+  var MIME = { html:'text/html', htm:'text/html', js:'text/javascript', mjs:'text/javascript', css:'text/css', json:'application/json',
+    png:'image/png', jpg:'image/jpeg', jpeg:'image/jpeg', gif:'image/gif', svg:'image/svg+xml', ico:'image/x-icon', webp:'image/webp',
+    wasm:'application/wasm', mp3:'audio/mpeg', ogg:'audio/ogg', wav:'audio/wav', mp4:'video/mp4', webm:'video/webm', txt:'text/plain',
+    xml:'application/xml', woff:'font/woff', woff2:'font/woff2', ttf:'font/ttf', otf:'font/otf', swf:'application/x-shockwave-flash' };
+  var ABS = /^(?:[a-z][a-z0-9+.\-]*:|\/\/|#|\?)/i;     // absolute, data:, blob:, //host, #hash
+
+  function mimeFor(p) { var m = /\.([a-z0-9]+)$/i.exec(p.split(/[?#]/)[0]); return (m && MIME[m[1].toLowerCase()]) || 'application/octet-stream'; }
+  function pathOf(abs) {
+    if (abs.indexOf(BASE) !== 0) return null;
+    var p = abs.slice(BASE.length).split(/[?#]/)[0];
+    return (!p || /\/$/.test(p)) ? p + 'index.html' : p;
+  }
+  function dirOf(abs) { var u = new URL(abs); return u.origin + u.pathname.replace(/[^\/]*$/, ''); }
+  function resolve(u, dirUrl) { if (!u || ABS.test(u)) return null; try { return new URL(u, dirUrl).href; } catch (e) { return null; } }
+
+  /* ---------- IndexedDB ---------- */
+  var dbp = null;
+  function db() {
+    return dbp || (dbp = new Promise(function (res, rej) {
+      var r = indexedDB.open('mpcsim-db', 1);
+      r.onupgradeneeded = function () { if (!r.result.objectStoreNames.contains('files')) r.result.createObjectStore('files'); };
+      r.onsuccess = function () { res(r.result); };
+      r.onerror = function () { rej(r.error); };
+    }));
+  }
+  function tx(mode, fn) {
+    return db().then(function (d) {
+      return new Promise(function (res, rej) {
+        var t = d.transaction('files', mode), q = fn(t.objectStore('files'));
+        t.oncomplete = function () { res(q && q.result); };
+        t.onerror = t.onabort = function () { rej(t.error); };
+      });
+    });
+  }
+  function dbGet(p) { return tx('readonly', function (s) { return s.get(p); }).catch(function () { return null; }); }
+  function keys() { return tx('readonly', function (s) { return s.getAllKeys(); }).catch(function () { return []; }); }
+  function clear() { return tx('readwrite', function (s) { return s.clear(); }); }
+  function put(p, buf) {
+    var rec = { content: buf, mimeType: mimeFor(p), lastModified: Date.now() };
+    return tx('readwrite', function (s) { return s.put(rec, p); }).then(function () { return rec; });
+  }
+
+  /* ---------- zip (stored + deflate) ---------- */
+  async function unzip(buf) {
+    var v = new DataView(buf), u8 = new Uint8Array(buf), i = buf.byteLength - 22;
+    while (i >= 0 && v.getUint32(i, true) !== 0x06054b50) i--;
+    if (i < 0) throw new Error('Not a zip file');
+    var count = v.getUint16(i + 10, true), off = v.getUint32(i + 16, true), out = {};
+    for (var n = 0; n < count; n++) {
+      if (v.getUint32(off, true) !== 0x02014b50) break;
+      var method = v.getUint16(off + 10, true), csize = v.getUint32(off + 20, true);
+      var nl = v.getUint16(off + 28, true), el = v.getUint16(off + 30, true), cl = v.getUint16(off + 32, true), lo = v.getUint32(off + 42, true);
+      var name = new TextDecoder().decode(u8.subarray(off + 46, off + 46 + nl));
+      off += 46 + nl + el + cl;
+      if (/\/$/.test(name)) continue;
+      var ds = lo + 30 + v.getUint16(lo + 26, true) + v.getUint16(lo + 28, true);
+      var data = u8.slice(ds, ds + csize);
+      if (method === 0) out[name] = data.buffer;
+      else if (method === 8) out[name] = await new Response(new Blob([data]).stream().pipeThrough(new DecompressionStream('deflate-raw'))).arrayBuffer();
+      else throw new Error('Unsupported zip compression ' + method);
+    }
+    return out;
+  }
+
+  /* ---------- files ---------- */
+  async function net(p) {
+    var r = await nativeFetch(BASE + p, { cache: 'no-cache' });
+    if (!r.ok) throw new Error('HTTP ' + r.status + ' for ' + p);
+    return r.arrayBuffer();
+  }
+  async function fromZip(p) {
+    var zsrc = ZIPPED[p], files = await unzip(await net(zsrc)), dir = zsrc.replace(/[^\/]*$/, '');
+    var out = null, firstHtml = null, names = Object.keys(files);
+    for (var i = 0; i < names.length; i++) {
+      var rec = await put(dir + names[i], files[names[i]]);
+      if (dir + names[i] === p) out = rec; else if (!firstHtml && /\.html?$/i.test(names[i])) firstHtml = files[names[i]];
+    }
+    if (!out && firstHtml) out = await put(p, firstHtml);
+    if (!out) throw new Error(zsrc + ' does not contain ' + p);
+    return out;
+  }
+  async function file(p, opts) {
+    if (!(opts && opts.force)) { var c = await dbGet(p); if (c && c.content) return c; }
+    try { return ZIPPED[p] ? await fromZip(p) : await put(p, await net(p)); }
+    catch (err) { var c2 = await dbGet(p); if (c2 && c2.content) return c2; throw err; }   // offline fallback
+  }
+  async function text(p, opts) { return new TextDecoder().decode((await file(p, opts)).content); }
+  var urls = {};
+  async function blobUrl(p) {
+    if (urls[p]) return urls[p];
+    var r = await file(p);
+    return (urls[p] = URL.createObjectURL(new Blob([r.content], { type: r.mimeType })));
+  }
+
+  /* ---------- HTML rewriting ---------- */
+  async function each(list, n, fn) {
+    var i = 0;
+    await Promise.all(Array.from({ length: n }, async function () { while (i < list.length) { var k = i++; await fn(list[k], k); } }));
+  }
+  async function rewrite(str, re, fn) {
+    var ms = [];
+    str.replace(re, function () { ms.push(Array.prototype.slice.call(arguments, 0, -2)); return ''; });
+    var outs = new Array(ms.length);
+    await each(ms, 6, async function (m, i) { try { outs[i] = await fn(m); } catch (e) { outs[i] = m[0]; } });
+    var k = 0;
+    return str.replace(re, function () { return outs[k++]; });
+  }
+  function cssAbs(css, cssUrl) {
+    return css
+      .replace(/url\(\s*(['"]?)([^'")]+)\1\s*\)/gi, function (all, q, u) { var a = resolve(u, cssUrl); return a ? 'url("' + a + '")' : all; })
+      .replace(/@import\s+(['"])([^'"]+)\1/gi, function (all, q, u) { var a = resolve(u, cssUrl); return a ? '@import "' + a + '"' : all; });
+  }
+  async function prepare(html, dirUrl, dry) {
+    var ref = function (p) { return dry ? file(p).then(function () { return 'about:blank'; }) : blobUrl(p); };
+    // <script src>
+    html = await rewrite(html, /<script((?:\s[^>]*?)?)\ssrc\s*=\s*(?:"([^"]*)"|'([^']*)')([^>]*)>\s*<\/script\s*>/gi, async function (m) {
+      var abs = resolve(m[2] !== undefined ? m[2] : m[3], dirUrl), p = abs && pathOf(abs);
+      if (!p) return m[0];
+      var attrs = (m[1] || '') + (m[4] || '');
+      var isMod = /\stype\s*=\s*["']?module/i.test(attrs);
+      if (!isMod && /\s(?:defer|async)(?:\s|=|$)/i.test(attrs + ' ')) return '<script' + (m[1] || '') + ' src="' + await ref(p) + '"' + (m[4] || '') + '><\/script>';
+      var code = await text(p);
+      return '<script' + attrs.replace(/\s(?:integrity|crossorigin)(?:\s*=\s*(?:"[^"]*"|'[^']*'|[^\s>]+))?/gi, '') + '>' + code.replace(/<\/script/gi, '<\\/script') + '<\/script>';
+    });
+    // <link rel=stylesheet|icon href>
+    html = await rewrite(html, /<link\b[^>]*>/gi, async function (m) {
+      var tag = m[0], hm = /\shref\s*=\s*(?:"([^"]*)"|'([^']*)')/i.exec(tag);
+      if (!hm) return tag;
+      var href = hm[1] !== undefined ? hm[1] : hm[2], abs = resolve(href, dirUrl), p = abs && pathOf(abs);
+      if (!p) return tag;
+      if (/\brel\s*=\s*["']?[^"'>]*stylesheet/i.test(tag)) {
+        var mm = /\smedia\s*=\s*(?:"([^"]*)"|'([^']*)')/i.exec(tag);
+        return '<style' + (mm ? ' media="' + (mm[1] || mm[2] || '') + '"' : '') + '>' + cssAbs(await text(p), abs) + '</style>';
+      }
+      if (/\brel\s*=\s*["']?[^"'>]*icon/i.test(tag)) return tag.replace(hm[0], ' href="' + await ref(p) + '"');
+      return tag;
+    });
+    // <img|source|audio|video|track src>
+    html = await rewrite(html, /(<(?:img|source|audio|video|track)\b[^>]*?\ssrc\s*=\s*)(?:"([^"]*)"|'([^']*)')/gi, async function (m) {
+      var abs = resolve(m[2] !== undefined ? m[2] : m[3], dirUrl), p = abs && pathOf(abs);
+      return p ? m[1] + '"' + await ref(p) + '"' : m[0];
+    });
+    return html;
+  }
+  async function pageHtml(html, dirUrl) {
+    html = await prepare(html, dirUrl, false);
+    var inject = '<base href="' + dirUrl + '"><script>' + mpcCore.toString() + ';mpcCore(' + JSON.stringify(BASE) + ').install();<\/script>';
+    var m;
+    if ((m = /<head[^>]*>/i.exec(html))) return html.slice(0, m.index + m[0].length) + inject + html.slice(m.index + m[0].length);
+    if ((m = /<html[^>]*>/i.exec(html))) return html.slice(0, m.index + m[0].length) + '<head>' + inject + '</head>' + html.slice(m.index + m[0].length);
+    if ((m = /^\s*<!doctype[^>]*>/i.exec(html))) return html.slice(0, m[0].length) + inject + html.slice(m[0].length);
+    return inject + html;
+  }
+  async function loadPage(abs, opts) {
+    var p = pathOf(abs);
+    if (p === null) throw new Error('Outside the repo: ' + abs);
+    var html = await text(p, opts);
+    if (opts && opts.patch) html = opts.patch(html);
+    return pageHtml(html, dirOf(abs));
+  }
+  async function cacheApp(p) {                      // used by the launcher's "download"
+    var rec = await file(p, { force: true });
+    if (/\.html?$/i.test(p)) await prepare(new TextDecoder().decode(rec.content), dirOf(BASE + p), true);
+  }
+
+  /* ---------- runtime that runs INSIDE every page ---------- */
+  function install() {
+    // fetch(): files from the repo come from the database
+    window.fetch = function (input, init) {
+      try {
+        var isReq = typeof Request !== 'undefined' && input instanceof Request;
+        var url = isReq ? input.url : String(input);
+        var method = String((init && init.method) || (isReq && input.method) || 'GET').toUpperCase();
+        var hdrs = new Headers((init && init.headers) || (isReq ? input.headers : undefined));
+        var p = pathOf(new URL(url, document.baseURI).href);
+        if (p !== null && method === 'GET' && !hdrs.has('range')) {
+          return file(p).then(function (r) { return new Response(r.content, { status: 200, headers: { 'Content-Type': r.mimeType } }); })
+            .catch(function () { return nativeFetch(input, init); });
+        }
+      } catch (e) {}
+      return nativeFetch(input, init);
+    };
+
+    // XMLHttpRequest: same, by deferring open() until the blob: URL is ready
+    var NX = window.XMLHttpRequest;
+    window.XMLHttpRequest = class extends NX {
+      open(m, u) {
+        var p = null;
+        try { if (String(m).toUpperCase() === 'GET' && arguments[2] !== false) p = pathOf(new URL(String(u), document.baseURI).href); } catch (e) {}
+        if (p === null) { this._d = null; return super.open.apply(this, arguments); }
+        this._d = { p: p, a: Array.prototype.slice.call(arguments), h: [] };
+      }
+      setRequestHeader(k, v) { if (this._d) this._d.h.push([k, v]); else super.setRequestHeader(k, v); }
+      send(b) {
+        var d = this._d, self = this;
+        if (!d) return super.send(b);
+        var ranged = d.h.some(function (h) { return /^range$/i.test(h[0]); });
+        (ranged ? Promise.reject() : blobUrl(d.p)).then(
+          function (bu) { NX.prototype.open.call(self, d.a[0], bu, true); },
+          function () { NX.prototype.open.apply(self, d.a); }
+        ).then(function () {
+          d.h.forEach(function (h) { NX.prototype.setRequestHeader.call(self, h[0], h[1]); });
+          NX.prototype.send.call(self, b);
+        });
+      }
+    };
+
+    // app iframes: load local apps through loadPage() (blob + DB), others untouched
+    var seen = new WeakMap();
+    async function fix(f, fromAttr) {
+      var data = f.getAttribute('data-mpc-src');
+      var raw = fromAttr ? f.getAttribute('src') : (data !== null ? data : f.getAttribute('src'));
+      if (!fromAttr && data !== null && /^(?:blob:|data:|about:)/i.test(raw || '')) { seen.set(f, raw); f.src = raw; return; }   // plugin / installed apps
+      if (!raw || /^(?:blob:|data:|about:|javascript:|__)/i.test(raw) || seen.get(f) === raw) return;
+      if (ABS.test(raw)) { if (!fromAttr && data !== null) { seen.set(f, raw); f.src = raw; } return; }
+      seen.set(f, raw);
+      var abs; try { abs = new URL(raw, document.baseURI).href; } catch (e) { return; }
+      var u = new URL(abs), p = pathOf(abs);
+      // a blob: URL cannot carry ?query, so those apps load straight from the CDN
+      if (u.search || p === null || !/\.html?$/i.test(p)) { f.src = abs; return; }
+      try { f.src = URL.createObjectURL(new Blob([await loadPage(abs)], { type: 'text/html' })) + u.hash; }
+      catch (e) { console.warn('[mpc] could not load', abs, e); f.src = abs; }
+    }
+    function scan(n) {
+      if (n.nodeType !== 1) return;
+      if (n.tagName === 'IFRAME') fix(n, false);
+      else if (n.querySelectorAll) n.querySelectorAll('iframe').forEach(function (f) { fix(f, false); });
+    }
+    new MutationObserver(function (ms) {
+      ms.forEach(function (m) {
+        if (m.type === 'attributes') { if (m.target.tagName === 'IFRAME') fix(m.target, true); }
+        else m.addedNodes.forEach(scan);
+      });
+    }).observe(document, { childList: true, subtree: true, attributes: true, attributeFilter: ['src'] });
+
+    // <base> would turn href="#x" into a navigation to the CDN
+    document.addEventListener('click', function (e) {
+      var a = e.target.closest && e.target.closest('a[href^="#"]');
+      if (!a || e.defaultPrevented) return;
+      e.preventDefault();
+      var id = a.getAttribute('href').slice(1), t = id && document.getElementById(id);
+      if (t && t.scrollIntoView) t.scrollIntoView();
+    }, true);
+  }
+
+  return { file: file, text: text, loadPage: loadPage, cacheApp: cacheApp, keys: keys, clear: clear, install: install };
+}
+
+/* ==========================================================================
+   Launcher
+   ========================================================================== */
+const BASE = 'https://cdn.jsdelivr.net/gh/fidgetsetc/mpcsim@main/';   // fixed, not user-editable
+const core = mpcCore(BASE);
+
+const DOWNLOADABLE = [
+  {id:'app-ppt', name:'PPTX Maker (DeckCraft, like PowerPoint)', path:'ppt/index.html', category:'Office', description:''},
+  {id:'app-doc', name:'DOCX Maker (WordCraft, like Word)', path:'doc/index.html', category:'Office', description:''},
+  {id:'app-edit', name:'Video Editor', path:'edit/index.html', category:'Office', description:''},
+  {id:'app-yt', name:'YouTube', path:'tube/index.html', category:'Entertainment', description:''},
+  {id:'app-calc', name:'Calculator', path:'calc/index.html', category:'Tools', description:''},
+  {id:'app-tts', name:'Text to Speech', path:'tts/index.html', category:'Tools', description:''},
+  {id:'app-xwp', name:'Extra Wallpapers', path:'extrawp/index.html', category:'Tools', description:''},
+  {id:'app-plug', name:'Plugins', path:'plugins/index.html', category:'Tools', description:''},
+  {id:'app-ai', name:'AI Chat', path:'ai/index.html', category:'Chat', description:''},
+  {id:'app-mc262', name:'MC (26.2)', path:'mc/index.html', category:'Games', description:'Fetched as mc/index.zip (contains only index.html)'},
+  {id:'app-ab', name:'Angry Birds SWF', path:'ab/index.html', category:'Games', description:''},
+  {id:'app-au', name:'Among Us', path:'au/index.html', category:'Games', description:''},
+  {id:'app-bp', name:'Bad Piggies', path:'bp/index.html', category:'Games', description:''},
+  {id:'app-br', name:'Brick', path:'brick/index.html', category:'Games', description:''},
+  {id:'app-brp', name:'Brick Plus', path:'brickplus/index.html', category:'Games', description:''},
+  {id:'app-block-blast', name:'Block Blast', path:'bb2/index.html', category:'Games', description:''},
+  {id:'app-dm', name:'DuckMath', path:'dm/index.svg', category:'Games', description:''},
+  {id:'app-baseb', name:'Baseball Bros', path:'gplay-tmp/html/baseb/index.html', category:'Games', description:''},
+  {id:'app-basket-bros', name:'Basket Bros', path:'gplay-tmp/html/bb/index.html', category:'Games', description:'./gplay-tmp/html/bb/index.html?h'},
+  {id:'app-fob', name:'Football Bros', path:'gplay-tmp/html/fob/index.html', category:'Games', description:''},
+  {id:'app-ctr', name:'Cut the Rope', path:'gplay-tmp/html/ctr/resize/index.html', category:'Games', description:''},
+  {id:'app-dd4', name:'Droistroy 4', path:'gplay-tmp/html/dd4/index.html', category:'Games', description:'./gplay-tmp/html/dd4/index.html?basic'},
+  {id:'app-gdo', name:'Geometry Dash', path:'gplay-tmp/html/gd/index.html', category:'Games', description:'./gplay-tmp/html/gd/index.html?no-vc'},
+  {id:'app-slope', name:'Slope', path:'gplay-tmp/html/slope/index.html', category:'Games', description:''},
+  {id:'app-sm', name:'Slice Master', path:'gplay-tmp/html/sm/index.html', category:'Games', description:''},
+  {id:'app-tif', name:'Tiny Fishing', path:'gplay-tmp/html/tif/index.html', category:'Games', description:''},
+  {id:'app-gs', name:'Google Snake', path:'gplay-tmp/html/gs/resize/index.html', category:'Games', description:''},
+  {id:'app-fb', name:'Flappy Bird', path:'gplay-tmp/html/scratchget/index.html', category:'Games', description:'./gplay-tmp/html/scratchget/index.html?id=1376043784'},
+  {id:'app-cc1', name:'Cookie Clicker', path:'gplay-tmp/html/duckget/index.html', category:'Games', description:'./gplay-tmp/html/duckget/index.html#/class/cookie-clicker'},
+  {id:'app-db', name:'Drift Boss', path:'gplay-tmp/html/duckget/index.html', category:'Games', description:'./gplay-tmp/html/duckget/index.html#/class/drift-boss'},
+  {id:'app-r1', name:'Run 1', path:'gplay-tmp/html/r1/index.html', category:'Games', description:''},
+  {id:'app-r2', name:'Run 2', path:'gplay-tmp/html/r2/index.html', category:'Games', description:''},
+  {id:'app-r3', name:'Run 3', path:'gplay-tmp/html/duckget/index.html', category:'Games', description:'./gplay-tmp/html/duckget/index.html#/class/run-3'},
+  {id:'app-chess-ai', name:'Chess AI', path:'gplay-tmp/html/scratchget/index.html', category:'Games', description:'./gplay-tmp/html/scratchget/index.html?id=148769358'},
+  {id:'app-bloxorz', name:'Bloxorz', path:'gplay-tmp/html/blo/index.html', category:'Games', description:''},
+  {id:'app-smb', name:'Mario Bros', path:'gplay-tmp/html/duckget/index.html', category:'Games', description:'./gplay-tmp/html/duckget/index.html#/class/super-mario-bros'},
+  {id:'app-smb3', name:'Mario Bros 3', path:'gplay-tmp/html/scratchget/index.html', category:'Games', description:'./gplay-tmp/html/scratchget/index.html?id=396544900'},
+  {id:'app-mm', name:'Megaman', path:'gplay-tmp/html/scratchget/index.html', category:'Games', description:'./gplay-tmp/html/scratchget/index.html?id=26274285&mm'},
+  {id:'app-uno', name:'UNO!', path:'gplay-tmp/html/duckget/index.html', category:'Games', description:'./gplay-tmp/html/duckget/index.html#/class/uno'},
+  {id:'app-jj', name:'Jetpack Joyride', path:'gplay-tmp/html/duckget/index.html', category:'Games', description:'./gplay-tmp/html/duckget/index.html#/class/jetpack-joyride'},
+  {id:'app-cricket', name:'Google Cricket', path:'gplay-tmp/html/c/resize/index.html', category:'Games', description:''},
+  {id:'app-gso', name:'Google Solitaire', path:'gplay-tmp/html/gso/index.html', category:'Games', description:''},
+  {id:'app-gb', name:'Google Baseball', path:'gplay-tmp/html/gb/index.html', category:'Games', description:''},
+  {id:'app-pvz', name:'Plants vs Zombies', path:'gplay-tmp/html/duckget/index.html', category:'Games', description:'./gplay-tmp/html/duckget/index.html#/class/plants-vs-zombies'},
+  {id:'app-fnf', name:'F-N-F', path:'big-tmp/playing/html/fnf/index.html', category:'Games', description:''},
+  {id:'app-cc', name:'Collab Clicker', path:'big-tmp/playing/html/cc/index.html', category:'Games', description:''},
+  {id:'app-yio', name:'YellItOut', path:'big-tmp/playing/html/yio/index.html', category:'Games', description:'./big-tmp/playing/html/yio/index.html?x=1'},
+  {id:'app-abe', name:'Angry Birds Epic', path:'abe/index.html', category:'Games', description:''},
+  {id:'app-ab2', name:'Angry Birds 2', path:'ab2/index.html', category:'Games', description:''},
+];
+
+const $ = id => document.getElementById(id);
+const el = {
+  start: $('start-screen'), dl: $('download-screen'), list: $('download-list'), count: $('download-count'),
+  filter: $('filter'), fullTab: $('full-tab'), status: $('status'), bar: $('progress-bar'),
+  handleBox: $('handle-box'), handle: $('handle'), fs: $('fs'), back: $('back-to-app'),
+  btnDl: $('start-download'), btnNow: $('launch-now'), btnAll: $('select-all'), btnNone: $('select-none'), btnClear: $('clear-cache'),
+};
+let selected = new Set(), cachedPaths = new Set(), frame = null, frameUrl = null;
+
+const lsGet = (k, d) => { try { return localStorage.getItem(k) ?? d; } catch { return d; } };
+const lsSet = (k, v) => { try { localStorage.setItem(k, v); } catch {} };
+const setStatus = (msg, err) => { el.status.textContent = msg || ''; el.status.classList.toggle('err', !!err); };
+const progress = f => { el.bar.style.width = Math.round(f * 100) + '%'; };
+async function refreshCached() { cachedPaths = new Set((await core.keys()).filter(k => typeof k === 'string')); }
+
+/* ---------- preloaded plugin: "Mirror Refresh" ----------
+   Registered inside main.html as an autostart built-in; uses the normal plugin API
+   (addApp, onStop, host, S). DOMAINS = every domain in the repo's domains.txt.
+   - Apps that are NOT downloaded (and any app that needs a ?query) are embedded in an iframe from a
+     random line of domains.txt; downloaded apps are served from the local database.
+   - The "Mirror Refresh" app is pinned to the taskbar automatically. Clicking it does not open a
+     window: it reloads the ACTIVE application from another random domain. */
+function mirrorPlugin(mpc, DOMAINS, CACHED) {
+  const host = mpc.host, doc = mpc.doc();
+  const APP_ID = 'app-mirror-refresh';
+  const current = new Map();                                   // window id -> URL currently shown
+  const split = s => String(s || '').split(/[\s|]+/).filter(Boolean);
+  const isLocalPath = u => !/^[a-z][a-z0-9+.\-]*:/i.test(u) && !/^(\/\/|#|__)/.test(u);
+
+  // An app is served from the local database only when it has been downloaded (and can be: a plain .html page
+  // without ?query). Every other local app is embedded in an iframe from a random line of domains.txt.
+  const cachedSet = new Set(CACHED || []);
+  const repoPath = u => { const p = u.replace(/^\.?\//, '').split(/[?#]/)[0]; return (!p || /\/$/.test(p)) ? p + 'index.html' : p; };
+  const servedLocally = u => !/\?/.test(u) && /\.html?$/i.test(repoPath(u)) && cachedSet.has(repoPath(u));
+  function poolFor(w, mirror) {                       // mirror = true: skip the downloaded copy, use the domains
+    const own = split(w.url);
+    if (!own.length) return [w.url];
+    const out = [];
+    own.forEach(u => {
+      if (DOMAINS.length && isLocalPath(u) && (mirror || !servedLocally(u))) DOMAINS.forEach(d => out.push(d + u.replace(/^\.?\//, '')));
+      else out.push(u);
+    });
+    return [...new Set(out)];
+  }
+  function pick(w, exclude, mirror) {
+    const pool = poolFor(w, mirror);
+    if (pool.length < 2) return pool[0];
+    const cand = pool.filter(u => u !== exclude);
+    return cand[Math.floor(Math.random() * cand.length)];
+  }
+  // main.html builds each window's iframe from this (patched in by the launcher)
+  host.__mpcPick = w => { const u = pick(w); current.set(w.id, u); return u; };
+
+  // the active application = the top-most window that is not minimized and holds an iframe
+  function activeWin() {
+    let best = null, bz = -1;
+    mpc.S().openWins.forEach(w => {
+      if (w.minimized) return;
+      const el = doc.getElementById(w.id);
+      if (!el || !el.querySelector('iframe.win-frame')) return;
+      const z = parseInt(el.style.zIndex, 10) || 0;
+      if (z >= bz) { bz = z; best = w; }
+    });
+    return best;
+  }
+  // in-desktop message box (replaces the browser's confirm()); resolves true for "Yes", false for "No"/Esc/outside click
+  let dialogOpen = false;
+  function ask(title, message, yesText, noText) {
+    return new Promise(resolve => {
+      if (dialogOpen) return resolve(false);
+      dialogOpen = true;
+      const mk = (tag, css, txt) => { const e = doc.createElement(tag); e.style.cssText = css; if (txt != null) e.textContent = txt; return e; };
+      const back = mk('div', 'position:fixed;inset:0;z-index:2147483647;background:rgba(0,0,0,.45);display:flex;align-items:center;justify-content:center;font:14px "Segoe UI",system-ui,sans-serif;');
+      const box = mk('div', 'width:min(420px,92vw);background:#2b2b2b;color:#f0f0f0;border:1px solid #4a4a4a;border-radius:8px;box-shadow:0 12px 40px rgba(0,0,0,.6);overflow:hidden;');
+      box.setAttribute('role', 'alertdialog'); box.setAttribute('aria-modal', 'true');
+      const bar = mk('div', 'padding:8px 14px;background:#1f1f1f;border-bottom:1px solid #444;font-weight:600;font-size:13px;', title);
+      const body = mk('div', 'padding:18px 16px;line-height:1.45;white-space:pre-wrap;', message);
+      const foot = mk('div', 'display:flex;justify-content:flex-end;gap:8px;padding:10px 14px 14px;');
+      const btn = (txt, primary) => mk('button', 'min-width:84px;padding:6px 14px;border-radius:4px;cursor:pointer;font:inherit;border:1px solid ' + (primary ? '#4aa3ff;background:#2d7fd3;color:#fff' : '#666;background:#3a3a3a;color:#f0f0f0'), txt);
+      const yes = btn(yesText || 'Yes', true), no = btn(noText || 'No', false);
+      const done = v => { doc.removeEventListener('keydown', onKey, true); back.remove(); dialogOpen = false; resolve(v); };
+      const onKey = e => {
+        if (e.key === 'Escape') { e.preventDefault(); e.stopPropagation(); done(false); }
+        else if (e.key === 'Enter') { e.preventDefault(); e.stopPropagation(); done(doc.activeElement === no ? false : true); }
+      };
+      yes.addEventListener('click', () => done(true));
+      no.addEventListener('click', () => done(false));
+      back.addEventListener('mousedown', e => { if (e.target === back) done(false); });
+      foot.append(no, yes); box.append(bar, body, foot); back.append(box);
+      doc.addEventListener('keydown', onKey, true);
+      (doc.body || doc.documentElement).append(back);
+      yes.focus();
+    });
+  }
+  async function reload(w) {
+    let win = doc.getElementById(w.id), fr = win && win.querySelector('iframe.win-frame');
+    if (!fr) return;
+    const cur = current.get(w.id) || split(w.url)[0] || '';
+    let u;
+    if (isLocalPath(cur) && servedLocally(cur)) {              // the downloaded copy is running: confirm, then bypass it
+      if (!DOMAINS.length) { try { mpc.notify('domains.txt is empty, cannot refresh from another domain'); } catch (e) {} return; }
+      if (!await ask('Refresh ' + w.name + '?', 'This app is downloaded.\n\nRefreshing will NOT use your downloaded version: it will be loaded from a random domain instead. Are you sure?', 'Yes, refresh', 'Cancel')) return;
+      win = doc.getElementById(w.id); fr = win && win.querySelector('iframe.win-frame');   // the window may have changed meanwhile
+      if (!fr) return;
+      u = DOMAINS[Math.floor(Math.random() * DOMAINS.length)] + cur.replace(/^\.?\//, '');
+    } else u = pick(w, cur, /^[a-z][a-z0-9+.\-]*:\/\//i.test(cur));   // already bypassed once: stay on the domains
+    current.set(w.id, u);
+    // a fresh iframe goes through the launcher's loader again (local apps -> database, others -> direct)
+    const nf = fr.cloneNode(false);
+    nf.setAttribute('src', 'about:blank');
+    nf.setAttribute('data-mpc-src', u);
+    fr.replaceWith(nf);
+    try { mpc.notify('Refreshing ' + w.name + (/^https?:/i.test(u) ? ' from ' + new URL(u).host : '')); } catch (e) {}
+  }
+  function refreshActive(fromStart) {
+    const w = activeWin();                                     // look before the view switches
+    try { if (host.dnSetMenu) host.dnSetMenu(false, fromStart); } catch (e) {}
+    try { if (host.goDesktop) host.goDesktop(); } catch (e) {}
+    if (!w) { mpc.notify('No active app to refresh'); return; }
+    reload(w);
+  }
+
+  // Clicking the app (taskbar, Start menu, desktop icon...) calls launchApp(app): intercept our own app
+  const origLaunch = host.launchApp;
+  const wrapped = function (app, fromStart) {
+    if (app && app.id === APP_ID) { refreshActive(fromStart); return; }
+    return origLaunch.apply(this, arguments);
+  };
+  host.launchApp = wrapped;
+  if (host.launchApp !== wrapped) mpc.log('Mirror Refresh could not hook launchApp', 'e');
+
+  const ICON = 'data:image/svg+xml;utf8,' + encodeURIComponent(
+    '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="#4aa3ff" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round">' +
+    '<path d="M20 11a8 8 0 0 0-14.9-3M4 4v4h4"/><path d="M4 13a8 8 0 0 0 14.9 3M20 20v-4h-4"/></svg>');
+  const app = mpc.addApp({
+    id: APP_ID, name: 'Mirror Refresh', icon: 'globe', iconUrl: ICON, cat: 'Tools', desktop: false,
+    // never opened as a window (launchApp is intercepted); only here because an app needs html or url
+    html: '<!DOCTYPE html><title>Mirror Refresh</title><body style="background:#1e1e1e;color:#aaa;font:13px sans-serif;padding:20px">Click Mirror Refresh on the taskbar to reload the active app from another domain.</body>',
+  });
+
+  // pin it to the taskbar (every start; stopping the plugin unpins it again)
+  try {
+    const S = mpc.S();
+    if (!S.tbPins.includes(app.id)) { S.tbPins.push(app.id); if (host.saveS) host.saveS(); }
+    if (host.renderTaskbar) host.renderTaskbar();
+  } catch (e) { mpc.log('Could not pin Mirror Refresh: ' + e.message, 'e'); }
+
+  mpc.onStop(() => {
+    if (host.launchApp === wrapped) host.launchApp = origLaunch;
+    try { delete host.__mpcPick; } catch (e) {}
+    try { if (host.unpinFromTaskbar) host.unpinFromTaskbar(APP_ID); } catch (e) {}
+  });
+}
+
+// domains.txt: one domain (or URL) per line, "#" starts a comment
+function parseDomains(text) {
+  const out = [];
+  String(text || '').split(/\r?\n/).forEach(line => {
+    let l = line.replace(/#.*$/, '').trim().split(/\s+/)[0];
+    if (!l) return;
+    if (!/^[a-z][a-z0-9+.\-]*:\/\//i.test(l)) l = 'https://' + l;
+    l = l.replace(/\/*$/, '/');
+    try { new URL(l); } catch { return; }
+    if (!out.includes(l)) out.push(l);
+  });
+  return out;
+}
+function mirrorTag(domains, cached) {
+  const plugin = {
+    id: 'mirror-refresh', name: 'Mirror Refresh', autostart: true,
+    description: 'Apps that are not downloaded are embedded in an iframe from a random domain from the repo\'s domains.txt and a Mirror Refresh app is pinned to the taskbar: clicking it reloads the active app from another random domain (a downloaded app asks for confirmation first and is not loaded from your downloaded copy).',
+    code: '(' + mirrorPlugin.toString() + ')(mpc, ' + JSON.stringify(domains) + ', ' + JSON.stringify(cached || []) + ');',
+  };
+  return '<script>(window.MPC_BUILTIN_PLUGINS=window.MPC_BUILTIN_PLUGINS||[]).push(' +
+    JSON.stringify(plugin).replace(/</g, '\\u003c') + ');<\/script>';
+}
+
+/* ---------- launch ---------- */
+async function launch() {
+  setStatus('Reading domains.txt…');
+  progress(.15);
+  await refreshCached();                                       // which apps are downloaded decides local vs. domain
+  let domains = [];
+  try { domains = parseDomains(await core.text('domains.txt', { force: true })); }
+  catch (err) { console.warn('domains.txt unavailable, embedded apps keep their own URL:', err); }
+  setStatus('Preparing main.html and downloading the files it needs…');
+  progress(.3);
+  let html;
+  try {
+    html = await core.loadPage(BASE + 'main.html', {
+      force: true,
+      // app windows are created with innerHTML; route them through the runtime before they start loading
+      patch: h => h
+        .replace(/\bsrc="\$\{w\.url\}"/g, () => 'src="about:blank" data-mpc-src="${(window.__mpcPick ? window.__mpcPick(w) : w.url)}"')
+        .replace(/<\/head>/i, () => mirrorTag(domains, [...cachedPaths]) + '</head>'),   // preload the plugin after builtin.js
+    });
+  } catch (err) {
+    progress(0);
+    setStatus('Could not load main.html from ' + BASE + '\n' + err.message, true);
+    return;
+  }
+  const url = URL.createObjectURL(new Blob([html], { type: 'text/html' }));
+  lsSet('mpcsim-full-tab', el.fullTab.checked ? '1' : '0');
+  progress(1);
+
+  if (el.fullTab.checked) { location.assign(url); return; }
+
+  closeFrame();
+  frameUrl = url;
+  frame = document.createElement('iframe');
+  frame.id = 'app-frame';
+  frame.allow = 'fullscreen *; autoplay; gamepad; clipboard-read; clipboard-write; microphone; camera; display-capture; encrypted-media; web-share';
+  frame.allowFullscreen = true;
+  frame.setAttribute('webkitallowfullscreen', '');
+  let sawRealPage = false;
+  frame.addEventListener('load', () => {
+    let href = '';
+    try { href = frame.contentWindow.location.href; } catch {}
+    if (href && href !== 'about:blank') { sawRealPage = true; return; }
+    if (sawRealPage && href === 'about:blank') { closeFrame(); show('dl'); setStatus('The app was shut down.'); }   // main.html's shutdown
+  });
+  frame.src = url;
+  document.body.appendChild(frame);
+  show('app');
+  setTimeout(() => progress(0), 400);
+  setStatus(domains.length ? `Loaded ${domains.length} domain(s) from domains.txt.` : 'domains.txt not found or empty: embedded apps use their original URL.');
+}
+function closeFrame() {
+  if (frame) { frame.remove(); frame = null; }
+  if (frameUrl) { URL.revokeObjectURL(frameUrl); frameUrl = null; }
+}
+
+/* ---------- fullscreen ---------- */
+function toggleFullscreen() {
+  const cur = document.fullscreenElement || document.webkitFullscreenElement;
+  if (cur) return (document.exitFullscreen || document.webkitExitFullscreen).call(document);
+  const t = frame || document.documentElement;
+  const req = t.requestFullscreen || t.webkitRequestFullscreen;
+  if (req) Promise.resolve(req.call(t)).catch(err => setStatus('Fullscreen was blocked: ' + err.message, true));
+}
+
+/* ---------- screens ---------- */
+function show(which) {
+  el.start.classList.toggle('hidden', which !== 'start');
+  el.dl.classList.toggle('hidden', which !== 'dl');
+  el.handleBox.classList.toggle('hidden', which === 'start' || (which === 'dl' && !frame));
+  el.fs.classList.toggle('hidden', !frame);
+  el.back.classList.toggle('hidden', !frame);
+  if (frame) frame.style.visibility = which === 'app' ? 'visible' : 'hidden';
+  if (which === 'dl') renderList();
+}
+
+/* ---------- list ---------- */
+const updateCount = () => { el.count.textContent = `${selected.size} selected · ${DOWNLOADABLE.filter(i => cachedPaths.has(i.path)).length} of ${DOWNLOADABLE.length} cached`; };
+function renderList() {
+  const q = el.filter.value.trim().toLowerCase();
+  el.list.textContent = '';
+  let lastCat = null, ul = null;
+  DOWNLOADABLE.forEach(item => {
+    if (q && !(item.name + ' ' + item.description + ' ' + item.path + ' ' + item.category).toLowerCase().includes(q)) return;
+    if (item.category !== lastCat) {
+      lastCat = item.category;
+      const h = document.createElement('div'); h.className = 'cat'; h.textContent = item.category;
+      ul = document.createElement('ul');
+      el.list.append(h, ul);
+    }
+    const li = document.createElement('li'), label = document.createElement('label');
+    const cb = document.createElement('input'); cb.type = 'checkbox'; cb.checked = selected.has(item.id);
+    cb.addEventListener('change', () => { cb.checked ? selected.add(item.id) : selected.delete(item.id); updateCount(); });
+    const mk = (cls, txt) => { const s = document.createElement('span'); s.className = cls; s.textContent = txt; return s; };
+    const path = mk('path', item.path); path.title = item.path;
+    const cached = cachedPaths.has(item.path);
+    label.append(cb, mk('name', item.name), mk('desc', item.description), path, mk('badge' + (cached ? ' ok' : ''), cached ? 'cached' : 'online'));
+    li.appendChild(label);
+    ul.appendChild(li);
+  });
+  updateCount();
+}
+
+/* ---------- download ---------- */
+function setButtons(disabled) {
+  [el.btnDl, el.btnNow, el.btnAll, el.btnNone, el.btnClear].forEach(b => b.disabled = disabled);
+  el.btnDl.textContent = disabled ? 'Downloading…' : 'Download & Launch';
+}
+async function downloadSelected() {
+  const paths = [...new Set(DOWNLOADABLE.filter(i => selected.has(i.id)).map(i => i.path))];
+  setButtons(true);
+  const failed = [];
+  let done = 0;
+  progress(0);
+  const queue = paths.slice();
+  const worker = async () => {
+    while (queue.length) {
+      const p = queue.shift();
+      setStatus(`Downloading ${p}… (${done}/${paths.length})`);
+      try { await core.cacheApp(p); } catch (err) { failed.push(`${p}: ${err.message}`); }
+      progress(++done / paths.length);
+    }
+  };
+  await Promise.all(Array.from({ length: 3 }, worker));
+  await refreshCached();
+  renderList();
+  setButtons(false);
+  if (failed.length) setStatus('Some downloads failed (they will load from the network instead):\n' + failed.join('\n'), true);
+  await launch();
+}
+
+/* ---------- events ---------- */
+el.start.addEventListener('click', async () => { await refreshCached(); show('dl'); });
+el.btnAll.addEventListener('click', () => { DOWNLOADABLE.forEach(i => selected.add(i.id)); renderList(); });
+el.btnNone.addEventListener('click', () => { selected.clear(); renderList(); });
+el.btnDl.addEventListener('click', downloadSelected);
+el.btnNow.addEventListener('click', launch);
+el.back.addEventListener('click', () => show('app'));
+el.handle.addEventListener('click', async () => { if (el.dl.classList.contains('hidden')) { await refreshCached(); show('dl'); } else show('app'); });
+el.fs.addEventListener('click', toggleFullscreen);
+el.filter.addEventListener('input', renderList);
+el.btnClear.addEventListener('click', async () => {
+  try { await core.clear(); setStatus('Cache cleared.'); } catch (err) { setStatus('Could not clear cache: ' + err.message, true); }
+  await refreshCached(); renderList();
+});
+el.fullTab.checked = lsGet('mpcsim-full-tab', '0') === '1';
+</script>
+</body>
+</html>
