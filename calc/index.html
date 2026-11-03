@@ -1,704 +1,745 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>TI-30XIIs Scientific Calculator Simulator</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Inter:wght@400;600;700;800&display=swap" rel="stylesheet">
-    <style>
-        /* Custom LCD pixel font styling */
-        .lcd-font {
-            font-family: 'Share Tech Mono', monospace;
-        }
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>TI-30X IIS Scientific Calculator</title>
+<link href="https://fonts.googleapis.com/css2?family=DotGothic16&family=Nunito+Sans:ital,wght@0,600;0,700;0,800;1,700&family=Share+Tech+Mono&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --body-hi: #2a86c0;
+    --body-mid: #1c6fa8;
+    --body-lo: #135a8c;
+    --key-top: #3f97d2;
+    --key-bot: #2878b4;
+    --key-edge: #0c3f66;
+    --navy: #111d36;
+    --navy-hi: #2c3b5e;
+    --ink: #1b2a4a;
+    --lcd: #d6dad5;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+  html, body { height: 100%; }
+  body {
+    background: radial-gradient(ellipse at 50% 35%, #f4f6f8 0%, #dde3e9 70%, #cdd5dc 100%);
+    display: flex; align-items: center; justify-content: center;
+    overflow: hidden;
+    font-family: 'Nunito Sans', 'Segoe UI', Helvetica, Arial, sans-serif;
+    user-select: none;
+  }
+  #fit { position: relative; width: 480px; height: 940px; flex: none; }
+  #calc { position: absolute; left: 0; top: 0; width: 480px; height: 940px; transform-origin: 0 0; }
 
-        /* Standardized button 3D physical style */
-        .calc-btn {
-            position: relative;
-            user-select: none;
-            transition: all 0.05s ease;
-            box-shadow: 0 4px 0 rgba(0, 0, 0, 0.3), inset 0 1px 1px rgba(255, 255, 255, 0.4);
-        }
+  /* ---------- Case ---------- */
+  #shell { position: absolute; inset: 0; width: 480px; height: 940px; filter: drop-shadow(0 22px 22px rgba(10,30,50,.38)) drop-shadow(0 3px 4px rgba(10,30,50,.35)); }
 
-        .calc-btn:active {
-            transform: translateY(3px);
-            box-shadow: 0 1px 0 rgba(0, 0, 0, 0.3), inset 0 1px 1px rgba(0, 0, 0, 0.2);
-        }
+  /* ---------- Face panel (solar + display) ---------- */
+  #face {
+    position: absolute; left: 46px; top: 46px; width: 392px; height: 284px;
+    background: linear-gradient(180deg, #f3f4f3 0%, #e7e9e7 100%);
+    border-radius: 12px 12px 44px 44px / 12px 12px 12px 12px;
+    box-shadow: inset 0 0 0 3px #0f4f7e, inset 0 2px 8px rgba(0,0,0,.25), 0 0 0 5px #4aa0d6;
+  }
+  #solar {
+    position: absolute; left: 112px; top: 26px; width: 166px; height: 48px;
+    background:
+      repeating-linear-gradient(90deg, transparent 0 22px, rgba(255,255,255,.07) 22px 23px),
+      linear-gradient(180deg, #17120f, #0a0807);
+    border-radius: 3px; box-shadow: inset 0 0 0 1px #333, 0 1px 0 rgba(255,255,255,.7);
+  }
+  #ti-logo { position: absolute; left: 28px; top: 92px; display: flex; align-items: center; gap: 6px; color: var(--ink); }
+  #ti-logo svg { width: 24px; height: 24px; }
+  #ti-logo span { font-family: Georgia, 'Times New Roman', serif; font-variant: small-caps; font-size: 15px; letter-spacing: .4px; font-weight: 600; white-space: nowrap; }
+  #model { position: absolute; left: 218px; top: 82px; color: var(--ink); white-space: nowrap; display: flex; align-items: baseline; font-weight: 800; }
+  #model .ti { font-size: 25px; font-weight: 700; letter-spacing: -1px; -webkit-text-stroke: .6px var(--ink); color: transparent; font-family: 'Nunito Sans', sans-serif; margin-right: 1px; }
+  #model .x30 { font-size: 36px; font-weight: 800; letter-spacing: -1.5px; transform: scaleX(.92); transform-origin: left; margin-right: -5px; }
+  #model .iis { font-size: 29px; font-weight: 800; letter-spacing: -2px; font-style: italic; transform: scaleX(.8); transform-origin: left; margin-left: 4px; }
 
-        /* Beveled body styling for realistic plastic feel */
-        .calc-body {
-            background: linear-gradient(145deg, #1d72b8 0%, #155184 60%, #0d385c 100%);
-            box-shadow: 
-                0 20px 35px rgba(0,0,0,0.5),
-                inset 0 2px 3px rgba(255,255,255,0.3),
-                inset 0 -3px 6px rgba(0,0,0,0.4);
-        }
+  /* ---------- LCD ---------- */
+  #lcd {
+    position: absolute; left: 21px; top: 131px; width: 350px; height: 114px;
+    background: linear-gradient(180deg, #c3c8c2 0, #d7dbd6 14%, #dde0dc 100%);
+    border: 2px solid #8d938d; border-radius: 3px;
+    box-shadow: inset 0 4px 7px rgba(0,0,0,.32), inset 0 -1px 0 rgba(255,255,255,.6), 0 1px 0 rgba(255,255,255,.9);
+    overflow: hidden; color: #1d211e;
+    font-family: 'DotGothic16', 'Share Tech Mono', 'Courier New', monospace;
+  }
+  #lcd .row { position: absolute; left: 12px; right: 12px; white-space: pre; transform: skewX(-7deg); }
+  #inp { top: 10px; height: 40px; font-size: 35px; line-height: 40px; letter-spacing: 1px; overflow: hidden; }
+  #inp .cur { display: inline-block; width: 0.5em; margin-right: -.5em; border-bottom: 3px solid #1d211e; animation: blink 1s steps(1) infinite; height: 1em; vertical-align: top; position: relative; top: -2px; }
+  @keyframes blink { 50% { opacity: 0; } }
+  #out { top: 52px; height: 42px; font-size: 38px; line-height: 42px; text-align: right; letter-spacing: 1px; overflow: hidden; }
+  #inp .sel, #out .sel { background: #1d211e; color: #d7dbd6; padding: 0 3px; }
+  #ind { position: absolute; left: 10px; right: 10px; bottom: 4px; height: 13px; font: 700 10px/13px 'Nunito Sans', sans-serif; letter-spacing: .5px; }
+  #ind span { position: absolute; opacity: 0; bottom: 0; }
+  #ind span.on { opacity: .9; }
+  #i2nd { left: 0; } #ihyp { left: 34px; } #ifix { left: 66px; } #isci { left: 92px; } #ieng { left: 118px; }
+  #istat { left: 150px; } #iang { left: 244px; }
+  #iarr { position: absolute; right: 16px; top: 12px; font-size: 13px; opacity: 0; font-family: Arial, sans-serif; }
+  #iarr.on { opacity: .85; }
+  #lcd.off .row, #lcd.off #ind span, #lcd.off #iarr { opacity: 0 !important; }
 
-        .lcd-screen {
-            background: #b5c7aa;
-            box-shadow: inset 2px 2px 6px rgba(0,0,0,0.4), inset -1px -1px 2px rgba(255,255,255,0.5);
-            text-shadow: 1px 1px 0px rgba(0, 0, 0, 0.15);
-        }
-
-        /* D-Pad 3D feel */
-        .dpad-btn {
-            background: #222;
-            box-shadow: 0 3px 0 #000;
-        }
-        .dpad-btn:active {
-            transform: translateY(2px);
-            box-shadow: 0 1px 0 #000;
-        }
-
-        /* Custom Scrollbars inside LCD if needed */
-        .lcd-screen::-webkit-scrollbar {
-            height: 4px;
-        }
-        .lcd-screen::-webkit-scrollbar-thumb {
-            background: #687a5e;
-            border-radius: 2px;
-        }
-    </style>
+  /* ---------- Keys ---------- */
+  .keywrap { position: absolute; }
+  .sec {
+    position: absolute; left: 50%; bottom: 100%; transform: translateX(-50%); margin-bottom: 3px;
+    font: 700 11px/12px 'Nunito Sans', sans-serif; color: #f3f9ff; white-space: nowrap; letter-spacing: .2px;
+    text-shadow: 0 1px 0 rgba(0,0,0,.25); pointer-events: none;
+  }
+  .sec sup { font-size: 8px; vertical-align: 4px; line-height: 0; }
+  .sec i { font-family: Georgia, serif; font-style: italic; }
+  .key {
+    position: absolute; inset: 0; border: 0; cursor: pointer; outline: none;
+    color: #fff; font-family: 'Nunito Sans', sans-serif; font-weight: 700;
+    background: linear-gradient(180deg, var(--key-top) 0%, var(--key-bot) 100%);
+    box-shadow: 0 4px 0 var(--key-edge), 0 6px 6px rgba(0,0,0,.28), inset 0 1px 0 rgba(255,255,255,.4), inset 0 0 0 1px rgba(255,255,255,.08);
+    transition: transform .04s, box-shadow .04s;
+    display: flex; align-items: center; justify-content: center; text-align: center;
+  }
+  .key:active, .key.down { transform: translateY(3px); box-shadow: 0 1px 0 var(--key-edge), 0 2px 3px rgba(0,0,0,.3), inset 0 1px 0 rgba(255,255,255,.3); }
+  .key:focus-visible { box-shadow: 0 4px 0 var(--key-edge), 0 0 0 3px #fff; }
+  .key.fn { border-radius: 10px; font-size: 15px; letter-spacing: .1px; }
+  .key.num { border-radius: 12px; font-size: 25px; font-weight: 700; }
+  .key.op {
+    border-radius: 10px; font-size: 30px; font-weight: 600;
+    background: linear-gradient(180deg, #243456 0%, #101b33 100%);
+    box-shadow: 0 4px 0 #050a15, 0 6px 6px rgba(0,0,0,.35), inset 0 1px 0 rgba(255,255,255,.22);
+  }
+  .key.op:active, .key.op.down { box-shadow: 0 1px 0 #050a15, inset 0 1px 0 rgba(255,255,255,.15); }
+  .key.second { background: linear-gradient(180deg, #a5c4e6 0%, #7ba4d0 100%); color: #14284a; box-shadow: 0 4px 0 #35597f, 0 6px 6px rgba(0,0,0,.28), inset 0 1px 0 rgba(255,255,255,.7); }
+  .key.second:active, .key.second.down { box-shadow: 0 1px 0 #35597f, inset 0 1px 0 rgba(255,255,255,.5); }
+  .key.second.armed { background: linear-gradient(180deg, #fff 0%, #cfe3f7 100%); }
+  .key i.m { font-family: Georgia, 'Times New Roman', serif; font-style: italic; font-weight: 700; font-size: 17px; }
+  .key sup { font-size: 10px; vertical-align: 6px; line-height: 0; font-style: normal; font-family: 'Nunito Sans', sans-serif; }
+  .key.small { font-size: 12px; letter-spacing: .2px; }
+  .key.enter { flex-direction: column; font-size: 10px; line-height: 11px; font-weight: 800; letter-spacing: .3px; }
+  .key.enter b { font-size: 30px; line-height: 20px; font-weight: 600; }
+  .key.dpad {
+    border-radius: 50% / 55%; background: linear-gradient(180deg, #243456 0%, #0d172c 100%);
+    box-shadow: 0 3px 0 #04080f, 0 5px 5px rgba(0,0,0,.4), inset 0 1px 0 rgba(255,255,255,.2);
+  }
+  .key.dpad svg { width: 22px; height: 16px; fill: #fff; }
+  .key.dpad:active, .key.dpad.down { box-shadow: 0 1px 0 #04080f; }
+  .deco { position: absolute; background: #a9c8e0; border-radius: 2px; opacity: .9; }
+</style>
 </head>
-<body class="bg-slate-900 min-h-screen flex items-center justify-center p-2 sm:p-4 text-slate-800 font-sans">
+<body>
+<div id="fit">
+  <div id="calc">
+    <!-- Plastic case -->
+    <svg id="shell" viewBox="0 0 480 940" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+      <defs>
+        <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+          <stop offset="0" stop-color="#2a86c0"/><stop offset=".5" stop-color="#1b6ea7"/><stop offset="1" stop-color="#145c8f"/>
+        </linearGradient>
+        <linearGradient id="rim" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0" stop-color="#7fc3ee" stop-opacity=".8"/><stop offset=".25" stop-color="#7fc3ee" stop-opacity=".1"/><stop offset="1" stop-color="#001a30" stop-opacity=".45"/>
+        </linearGradient>
+        <linearGradient id="side" x1="0" y1="0" x2="1" y2="0">
+          <stop offset="0" stop-color="#000" stop-opacity=".22"/><stop offset=".06" stop-color="#000" stop-opacity="0"/>
+          <stop offset=".94" stop-color="#000" stop-opacity="0"/><stop offset="1" stop-color="#000" stop-opacity=".25"/>
+        </linearGradient>
+      </defs>
+      <path id="casepath" d="M 24 40 Q 240 -14 456 40 Q 480 48 478 84 C 476 300 462 420 462 520 C 462 640 476 760 478 846 Q 480 904 440 926 Q 240 954 40 926 Q 0 904 2 846 C 4 760 18 640 18 520 C 18 420 4 300 2 84 Q 0 48 24 40 Z" fill="url(#bg)"/>
+      <path d="M 24 40 Q 240 -14 456 40 Q 480 48 478 84 C 476 300 462 420 462 520 C 462 640 476 760 478 846 Q 480 904 440 926 Q 240 954 40 926 Q 0 904 2 846 C 4 760 18 640 18 520 C 18 420 4 300 2 84 Q 0 48 24 40 Z" fill="url(#side)"/>
+      <path d="M 24 40 Q 240 -14 456 40 Q 480 48 478 84 C 476 300 462 420 462 520 C 462 640 476 760 478 846 Q 480 904 440 926 Q 240 954 40 926 Q 0 904 2 846 C 4 760 18 640 18 520 C 18 420 4 300 2 84 Q 0 48 24 40 Z" fill="none" stroke="url(#rim)" stroke-width="3"/>
+      <!-- inner keypad recess -->
+      <path d="M 38 350 Q 240 336 442 350 C 436 470 436 580 440 700 C 442 790 440 850 420 890 Q 240 912 60 890 C 40 850 38 790 40 700 C 44 580 44 470 38 350 Z" fill="#000" opacity=".07"/>
+    </svg>
 
-    <!-- Calculator Main Container -->
-    <div class="calc-body relative w-full max-w-[390px] rounded-[36px] p-5 sm:p-6 border-2 border-blue-400/30">
-        
-        <!-- Top Logo & Solar Panel Header Section -->
-        <div class="bg-white rounded-t-2xl rounded-b-lg p-3 pb-2 mb-4 shadow-inner border border-slate-200">
-            <!-- Solar Cell & Brand Label -->
-            <div class="flex justify-between items-center mb-2">
-                <!-- Solar Panel -->
-                <div class="w-24 h-6 bg-stone-900 rounded border-2 border-stone-700 grid grid-cols-4 gap-0.5 p-0.5 shadow-inner">
-                    <div class="bg-amber-950/80 rounded-sm"></div>
-                    <div class="bg-amber-950/80 rounded-sm"></div>
-                    <div class="bg-amber-950/80 rounded-sm"></div>
-                    <div class="bg-amber-950/80 rounded-sm"></div>
-                </div>
-                <!-- Brand Text -->
-                <div class="text-right">
-                    <div class="text-[10px] font-bold text-slate-700 tracking-tighter flex items-center justify-end gap-1">
-                        <span class="inline-block w-2.5 h-2.5 bg-blue-600 rounded-full text-white text-[7px] text-center font-serif leading-none pt-0.5">ti</span>
-                        TEXAS INSTRUMENTS
-                    </div>
-                    <div class="text-lg font-black tracking-wider text-slate-900 leading-none">TI-30X<span class="text-sm">IIs</span></div>
-                </div>
-            </div>
+    <div id="face">
+      <div id="solar"></div>
+      <div id="ti-logo">
+        <svg viewBox="0 0 24 24"><path fill="#c8102e" d="M12 1.5c-1 0-1.8.8-2 1.8C7.600 3.600 5.600 5 5.300 7c-.2 1.200.2 2.200 1 2.800C5 10.600 4.200 12.200 4.600 14c.4 1.800 2 2.900 3.600 2.800.1 1.200.6 2.600 1.800 3.400l1 2.300 1-2.300c1.200-.8 1.700-2.200 1.800-3.400 1.600.1 3.200-1 3.600-2.800.4-1.800-.4-3.400-1.700-4.200.8-.6 1.200-1.600 1-2.800-.3-2-2.300-3.400-4.700-3.700-.2-1-1-1.800-2-1.800z"/></svg>
+        <span>Texas Instruments</span>
+      </div>
+      <div id="model"><span class="ti">TI-</span><span class="x30">30X</span><span class="iis">IIS</span></div>
 
-            <!-- LCD Display Screen -->
-            <div class="lcd-screen rounded p-2 text-stone-900 h-24 flex flex-col justify-between overflow-hidden relative border border-stone-500">
-                
-                <!-- Status Indicators Row -->
-                <div class="flex justify-between text-[10px] font-bold tracking-widest text-stone-700 h-4 border-b border-stone-400/40 pb-0.5">
-                    <span id="ind-2nd" class="opacity-10">2nd</span>
-                    <span id="ind-hyp" class="opacity-10">HYP</span>
-                    <span id="ind-sci" class="opacity-10">SCI</span>
-                    <span id="ind-eng" class="opacity-10">ENG</span>
-                    <span id="ind-stat" class="opacity-10">STAT</span>
-                    <span id="ind-angle" class="opacity-100">DEG</span>
-                </div>
-
-                <!-- Input Line (Scrollable) -->
-                <div id="lcd-input" class="lcd-font text-lg leading-tight tracking-wider overflow-x-auto whitespace-nowrap scrollbar-none py-1 flex items-center min-h-[28px]">
-                    <span id="lcd-input-text">0</span>
-                </div>
-
-                <!-- Output Line (Result) -->
-                <div id="lcd-output" class="lcd-font text-2xl text-right leading-none font-bold tracking-wider overflow-x-auto whitespace-nowrap">
-                    0
-                </div>
-            </div>
+      <div id="lcd">
+        <div id="inp" class="row"></div>
+        <div id="out" class="row"></div>
+        <div id="iarr">&#8593;</div>
+        <div id="ind">
+          <span id="i2nd">2nd</span><span id="ihyp">HYP</span><span id="ifix">FIX</span><span id="isci">SCI</span><span id="ieng">ENG</span><span id="istat">STAT</span><span id="iang">DEG</span>
         </div>
-
-        <!-- Secondary Functions Legend Banner -->
-        <div class="grid grid-cols-5 gap-1.5 px-1 mb-1 text-[9px] font-bold text-sky-200 text-center uppercase tracking-tighter">
-            <div>2nd</div>
-            <div>SCI/ENG</div>
-            <div>INS</div>
-            <div class="col-span-2"></div>
-        </div>
-
-        <!-- Row 1: Function Control Keys + D-Pad -->
-        <div class="grid grid-cols-5 gap-1.5 mb-2.5">
-            <!-- 2nd Key -->
-            <button onclick="pressKey('2nd')" class="calc-btn bg-white text-blue-900 font-extrabold text-xs py-2 rounded-md hover:bg-slate-100">2nd</button>
-            <!-- DRG -->
-            <button onclick="pressKey('DRG')" class="calc-btn bg-blue-900 text-white font-semibold text-xs py-2 rounded-md hover:bg-blue-800">DRG</button>
-            <!-- DEL -->
-            <button onclick="pressKey('DEL')" class="calc-btn bg-blue-900 text-white font-semibold text-xs py-2 rounded-md hover:bg-blue-800">DEL</button>
-            
-            <!-- D-Pad Navigation Controls (Spans 2 cols, 2 rows) -->
-            <div class="col-span-2 row-span-2 relative flex items-center justify-center p-1">
-                <div class="bg-slate-900/40 p-1.5 rounded-full border border-blue-400/30">
-                    <div class="grid grid-cols-3 grid-rows-3 gap-0.5 w-20 h-20 items-center justify-items-center">
-                        <div></div>
-                        <button onclick="navigate('up')" class="dpad-btn w-6 h-6 rounded-t-md text-white text-[10px] flex items-center justify-center">▲</button>
-                        <div></div>
-                        <button onclick="navigate('left')" class="dpad-btn w-6 h-6 rounded-l-md text-white text-[10px] flex items-center justify-center">◀</button>
-                        <div class="w-4 h-4 rounded-full bg-slate-800 border border-slate-600"></div>
-                        <button onclick="navigate('right')" class="dpad-btn w-6 h-6 rounded-r-md text-white text-[10px] flex items-center justify-center">▶</button>
-                        <div></div>
-                        <button onclick="navigate('down')" class="dpad-btn w-6 h-6 rounded-b-md text-white text-[10px] flex items-center justify-center">▼</button>
-                        <div></div>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <!-- Row 2 Secondary Labels -->
-        <div class="grid grid-cols-5 gap-1.5 px-1 text-[8px] font-semibold text-sky-200 text-center">
-            <div>10<sup>x</sup></div>
-            <div>F◄►D</div>
-            <div>e<sup>x</sup></div>
-            <div class="col-span-2"></div>
-        </div>
-
-        <!-- Row 2 Buttons -->
-        <div class="grid grid-cols-5 gap-1.5 mb-2">
-            <button onclick="pressKey('LOG')" class="calc-btn bg-blue-900 text-white font-medium text-xs py-1.5 rounded-md">LOG</button>
-            <button onclick="pressKey('PRB')" class="calc-btn bg-blue-900 text-white font-medium text-xs py-1.5 rounded-md">PRB</button>
-            <button onclick="pressKey('LN')" class="calc-btn bg-blue-900 text-white font-medium text-xs py-1.5 rounded-md">LN</button>
-            <div class="col-span-2"></div>
-        </div>
-
-        <!-- Row 3 Secondary Labels -->
-        <div class="grid grid-cols-5 gap-1.5 px-1 text-[8px] font-semibold text-sky-200 text-center">
-            <div>3√x</div>
-            <div>Ab/c◄►d/e</div>
-            <div>STAT</div>
-            <div>EXIT STAT</div>
-            <div></div>
-        </div>
-
-        <!-- Row 3 Buttons -->
-        <div class="grid grid-cols-5 gap-1.5 mb-2">
-            <button onclick="pressKey('DATA')" class="calc-btn bg-blue-900 text-white font-medium text-xs py-1.5 rounded-md">DATA</button>
-            <button onclick="pressKey('FRAC')" class="calc-btn bg-blue-900 text-white font-medium text-xs py-1.5 rounded-md">A b/c</button>
-            <button onclick="pressKey('STATVAR')" class="calc-btn bg-blue-900 text-white font-medium text-xs py-1.5 rounded-md">STATVAR</button>
-            <button onclick="pressKey('CLEAR')" class="calc-btn bg-sky-200 text-blue-950 font-bold text-xs py-1.5 rounded-md hover:bg-sky-100">CLEAR</button>
-            <button onclick="pressKey('DIV')" class="calc-btn bg-slate-900 text-white font-bold text-base py-1.5 rounded-md hover:bg-slate-800">÷</button>
-        </div>
-
-        <!-- Row 4 Secondary Labels -->
-        <div class="grid grid-cols-5 gap-1.5 px-1 text-[8px] font-semibold text-sky-200 text-center">
-            <div>HYP</div>
-            <div>sin<sup>-1</sup></div>
-            <div>cos<sup>-1</sup></div>
-            <div>tan<sup>-1</sup></div>
-            <div>K</div>
-        </div>
-
-        <!-- Row 4 Buttons -->
-        <div class="grid grid-cols-5 gap-1.5 mb-2">
-            <button onclick="pressKey('PI')" class="calc-btn bg-blue-900 text-white font-medium text-xs py-1.5 rounded-md">π</button>
-            <button onclick="pressKey('SIN')" class="calc-btn bg-blue-900 text-white font-medium text-xs py-1.5 rounded-md">SIN</button>
-            <button onclick="pressKey('COS')" class="calc-btn bg-blue-900 text-white font-medium text-xs py-1.5 rounded-md">COS</button>
-            <button onclick="pressKey('TAN')" class="calc-btn bg-blue-900 text-white font-medium text-xs py-1.5 rounded-md">TAN</button>
-            <button onclick="pressKey('MUL')" class="calc-btn bg-slate-900 text-white font-bold text-base py-1.5 rounded-md hover:bg-slate-800">×</button>
-        </div>
-
-        <!-- Row 5 Secondary Labels -->
-        <div class="grid grid-cols-5 gap-1.5 px-1 text-[8px] font-semibold text-sky-200 text-center">
-            <div>e</div>
-            <div>√</div>
-            <div>x√</div>
-            <div>%</div>
-            <div>,</div>
-        </div>
-
-        <!-- Row 5 Buttons -->
-        <div class="grid grid-cols-5 gap-1.5 mb-2">
-            <button onclick="pressKey('POWER')" class="calc-btn bg-blue-900 text-white font-medium text-xs py-1.5 rounded-md">^</button>
-            <button onclick="pressKey('INVERSE')" class="calc-btn bg-blue-900 text-white font-medium text-xs py-1.5 rounded-md">x⁻¹</button>
-            <button onclick="pressKey('OPEN_PAR')" class="calc-btn bg-blue-900 text-white font-medium text-sm py-1.5 rounded-md">(</button>
-            <button onclick="pressKey('CLOSE_PAR')" class="calc-btn bg-blue-900 text-white font-medium text-sm py-1.5 rounded-md">)</button>
-            <button onclick="pressKey('SUB')" class="calc-btn bg-slate-900 text-white font-bold text-base py-1.5 rounded-md hover:bg-slate-800">-</button>
-        </div>
-
-        <!-- Row 6 Secondary Labels (Above Numbers 7-8-9) -->
-        <div class="grid grid-cols-5 gap-1.5 px-1 text-[8px] font-semibold text-sky-200 text-center">
-            <div>x²</div>
-            <div></div>
-            <div></div>
-            <div></div>
-            <div></div>
-        </div>
-
-        <!-- Row 6: x² and Numbers 7, 8, 9, + -->
-        <div class="grid grid-cols-5 gap-1.5 mb-2">
-            <button onclick="pressKey('SQUARE')" class="calc-btn bg-blue-900 text-white font-medium text-xs py-2 rounded-md">x²</button>
-            <button onclick="pressNum('7')" class="calc-btn bg-white text-slate-900 font-bold text-base py-2 rounded-md hover:bg-slate-100">7</button>
-            <button onclick="pressNum('8')" class="calc-btn bg-white text-slate-900 font-bold text-base py-2 rounded-md hover:bg-slate-100">8</button>
-            <button onclick="pressNum('9')" class="calc-btn bg-white text-slate-900 font-bold text-base py-2 rounded-md hover:bg-slate-100">9</button>
-            <button onclick="pressKey('ADD')" class="calc-btn bg-slate-900 text-white font-bold text-base py-2 rounded-md hover:bg-slate-800">+</button>
-        </div>
-
-        <!-- Row 7 Secondary Labels -->
-        <div class="grid grid-cols-5 gap-1.5 px-1 text-[8px] font-semibold text-sky-200 text-center">
-            <div>CLRVAR</div>
-            <div></div>
-            <div></div>
-            <div></div>
-            <div></div>
-        </div>
-
-        <!-- Row 7: MEMVAR and Numbers 4, 5, 6, [ENTER height space] -->
-        <div class="grid grid-cols-5 gap-1.5 mb-2">
-            <button onclick="pressKey('MEMVAR')" class="calc-btn bg-blue-900 text-white font-medium text-xs py-2 rounded-md">MEMVAR</button>
-            <button onclick="pressNum('4')" class="calc-btn bg-white text-slate-900 font-bold text-base py-2 rounded-md hover:bg-slate-100">4</button>
-            <button onclick="pressNum('5')" class="calc-btn bg-white text-slate-900 font-bold text-base py-2 rounded-md hover:bg-slate-100">5</button>
-            <button onclick="pressNum('6')" class="calc-btn bg-white text-slate-900 font-bold text-base py-2 rounded-md hover:bg-slate-100">6</button>
-            <!-- ENTER key spans rows 7 and 8 on right column -->
-            <button onclick="calculateResult()" class="calc-btn row-span-2 bg-slate-900 text-white font-extrabold text-xs py-2 rounded-md hover:bg-slate-800 flex flex-col items-center justify-center border border-slate-700">
-                <span>ENTER</span>
-                <span class="text-sm">═</span>
-            </button>
-        </div>
-
-        <!-- Row 8 Secondary Labels -->
-        <div class="grid grid-cols-5 gap-1.5 px-1 text-[8px] font-semibold text-sky-200 text-center">
-            <div>RCL</div>
-            <div></div>
-            <div></div>
-            <div></div>
-            <div></div>
-        </div>
-
-        <!-- Row 8: STO► and Numbers 1, 2, 3 -->
-        <div class="grid grid-cols-5 gap-1.5 mb-2">
-            <button onclick="pressKey('STO')" class="calc-btn bg-blue-900 text-white font-medium text-xs py-2 rounded-md">STO►</button>
-            <button onclick="pressNum('1')" class="calc-btn bg-white text-slate-900 font-bold text-base py-2 rounded-md hover:bg-slate-100">1</button>
-            <button onclick="pressNum('2')" class="calc-btn bg-white text-slate-900 font-bold text-base py-2 rounded-md hover:bg-slate-100">2</button>
-            <button onclick="pressNum('3')" class="calc-btn bg-white text-slate-900 font-bold text-base py-2 rounded-md hover:bg-slate-100">3</button>
-            <div></div> <!-- Occupied by row-span-2 ENTER button above -->
-        </div>
-
-        <!-- Row 9 Secondary Labels -->
-        <div class="grid grid-cols-5 gap-1.5 px-1 text-[8px] font-semibold text-sky-200 text-center">
-            <div>OFF</div>
-            <div>RESET</div>
-            <div>FIX</div>
-            <div>ANS</div>
-            <div></div>
-        </div>
-
-        <!-- Row 9: Bottom Row (ON, 0, ., (-)) -->
-        <div class="grid grid-cols-5 gap-1.5">
-            <button onclick="pressKey('ON')" class="calc-btn bg-blue-900 text-white font-bold text-xs py-2 rounded-md hover:bg-blue-800">ON</button>
-            <button onclick="pressNum('0')" class="calc-btn bg-white text-slate-900 font-bold text-base py-2 rounded-md hover:bg-slate-100">0</button>
-            <button onclick="pressNum('.')" class="calc-btn bg-white text-slate-900 font-bold text-base py-2 rounded-md hover:bg-slate-100">.</button>
-            <button onclick="pressKey('NEG')" class="calc-btn bg-white text-slate-900 font-bold text-xs py-2 rounded-md hover:bg-slate-100">(-)</button>
-            <button onclick="pressKey('OFF')" class="calc-btn bg-blue-900 text-sky-300 font-bold text-[10px] py-2 rounded-md">OFF</button>
-        </div>
+      </div>
     </div>
+    <div id="keys"></div>
+  </div>
+</div>
 
-    <!-- JavaScript Engine -->
-    <script>
-        // Internal State
-        let isPowerOn = true;
-        let is2ndActive = false;
-        let angleMode = 'DEG'; // DEG, RAD, GRAD
-        let expression = '';
-        let cursorPos = 0;
-        let history = [];
-        let historyIndex = -1;
-        let isResultDisplayed = false;
-        let lastAns = 0;
+<script>
+/* ============================================================
+   Layout: every key is placed at the coordinates measured
+   from the real TI-30X IIS (centre x/y inside the 480x940 case)
+   ============================================================ */
+const OX = 270, OY = 48;               // photo -> case origin
+const C1 = 353, C2 = 432, C3 = 511, C4 = 590, C5 = 670;
 
-        // Variables state (A, B, C, D, E)
-        let variables = { A: 0, B: 0, C: 0, D: 0, E: 0 };
-        let activeVarIndex = 0;
-        const varNames = ['A', 'B', 'C', 'D', 'E'];
-        let mode = 'NORMAL'; // 'NORMAL', 'STO', 'MEMVAR'
+// [centreX, centreY, w, h, kind, face, secondary label, action, 2nd action]
+const KEYS = [
+  [C1,425,62,30,'fn second','2nd','', '2nd'],
+  [C2,425,62,32,'fn','DRG','SCI/ENG','drg','sci'],
+  [C3,425,62,32,'fn','DEL','INS','del','ins'],
 
-        // Elements
-        const lcdInput = document.getElementById('lcd-input');
-        const lcdOutput = document.getElementById('lcd-output');
-        const ind2nd = document.getElementById('ind-2nd');
-        const indAngle = document.getElementById('ind-angle');
+  [C1,480,62,32,'fn','LOG','10<sup>x</sup>','log','tenx'],
+  [C2,480,62,32,'fn','PRB','F&#9668;&#9658;D','prb','fd'],
+  [C3,480,62,32,'fn small','&deg; &prime; &Prime;','R&#9668;&#9658;P','dms','noop'],
 
-        // Toggle 2nd state modifier
-        function toggle2nd() {
-            is2ndActive = !is2ndActive;
-            if (is2ndActive) {
-                ind2nd.classList.remove('opacity-10');
-                ind2nd.classList.add('opacity-100');
-            } else {
-                ind2nd.classList.remove('opacity-100');
-                ind2nd.classList.add('opacity-10');
-            }
+  [C1,533,62,32,'fn','LN','e<sup>x</sup>','ln','ex'],
+  [C2,533,62,32,'fn small','A<sup style="font-size:8px;vertical-align:4px">b</sup>/<sub style="font-size:8px">c</sub>','A<sup>b</sup>/<sub>c</sub>&#9668;&#9658;<sup>d</sup>/<sub>e</sub>','abc','noop'],
+  [C3,533,62,32,'fn','DATA','STAT','noop','noop'],
+  [C4,533,62,32,'fn small','STATVAR','EXIT STAT','noop','noop'],
+  [C5,533,62,32,'fn small','CLEAR','','clear'],
+
+  [C1,590,62,32,'fn','&pi;','HYP','pi','hyp'],
+  [C2,590,62,32,'fn','SIN','SIN<sup>-1</sup>','sin','asin'],
+  [C3,590,62,32,'fn','COS','COS<sup>-1</sup>','cos','acos'],
+  [C4,590,62,32,'fn','TAN','TAN<sup>-1</sup>','tan','atan'],
+  [C5,605,62,46,'op','&divide;','K','div','noop'],
+
+  [C1,642,62,32,'fn','&and;','<sup style="font-size:9px;vertical-align:5px">x</sup>&radic;&#8254;','pow','root'],
+  [C2,642,62,32,'fn','<i class="m">x</i><sup>-1</sup>','EE','inv','ee'],
+  [C3,642,62,32,'fn','(','%','lp','pct'],
+  [C4,642,62,32,'fn',')',',','rp','comma'],
+  [C5,670,62,46,'op','&times;','','mul'],
+
+  [C1,697,62,32,'fn','<i class="m">x</i><sup>2</sup>','&radic;&#8254;','sq','sqrt'],
+  [C2,708,64,42,'num','7','','d7'],
+  [C3,708,64,42,'num','8','','d8'],
+  [C4,708,64,42,'num','9','','d9'],
+  [C5,737,62,46,'op','&minus;','','sub'],
+
+  [C1,750,62,32,'fn small','MEMVAR','CLRVAR','memvar','clrvar'],
+  [C2,773,64,42,'num','4','','d4'],
+  [C3,773,64,42,'num','5','','d5'],
+  [C4,773,64,42,'num','6','','d6'],
+  [C5,803,62,46,'op','+','','add'],
+
+  [C1,805,62,32,'fn small','STO&#9658;','RCL','sto','rcl'],
+  [C2,838,64,42,'num','1','','d1'],
+  [C3,838,64,42,'num','2','','d2'],
+  [C4,838,64,42,'num','3','','d3'],
+  [C5,868,62,46,'op enter','<span>ENTER</span><b>=</b>','','enter'],
+
+  [C1,865,62,44,'fn','ON','OFF','on','off'],
+  [C2,903,64,42,'num','0','RESET','d0','reset'],
+  [C3,903,64,42,'num','&middot;','FIX','dot','fix'],
+  [C4,903,64,42,'num small','(-)','ANS','neg','ans'],
+];
+
+const tri = {
+  up:   '<svg viewBox="0 0 22 16"><path d="M11 2 20 14H2z"/></svg>',
+  down: '<svg viewBox="0 0 22 16"><path d="M11 14 2 2h18z"/></svg>',
+  left: '<svg viewBox="0 0 22 16"><path d="M3 8 17 1v14z"/></svg>',
+  right:'<svg viewBox="0 0 22 16"><path d="M19 8 5 1v14z"/></svg>',
+};
+// [centreX, centreY, w, h, dir]
+const DPAD = [[630,405,68,28,'up'],[587,445,64,32,'left'],[672,445,64,32,'right'],[630,484,68,28,'down']];
+
+const keysEl = document.getElementById('keys');
+function place(el, cx, cy, w, h) {
+  el.style.left = (cx - OX - w/2) + 'px'; el.style.top = (cy - OY - h/2) + 'px';
+  el.style.width = w + 'px'; el.style.height = h + 'px';
+}
+let secondKeyEl;
+KEYS.forEach(k => {
+  const [cx, cy, w, h, kind, face, sec, a, b] = k;
+  const wrap = document.createElement('div'); wrap.className = 'keywrap'; place(wrap, cx, cy, w, h);
+  if (sec) { const s = document.createElement('div'); s.className = 'sec'; s.innerHTML = sec; wrap.appendChild(s); }
+  const btn = document.createElement('button'); btn.className = 'key ' + kind; btn.innerHTML = face;
+  btn.setAttribute('aria-label', a);
+  btn.addEventListener('mousedown', e => e.preventDefault());
+  btn.addEventListener('click', () => press(a, b));
+  if (a === '2nd') secondKeyEl = btn;
+  wrap.appendChild(btn); keysEl.appendChild(wrap);
+});
+DPAD.forEach(([cx, cy, w, h, dir]) => {
+  const wrap = document.createElement('div'); wrap.className = 'keywrap'; place(wrap, cx, cy, w, h);
+  const btn = document.createElement('button'); btn.className = 'key dpad'; btn.innerHTML = tri[dir];
+  btn.setAttribute('aria-label', dir);
+  btn.addEventListener('mousedown', e => e.preventDefault());
+  btn.addEventListener('click', () => navigate(dir));
+  wrap.appendChild(btn); keysEl.appendChild(wrap);
+});
+// little printed details from the real keypad
+[[C5-12,509-OY,24,2],[C1-11,900-OY,22,3]].forEach(([x,y,w,h]) => {
+  const d = document.createElement('div'); d.className = 'deco';
+  d.style.cssText = `left:${x-OX}px;top:${y}px;width:${w}px;height:${h}px`; keysEl.appendChild(d);
+});
+
+/* ---------- Fit to window ---------- */
+function fit() {
+  const s = Math.min((innerHeight - 24) / 940, (innerWidth - 16) / 480, 1.25);
+  const calc = document.getElementById('calc'), box = document.getElementById('fit');
+  calc.style.transform = `scale(${s})`;
+  box.style.width = 480 * s + 'px'; box.style.height = 940 * s + 'px';
+}
+addEventListener('resize', fit); fit();
+
+/* ============================================================
+   Calculator engine
+   ============================================================ */
+const S = {
+  on: true, second: false, hyp: false, ins: true,
+  angle: 'DEG', fmt: 'float', fix: null,
+  expr: '', cur: 0, shown: false,      // shown = a result is on screen
+  mode: 'NORMAL', menuIdx: 0,
+  ans: 0, resultText: '0', showFrac: false, lastVal: 0,
+  vars: { x:0, y:0, z:0, t:0, a:0, b:0, c:0 },
+  hist: [], hi: -1, error: null, dmsStep: 0,
+};
+const VARN = ['x','y','z','t','a','b','c'];
+const STORE_KEY = 'ti30xiis-state-v1';
+function save() {
+  try {
+    localStorage.setItem(STORE_KEY, JSON.stringify({
+      vars: S.vars, hist: S.hist.slice(-50), ans: S.ans, angle: S.angle, fmt: S.fmt, fix: S.fix,
+      lastExpr: S.hist.length ? S.hist[S.hist.length - 1] : ''
+    }));
+  } catch (e) { /* storage unavailable: keep working in memory */ }
+}
+function load() {
+  try {
+    const d = JSON.parse(localStorage.getItem(STORE_KEY) || 'null'); if (!d) return;
+    if (d.vars) VARN.forEach(v => { if (typeof d.vars[v] === 'number') S.vars[v] = d.vars[v]; });
+    if (Array.isArray(d.hist)) S.hist = d.hist.filter(h => typeof h === 'string');
+    if (typeof d.ans === 'number') { S.ans = d.ans; S.lastVal = d.ans; }
+    if (['DEG','RAD','GRAD'].includes(d.angle)) S.angle = d.angle;
+    if (['float','sci','eng'].includes(d.fmt)) S.fmt = d.fmt;
+    if (d.fix === null || (Number.isInteger(d.fix) && d.fix >= 0 && d.fix <= 9)) S.fix = d.fix;
+  } catch (e) { /* ignore corrupt data */ }
+}
+
+const PRB_ITEMS = ['rand','nPr','nCr','!'];
+const $ = id => document.getElementById(id);
+
+/* ---------- Tokenizer ---------- */
+const FNS = ['asinh','acosh','atanh','sinh','cosh','tanh','asin','acos','atan','sin','cos','tan','log','ln'];
+function SYN() { return { msg: 'SYNTAX ERROR' }; }
+function tokenize(s) {
+  const out = []; let i = 0;
+  while (i < s.length) {
+    const c = s[i];
+    if (c === ' ') { i++; continue; }
+    if (/[0-9.]/.test(c)) {
+      let j = i; while (j < s.length && /[0-9.]/.test(s[j])) j++;
+      let txt = s.slice(i, j);
+      if (s[j] === 'E') {
+        let k = j + 1; if (s[k] === '-' || s[k] === '+') k++;
+        let m = k; while (m < s.length && /[0-9]/.test(s[m])) m++;
+        if (m === k) throw SYN();
+        txt += s.slice(j, m); j = m;
+      }
+      const v = parseFloat(txt);
+      if (isNaN(v) || (txt.match(/\./g) || []).length > 1) throw SYN();
+      out.push({ t: 'num', v }); i = j; continue;
+    }
+    const rest = s.slice(i);
+    let m;
+    if (rest.startsWith('Ans')) { out.push({ t: 'ans' }); i += 3; continue; }
+    if (rest.startsWith('rand')) { out.push({ t: 'rand' }); i += 4; continue; }
+    if (rest.startsWith('nPr') || rest.startsWith('nCr')) { out.push({ t: 'cmb', v: rest.slice(0, 3) }); i += 3; continue; }
+    if (rest.startsWith('\u02E3\u221A')) { out.push({ t: 'root' }); i += 2; continue; }
+    if (rest.startsWith('\u207B\u00B9')) { out.push({ t: 'post', v: 'inv' }); i += 2; continue; }
+    if ((m = FNS.find(f => rest.startsWith(f + '(')))) { out.push({ t: 'fn', v: m }); i += m.length; continue; }
+    if (c === '\u221A') { out.push({ t: 'fn', v: 'sqrt' }); i++; continue; }
+    if (c === '\u03C0') { out.push({ t: 'const', v: Math.PI }); i++; continue; }
+    if (c === 'e') { out.push({ t: 'const', v: Math.E }); i++; continue; }
+    if (VARN.includes(c)) { out.push({ t: 'var', v: c }); i++; continue; }
+    if ('+-*/^()'.includes(c)) { out.push({ t: c }); i++; continue; }
+    if (c === '\u00B2') { out.push({ t: 'post', v: 'sq' }); i++; continue; }
+    if (c === '!') { out.push({ t: 'post', v: 'fact' }); i++; continue; }
+    if (c === '%') { out.push({ t: 'post', v: 'pct' }); i++; continue; }
+    if (c === '\u00B0' || c === '\u2032' || c === '\u2033') { out.push({ t: 'unit', v: c }); i++; continue; }
+    if (c === '\u231F') { out.push({ t: 'frac' }); i++; continue; }
+    throw SYN();
+  }
+  return out;
+}
+
+/* ---------- Parser / evaluator ---------- */
+function angleFactor() { return S.angle === 'DEG' ? Math.PI / 180 : S.angle === 'GRAD' ? Math.PI / 200 : 1; }
+const clean = v => (typeof v === 'number' && isFinite(v)) ? Number(v.toPrecision(12)) : v;
+function fact(n) {
+  if (n < 0 || n !== Math.floor(n) || n > 69) throw { msg: 'DOMAIN ERROR' };
+  let r = 1; for (let i = 2; i <= n; i++) r *= i; return r;
+}
+function callFn(f, x) {
+  const k = angleFactor();
+  switch (f) {
+    case 'sin': return clean(Math.sin(x * k));
+    case 'cos': return clean(Math.cos(x * k));
+    case 'tan': {
+      const c = Math.cos(x * k); if (Math.abs(c) < 1e-14) throw { msg: 'DOMAIN ERROR' };
+      return clean(Math.tan(x * k));
+    }
+    case 'asin': if (Math.abs(x) > 1) throw { msg: 'DOMAIN ERROR' }; return clean(Math.asin(x) / k);
+    case 'acos': if (Math.abs(x) > 1) throw { msg: 'DOMAIN ERROR' }; return clean(Math.acos(x) / k);
+    case 'atan': return clean(Math.atan(x) / k);
+    case 'sinh': return Math.sinh(x); case 'cosh': return Math.cosh(x); case 'tanh': return Math.tanh(x);
+    case 'asinh': return Math.asinh(x);
+    case 'acosh': if (x < 1) throw { msg: 'DOMAIN ERROR' }; return Math.acosh(x);
+    case 'atanh': if (Math.abs(x) >= 1) throw { msg: 'DOMAIN ERROR' }; return Math.atanh(x);
+    case 'log': if (x <= 0) throw { msg: 'DOMAIN ERROR' }; return clean(Math.log10(x));
+    case 'ln': if (x <= 0) throw { msg: 'DOMAIN ERROR' }; return clean(Math.log(x));
+    case 'sqrt': if (x < 0) throw { msg: 'DOMAIN ERROR' }; return Math.sqrt(x);
+  }
+}
+function evaluate(src) {
+  const T = tokenize(src); let p = 0;
+  const peek = (o = 0) => T[p + o];
+  const eat = t => { if (peek() && peek().t === t) return T[p++]; return null; };
+  const startsAtom = tk => tk && ['num','const','var','ans','rand','fn','('].includes(tk.t);
+
+  function expr() {
+    let v = term();
+    for (;;) {
+      if (eat('+')) v += term(); else if (eat('-')) v -= term(); else break;
+    }
+    return v;
+  }
+  function term() {
+    let v = perm();
+    for (;;) {
+      if (eat('*')) v *= perm();
+      else if (eat('/')) { const d = perm(); if (d === 0) throw { msg: 'DIVIDE BY 0 ERROR' }; v /= d; }
+      else if (startsAtom(peek())) v *= perm();
+      else break;
+    }
+    return v;
+  }
+  function perm() {
+    let v = unary();
+    while (peek() && peek().t === 'cmb') {
+      const k = T[p++].v, r = unary();
+      if (v < 0 || r < 0 || r > v || v !== Math.floor(v) || r !== Math.floor(r)) throw { msg: 'DOMAIN ERROR' };
+      v = k === 'nPr' ? fact(v) / fact(v - r) : fact(v) / (fact(r) * fact(v - r));
+    }
+    return v;
+  }
+  function unary() {
+    if (eat('-')) return -unary();
+    if (eat('+')) return unary();
+    return power();
+  }
+  function power() {
+    let base = postfix();
+    while (peek() && peek().t === 'root') {
+      p++; const rhs = postfix();
+      if (rhs < 0 && base % 2 === 0) throw { msg: 'DOMAIN ERROR' };
+      base = rhs < 0 ? -Math.pow(-rhs, 1 / base) : Math.pow(rhs, 1 / base);
+    }
+    if (eat('^')) {
+      const e = unary(); const r = Math.pow(base, e);
+      if (isNaN(r)) throw { msg: 'DOMAIN ERROR' };
+      if (!isFinite(r)) throw { msg: 'OVERFLOW ERROR' };
+      return clean(r);
+    }
+    return base;
+  }
+  function postfix() {
+    let v = atom();
+    while (peek() && peek().t === 'post') {
+      const k = T[p++].v;
+      if (k === 'sq') v = v * v;
+      else if (k === 'inv') { if (v === 0) throw { msg: 'DIVIDE BY 0 ERROR' }; v = 1 / v; }
+      else if (k === 'fact') v = fact(v);
+      else if (k === 'pct') v = v / 100;
+    }
+    return v;
+  }
+  function atom() {
+    const tk = T[p++]; if (!tk) throw SYN();
+    switch (tk.t) {
+      case 'num': {
+        let n = tk.v;
+        if (peek() && peek().t === 'frac') {          // a⌟b  or  a⌟b⌟c
+          p++; const n2 = eat('num'); if (!n2) throw SYN();
+          if (peek() && peek().t === 'frac') {
+            p++; const n3 = eat('num'); if (!n3 || n3.v === 0) throw SYN();
+            return n + n2.v / n3.v;
+          }
+          if (n2.v === 0) throw { msg: 'DIVIDE BY 0 ERROR' };
+          return n / n2.v;
         }
-
-        function reset2nd() {
-            is2ndActive = false;
-            ind2nd.classList.remove('opacity-100');
-            ind2nd.classList.add('opacity-10');
+        if (peek() && peek().t === 'unit') {          // degrees ° minutes ′ seconds ″
+          const F = { '\u00B0': 1, '\u2032': 1/60, '\u2033': 1/3600 };
+          let total = 0, cur = n;
+          for (;;) {
+            total += cur * F[T[p++].v];
+            if (peek() && peek().t === 'num' && peek(1) && peek(1).t === 'unit') cur = T[p++].v; else break;
+          }
+          return total;
         }
-
-        // Render LCD Input line with active blink cursor
-        function updateScreen() {
-            if (!isPowerOn) {
-                lcdInput.innerHTML = '';
-                lcdOutput.innerText = '';
-                return;
-            }
-
-            if (mode === 'STO') {
-                const targetVar = varNames[activeVarIndex];
-                lcdInput.innerHTML = `Store to: <span class="bg-stone-900 text-stone-100 px-1 rounded">${targetVar}</span>`;
-                lcdOutput.innerText = `val = ${lcdOutput.innerText || '0'}`;
-                return;
-            }
-
-            if (mode === 'MEMVAR') {
-                const varName = varNames[activeVarIndex];
-                const val = variables[varName];
-                lcdInput.innerHTML = `VAR: <span class="bg-stone-900 text-stone-100 px-1 rounded">${varName}</span>`;
-                lcdOutput.innerText = `${varName} = ${val}`;
-                return;
-            }
-
-            const str = expression;
-            const pos = Math.min(Math.max(0, cursorPos), str.length);
-
-            const before = str.slice(0, pos);
-            const charAtCursor = str.slice(pos, pos + 1) || ' ';
-            const after = str.slice(pos + 1);
-
-            // Escape HTML characters
-            const esc = (text) => text.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
-
-            lcdInput.innerHTML = `${esc(before)}<span class="bg-stone-800 text-stone-100 border-b-2 border-stone-900 animate-pulse">${esc(charAtCursor)}</span>${esc(after)}`;
-            
-            // Auto scroll LCD container to cursor
-            setTimeout(() => {
-                const activeEl = lcdInput.querySelector('span');
-                if (activeEl) {
-                    activeEl.scrollIntoView({ block: 'nearest', inline: 'nearest' });
-                }
-            }, 0);
+        return n;
+      }
+      case 'const': return tk.v;
+      case 'var': return S.vars[tk.v];
+      case 'ans': return S.ans;
+      case 'rand': return Math.random();
+      case '(': { const v = expr(); eat(')'); return v; }
+      case 'fn': {
+        if (!eat('(') && tk.v !== 'sqrt') throw SYN();
+        if (tk.v === 'sqrt' && T[p - 1] && T[p - 1].t !== '(') {   // √ without paren: √9
+          return callFn('sqrt', postfix());
         }
+        const v = expr(); eat(')'); return callFn(tk.v, v);
+      }
+      default: throw SYN();
+    }
+  }
+  const r = expr();
+  if (p < T.length) throw SYN();
+  return r;
+}
 
-        function insertAtCursor(text) {
-            if (isResultDisplayed) {
-                expression = '';
-                cursorPos = 0;
-                isResultDisplayed = false;
-            }
-            expression = expression.slice(0, cursorPos) + text + expression.slice(cursorPos);
-            cursorPos += text.length;
-            updateScreen();
-        }
+/* ---------- Number formatting ---------- */
+function expParts(v, eng) {
+  let e = Math.floor(Math.log10(Math.abs(v)));
+  if (eng) e = Math.floor(e / 3) * 3;
+  let m = v / Math.pow(10, e);
+  m = Number(m.toPrecision(10));
+  if (!eng && Math.abs(m) >= 10) { m /= 10; e++; }
+  return (String(m)) + 'E' + e;
+}
+function toFraction(v) {
+  const sign = v < 0 ? -1 : 1; let x = Math.abs(v);
+  if (x === Math.floor(x)) return null;
+  let h1 = 1, h0 = 0, k1 = 0, k0 = 1, b = x;
+  for (let i = 0; i < 20; i++) {
+    const a = Math.floor(b); const h2 = a * h1 + h0, k2 = a * k1 + k0;
+    if (k2 > 9999) return null;
+    h0 = h1; h1 = h2; k0 = k1; k1 = k2;
+    if (Math.abs(x - h1 / k1) < 1e-10 * Math.max(1, x)) return (sign < 0 ? '-' : '') + h1 + '/' + k1;
+    b = 1 / (b - a); if (!isFinite(b)) break;
+  }
+  return null;
+}
+function fmt(v) {
+  if (v === 0) return '0';
+  const a = Math.abs(v);
+  if (S.showFrac) { const f = toFraction(v); if (f) return f; }
+  if (S.fmt === 'sci') return expParts(v, false);
+  if (S.fmt === 'eng') return expParts(v, true);
+  if (S.fix !== null && a < 1e10) return v.toFixed(S.fix);
+  if (a >= 1e10 || a < 1e-9) return expParts(v, false);
+  return String(Number(v.toPrecision(10)));
+}
 
-        // Handle numeric and basic character inputs
-        function pressNum(char) {
-            if (!isPowerOn) return;
+/* ---------- Rendering ---------- */
+const esc = t => t.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+function menuRow(items, idx) {
+  return items.map((it, i) => i === idx ? `<span class="sel">${esc(it)}</span>` : esc(it)).join('  ');
+}
+function render() {
+  save();
+  const lcd = $('lcd'); lcd.classList.toggle('off', !S.on);
+  const inp = $('inp'), out = $('out');
+  const set = (id, on) => $(id).classList.toggle('on', on);
+  set('i2nd', S.second); set('ihyp', S.hyp); set('ifix', S.fix !== null);
+  set('isci', S.fmt === 'sci'); set('ieng', S.fmt === 'eng'); set('istat', false);
+  $('iang').textContent = S.angle; $('iang').classList.add('on');
+  set('iarr', S.hist.length > 0 && S.hi < S.hist.length - 1);
+  secondKeyEl.classList.toggle('armed', S.second);
+  if (!S.on) { inp.innerHTML = ''; out.innerHTML = ''; return; }
 
-            if (mode !== 'NORMAL') {
-                mode = 'NORMAL';
-            }
+  if (S.mode === 'MEMVAR' || S.mode === 'STO' || S.mode === 'RCL') {
+    const v = VARN[S.menuIdx];
+    const label = S.mode === 'STO' ? 'STO\u25BA' : S.mode === 'RCL' ? 'RCL' : 'MEMVAR';
+    inp.innerHTML = `${label}  ${esc(v)} = ${esc(fmt(S.vars[v]))}`;
+    out.innerHTML = menuRow(VARN, S.menuIdx);
+    return;
+  }
+  if (S.mode === 'PRB') {
+    inp.innerHTML = 'PRB';
+    out.innerHTML = menuRow(PRB_ITEMS, S.menuIdx);
+    return;
+  }
+  const str = S.expr, pos = Math.min(S.cur, str.length);
+  if (S.shown) {
+    inp.textContent = str;
+  } else {
+    const ch = str.slice(pos, pos + 1);
+    inp.innerHTML = esc(str.slice(0, pos)) + (S.ins ? `<span class="cur"></span>${esc(ch)}` : `<span class="sel">${esc(ch || ' ')}</span>`) + esc(str.slice(pos + 1));
+    // keep the cursor in view
+    inp.scrollLeft = 0;
+    const c = inp.querySelector('.cur, .sel');
+    if (c) { const off = c.offsetLeft + c.offsetWidth - inp.clientWidth + 12; if (off > 0) inp.scrollLeft = off; }
+  }
+  out.textContent = S.error || S.resultText;
+}
 
-            insertAtCursor(char);
-            reset2nd();
-        }
+/* ---------- Editing helpers ---------- */
+function insert(text, binary) {
+  if (S.shown || S.error) {
+    S.expr = binary && !S.error ? 'Ans' : ''; S.cur = S.expr.length;
+    S.shown = false; S.error = null; S.hi = -1;
+  }
+  if (!S.ins && S.cur < S.expr.length) S.expr = S.expr.slice(0, S.cur) + S.expr.slice(S.cur + 1);
+  S.expr = S.expr.slice(0, S.cur) + text + S.expr.slice(S.cur);
+  S.cur += text.length; S.dmsStep = 0;
+}
+const TOKEN_END = /(asinh\(|acosh\(|atanh\(|sinh\(|cosh\(|tanh\(|asin\(|acos\(|atan\(|sin\(|cos\(|tan\(|log\(|ln\(|\u221A\(|Ans|nPr|nCr|rand|\u02E3\u221A|\u207B\u00B9)$/;
+function backspace() {
+  if (S.shown || S.error) { S.shown = false; S.error = null; S.cur = S.expr.length; }
+  if (S.cur <= 0) return;
+  const before = S.expr.slice(0, S.cur), m = before.match(TOKEN_END);
+  const n = m ? m[0].length : 1;
+  S.expr = before.slice(0, S.cur - n) + S.expr.slice(S.cur); S.cur -= n;
+}
+function trig(name) {
+  const base = S.hyp ? name + 'h' : name; S.hyp = false; return base + '(';
+}
 
-        // Handle functional key presses
-        function pressKey(key) {
-            if (key === 'ON') {
-                isPowerOn = true;
-                expression = '';
-                cursorPos = 0;
-                mode = 'NORMAL';
-                lcdOutput.innerText = '0';
-                updateScreen();
-                return;
-            }
+/* ---------- Key actions ---------- */
+function press(a, b) {
+  if (a === 'on') { if (!S.second) { S.on = true; S.expr = ''; S.cur = 0; S.shown = false; S.error = null; S.resultText = '0'; S.mode = 'NORMAL'; render(); return; } }
+  if (!S.on) return;
+  if (a === '2nd') { S.second = !S.second; render(); return; }
 
-            if (!isPowerOn) return;
+  const act = (S.second && b) ? b : a;
+  S.second = false;
+  const wasMenu = S.mode !== 'NORMAL';
+  const menuClosers = ['clear','on','off'];
 
-            if (key === 'OFF') {
-                isPowerOn = false;
-                reset2nd();
-                updateScreen();
-                return;
-            }
+  // keys that behave differently while a menu is open
+  if (wasMenu && act === 'enter') { menuSelect(); render(); return; }
+  if (wasMenu && menuClosers.includes(act) === false && !['memvar','sto','rcl','prb','clrvar'].includes(act)) S.mode = 'NORMAL';
 
-            if (key === '2nd') {
-                toggle2nd();
-                return;
-            }
+  switch (act) {
+    case 'noop': break;
+    case 'off': S.on = false; break;
+    case 'drg': S.angle = S.angle === 'DEG' ? 'RAD' : S.angle === 'RAD' ? 'GRAD' : 'DEG'; break;
+    case 'sci': S.fmt = S.fmt === 'float' ? 'sci' : S.fmt === 'sci' ? 'eng' : 'float'; reformat(); break;
+    case 'del': backspace(); break;
+    case 'ins': S.ins = !S.ins; break;
+    case 'log': insert('log('); break;
+    case 'tenx': insert('10^('); break;
+    case 'ln': insert('ln('); break;
+    case 'ex': insert('e^('); break;
+    case 'prb': S.mode = 'PRB'; S.menuIdx = 0; break;
+    case 'fd': S.showFrac = !S.showFrac; reformat(); break;
+    case 'dms': { const u = ['\u00B0', '\u2032', '\u2033'][S.dmsStep % 3]; const k = S.dmsStep + 1; insert(u); S.dmsStep = k; break; }
+    case 'abc': insert('\u231F'); break;
+    case 'clear':
+      if (S.mode !== 'NORMAL') S.mode = 'NORMAL';
+      else { S.expr = ''; S.cur = 0; S.shown = false; S.error = null; S.resultText = '0'; S.hi = -1; S.hyp = false; }
+      break;
+    case 'pi': insert('\u03C0'); break;
+    case 'hyp': S.hyp = !S.hyp; break;
+    case 'sin': insert(trig('sin')); break;
+    case 'cos': insert(trig('cos')); break;
+    case 'tan': insert(trig('tan')); break;
+    case 'asin': insert(trig('asin')); break;
+    case 'acos': insert(trig('acos')); break;
+    case 'atan': insert(trig('atan')); break;
+    case 'div': insert('/', true); break;
+    case 'mul': insert('*', true); break;
+    case 'sub': insert('-', true); break;
+    case 'add': insert('+', true); break;
+    case 'neg': insert('-'); break;
+    case 'pow': insert('^', true); break;
+    case 'root': insert('\u02E3\u221A', false); break;
+    case 'inv': insert('\u207B\u00B9', true); break;
+    case 'ee': insert('E'); break;
+    case 'lp': insert('('); break;
+    case 'rp': insert(')'); break;
+    case 'pct': insert('%', true); break;
+    case 'comma': insert(','); break;
+    case 'sq': insert('\u00B2', true); break;
+    case 'sqrt': insert('\u221A('); break;
+    case 'memvar': S.mode = 'MEMVAR'; S.menuIdx = 0; break;
+    case 'clrvar': VARN.forEach(v => S.vars[v] = 0); S.mode = 'NORMAL'; S.resultText = 'VARS CLEARED'; S.shown = true; break;
+    case 'sto': S.mode = 'STO'; S.menuIdx = 0; break;
+    case 'rcl': S.mode = 'RCL'; S.menuIdx = 0; break;
+    case 'ans': insert('Ans'); break;
+    case 'dot': insert('.'); break;
+    case 'fix': S.fix = S.fix === null ? 0 : (S.fix >= 9 ? null : S.fix + 1); S.fmt = 'float'; reformat(); break;
+    case 'reset': VARN.forEach(v => S.vars[v] = 0); S.angle = 'DEG'; S.fmt = 'float'; S.fix = null; S.hyp = false; S.showFrac = false;
+                  S.expr = ''; S.cur = 0; S.shown = false; S.error = null; S.resultText = '0'; S.hist = []; S.ans = 0; S.mode = 'NORMAL'; break;
+    case 'enter': calculate(); break;
+    default:
+      if (act[0] === 'd' && act.length === 2) insert(act[1]);
+  }
+  render();
+}
+function reformat() { if (S.shown && !S.error) S.resultText = fmt(S.lastVal); }
 
-            if (key === 'CLEAR') {
-                if (mode !== 'NORMAL') {
-                    mode = 'NORMAL';
-                } else {
-                    expression = '';
-                    cursorPos = 0;
-                    lcdOutput.innerText = '0';
-                    isResultDisplayed = false;
-                }
-                reset2nd();
-                updateScreen();
-                return;
-            }
+function menuSelect() {
+  const v = VARN[S.menuIdx];
+  if (S.mode === 'STO') { S.vars[v] = S.ans; S.mode = 'NORMAL'; S.resultText = fmt(S.ans); S.shown = true; }
+  else if (S.mode === 'RCL' || S.mode === 'MEMVAR') { S.mode = 'NORMAL'; insert(v); }
+  else if (S.mode === 'PRB') {
+    const it = PRB_ITEMS[S.menuIdx]; S.mode = 'NORMAL';
+    insert(it, it !== 'rand');
+  }
+}
 
-            if (key === 'DEL') {
-                if (mode !== 'NORMAL') {
-                    mode = 'NORMAL';
-                    updateScreen();
-                    return;
-                }
-                if (cursorPos > 0) {
-                    expression = expression.slice(0, cursorPos - 1) + expression.slice(cursorPos);
-                    cursorPos--;
-                    updateScreen();
-                }
-                reset2nd();
-                return;
-            }
+function calculate() {
+  // ENTER on an empty line repeats the last equation; ENTER on a shown result re-runs it (Ans updates each time)
+  if (!S.expr) {
+    if (!S.hist.length) return;
+    S.expr = S.hist[S.hist.length - 1]; S.cur = S.expr.length;
+  }
+  if (S.hist[S.hist.length - 1] !== S.expr) S.hist.push(S.expr);
+  S.hi = -1;
+  try {
+    const r = evaluate(S.expr);
+    if (typeof r !== 'number' || isNaN(r)) throw SYN();
+    if (!isFinite(r)) throw { msg: 'OVERFLOW ERROR' };
+    S.ans = r; S.lastVal = r; S.showFrac = false; S.error = null; S.resultText = fmt(r);
+  } catch (e) { S.error = (e && e.msg) || 'SYNTAX ERROR'; }
+  S.shown = true; S.hyp = false;
+}
 
-            if (key === 'DRG') {
-                if (angleMode === 'DEG') angleMode = 'RAD';
-                else if (angleMode === 'RAD') angleMode = 'GRAD';
-                else angleMode = 'DEG';
-                
-                indAngle.innerText = angleMode;
-                reset2nd();
-                return;
-            }
+/* ---------- Navigation pad ---------- */
+function navigate(dir) {
+  if (!S.on) return;
+  if (S.mode !== 'NORMAL') {
+    const n = S.mode === 'PRB' ? PRB_ITEMS.length : VARN.length;
+    if (dir === 'left') S.menuIdx = (S.menuIdx - 1 + n) % n;
+    if (dir === 'right') S.menuIdx = (S.menuIdx + 1) % n;
+    render(); return;
+  }
+  if (S.shown && (dir === 'left' || dir === 'right')) { S.shown = false; S.error = null; S.cur = dir === 'left' ? S.expr.length : 0; render(); return; }
+  if (dir === 'left') S.cur = Math.max(0, S.cur - 1);
+  else if (dir === 'right') S.cur = Math.min(S.expr.length, S.cur + 1);
+  else if (dir === 'up' && S.hist.length) {
+    if (S.hi < S.hist.length - 1) { S.hi++; S.expr = S.hist[S.hist.length - 1 - S.hi]; S.cur = S.expr.length; S.shown = false; S.error = null; }
+  } else if (dir === 'down') {
+    if (S.hi > 0) { S.hi--; S.expr = S.hist[S.hist.length - 1 - S.hi]; S.cur = S.expr.length; S.shown = false; }
+    else if (S.hi === 0) { S.hi = -1; S.expr = ''; S.cur = 0; S.shown = false; }
+  }
+  render();
+}
 
-            // Variable Memory Functions
-            if (key === 'STO') {
-                if (is2ndActive) {
-                    // CLRVAR - Clear all variables
-                    variables = { A: 0, B: 0, C: 0, D: 0, E: 0 };
-                    lcdOutput.innerText = 'VARS CLEARED';
-                    reset2nd();
-                    return;
-                } else {
-                    mode = 'STO';
-                    activeVarIndex = 0;
-                    reset2nd();
-                    updateScreen();
-                    return;
-                }
-            }
+/* ---------- Keyboard ---------- */
+addEventListener('keydown', e => {
+  if (e.ctrlKey || e.metaKey || e.altKey) return;
+  const k = e.key;
+  if (/^[0-9]$/.test(k)) press('d' + k);
+  else if (k === '.') press('dot');
+  else if (k === '+') press('add');
+  else if (k === '-') press('sub');
+  else if (k === '*') press('mul');
+  else if (k === '/') { e.preventDefault(); press('div'); }
+  else if (k === '^') press('pow');
+  else if (k === '(') press('lp');
+  else if (k === ')') press('rp');
+  else if (k === '%') press('pct');
+  else if (k === '!') insert('!', true), render();
+  else if (k === 'Enter' || k === '=') { e.preventDefault(); press('enter'); }
+  else if (k === 'Backspace') press('del');
+  else if (k === 'Escape') press('clear');
+  else if (k === 'ArrowUp') { e.preventDefault(); navigate('up'); }
+  else if (k === 'ArrowDown') { e.preventDefault(); navigate('down'); }
+  else if (k === 'ArrowLeft') navigate('left');
+  else if (k === 'ArrowRight') navigate('right');
+});
 
-            if (key === 'MEMVAR') {
-                if (is2ndActive) {
-                    // Recall variable directly into expression
-                    insertAtCursor(varNames[activeVarIndex]);
-                } else {
-                    mode = 'MEMVAR';
-                    activeVarIndex = 0;
-                }
-                reset2nd();
-                updateScreen();
-                return;
-            }
-
-            // Normal or 2nd mode operations mapping
-            let strToInsert = '';
-            if (is2ndActive) {
-                switch(key) {
-                    case 'LOG': strToInsert = '10^('; break;
-                    case 'LN': strToInsert = 'e^('; break;
-                    case 'SIN': strToInsert = 'asin('; break;
-                    case 'COS': strToInsert = 'acos('; break;
-                    case 'TAN': strToInsert = 'atan('; break;
-                    case 'SQUARE': strToInsert = '√('; break;
-                    case 'POWER': strToInsert = 'e'; break;
-                    case 'PI': strToInsert = 'π'; break;
-                    case 'NEG': strToInsert = 'Ans'; break;
-                    default: break;
-                }
-            } else {
-                switch(key) {
-                    case 'LOG': strToInsert = 'log('; break;
-                    case 'LN': strToInsert = 'ln('; break;
-                    case 'SIN': strToInsert = 'sin('; break;
-                    case 'COS': strToInsert = 'cos('; break;
-                    case 'TAN': strToInsert = 'tan('; break;
-                    case 'PI': strToInsert = 'π'; break;
-                    case 'POWER': strToInsert = '^'; break;
-                    case 'SQUARE': strToInsert = '^2'; break;
-                    case 'INVERSE': strToInsert = '^-1'; break;
-                    case 'ADD': strToInsert = '+'; break;
-                    case 'SUB': strToInsert = '-'; break;
-                    case 'MUL': strToInsert = '×'; break;
-                    case 'DIV': strToInsert = '÷'; break;
-                    case 'OPEN_PAR': strToInsert = '('; break;
-                    case 'CLOSE_PAR': strToInsert = ')'; break;
-                    case 'NEG': strToInsert = '-'; break;
-                    default: break;
-                }
-            }
-
-            if (strToInsert) {
-                if (mode !== 'NORMAL') mode = 'NORMAL';
-                insertAtCursor(strToInsert);
-            }
-
-            reset2nd();
-        }
-
-        // Navigation D-Pad functionality
-        function navigate(direction) {
-            if (!isPowerOn) return;
-
-            // Variable menu navigation
-            if (mode === 'STO' || mode === 'MEMVAR') {
-                if (direction === 'left') {
-                    activeVarIndex = (activeVarIndex - 1 + varNames.length) % varNames.length;
-                } else if (direction === 'right') {
-                    activeVarIndex = (activeVarIndex + 1) % varNames.length;
-                }
-                updateScreen();
-                return;
-            }
-
-            // Normal mode navigation: Left/Right move cursor; Up/Down navigate history
-            if (direction === 'left') {
-                if (cursorPos > 0) {
-                    cursorPos--;
-                    updateScreen();
-                }
-            } else if (direction === 'right') {
-                if (cursorPos < expression.length) {
-                    cursorPos++;
-                    updateScreen();
-                }
-            } else if (direction === 'up' && history.length > 0) {
-                if (historyIndex < history.length - 1) {
-                    historyIndex++;
-                    expression = history[history.length - 1 - historyIndex];
-                    cursorPos = expression.length;
-                    updateScreen();
-                }
-            } else if (direction === 'down') {
-                if (historyIndex > 0) {
-                    historyIndex--;
-                    expression = history[history.length - 1 - historyIndex];
-                    cursorPos = expression.length;
-                    updateScreen();
-                } else if (historyIndex === 0) {
-                    historyIndex = -1;
-                    expression = '';
-                    cursorPos = 0;
-                    updateScreen();
-                }
-            }
-        }
-
-        // Safe mathematical evaluation routine
-        function calculateResult() {
-            if (!isPowerOn) return;
-
-            // Handle STO confirmation
-            if (mode === 'STO') {
-                const targetVar = varNames[activeVarIndex];
-                const currentVal = parseFloat(lcdOutput.innerText) || 0;
-                variables[targetVar] = currentVal;
-                lcdOutput.innerText = `${targetVar} = ${currentVal}`;
-                mode = 'NORMAL';
-                reset2nd();
-                return;
-            }
-
-            if (mode === 'MEMVAR') {
-                const targetVar = varNames[activeVarIndex];
-                insertAtCursor(targetVar);
-                mode = 'NORMAL';
-                reset2nd();
-                return;
-            }
-
-            if (!expression) return;
-
-            try {
-                let parsed = expression;
-
-                // Save to history
-                history.push(expression);
-                historyIndex = -1;
-
-                // Replace variables
-                varNames.forEach(v => {
-                    parsed = parsed.replace(new RegExp(v, 'g'), `(${variables[v]})`);
-                });
-                parsed = parsed.replace(/Ans/g, `(${lastAns})`);
-
-                // Replace mathematical operators & constants
-                parsed = parsed.replace(/π/g, 'Math.PI');
-                parsed = parsed.replace(/e/g, 'Math.E');
-                parsed = parsed.replace(/×/g, '*');
-                parsed = parsed.replace(/÷/g, '/');
-                parsed = parsed.replace(/\^/g, '**');
-
-                // Logarithmic functions
-                parsed = parsed.replace(/log\(/g, 'Math.log10(');
-                parsed = parsed.replace(/ln\(/g, 'Math.log(');
-
-                // Trigonometric modes handling
-                let angleFactor = 1;
-                if (angleMode === 'DEG') angleFactor = Math.PI / 180;
-                else if (angleMode === 'GRAD') angleFactor = Math.PI / 200;
-
-                parsed = parsed.replace(/sin\(([^)]+)\)/g, (match, p1) => `Math.sin((${p1}) * ${angleFactor})`);
-                parsed = parsed.replace(/cos\(([^)]+)\)/g, (match, p1) => `Math.cos((${p1}) * ${angleFactor})`);
-                parsed = parsed.replace(/tan\(([^)]+)\)/g, (match, p1) => `Math.tan((${p1}) * ${angleFactor})`);
-
-                parsed = parsed.replace(/asin\(([^)]+)\)/g, (match, p1) => `(Math.asin(${p1}) / ${angleFactor})`);
-                parsed = parsed.replace(/acos\(([^)]+)\)/g, (match, p1) => `(Math.acos(${p1}) / ${angleFactor})`);
-                parsed = parsed.replace(/atan\(([^)]+)\)/g, (match, p1) => `(Math.atan(${p1}) / ${angleFactor})`);
-
-                // Square roots
-                parsed = parsed.replace(/√\(([^)]+)\)/g, 'Math.sqrt($1)');
-
-                // Evaluate math safely
-                let result = Function(`'use strict'; return (${parsed})`)();
-
-                // Format outcome
-                if (typeof result === 'number') {
-                    if (!isFinite(result) || isNaN(result)) {
-                        lcdOutput.innerText = 'DOMAIN Error';
-                    } else {
-                        let formatted = Number(Math.round(result + 'e10') + 'e-10').toString();
-                        lcdOutput.innerText = formatted;
-                        lastAns = result;
-                    }
-                } else {
-                    lcdOutput.innerText = 'SYNTAX Error';
-                }
-            } catch (err) {
-                lcdOutput.innerText = 'SYNTAX Error';
-            }
-
-            isResultDisplayed = true;
-            reset2nd();
-        }
-
-        // Keyboard Support
-        window.addEventListener('keydown', (e) => {
-            if (!isPowerOn) return;
-
-            if (e.key >= '0' && e.key <= '9') pressNum(e.key);
-            else if (e.key === '.') pressNum('.');
-            else if (e.key === '+') pressKey('ADD');
-            else if (e.key === '-') pressKey('SUB');
-            else if (e.key === '*') pressKey('MUL');
-            else if (e.key === '/') pressKey('DIV');
-            else if (e.key === '(') pressKey('OPEN_PAR');
-            else if (e.key === ')') pressKey('CLOSE_PAR');
-            else if (e.key === 'Enter' || e.key === '=') calculateResult();
-            else if (e.key === 'Backspace') pressKey('DEL');
-            else if (e.key === 'Escape') pressKey('CLEAR');
-            else if (e.key === 'ArrowUp') navigate('up');
-            else if (e.key === 'ArrowDown') navigate('down');
-            else if (e.key === 'ArrowLeft') navigate('left');
-            else if (e.key === 'ArrowRight') navigate('right');
-        });
-    </script>
+load();
+render();
+</script>
 </body>
 </html>
