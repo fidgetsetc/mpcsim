@@ -1305,6 +1305,7 @@ const ICON_LIB = [
   {k:'spotify',  fa:'fa-brands fa-spotify'},
   {k:'youtube',  fa:'fa-brands fa-youtube'},
   {k:'google',   fa:'fa-brands fa-google'},
+  {k:'file-powerpoint',   fa:'fa-solid fa-file-powerpoint'},
 ];
 function faForKey(k) { return (ICON_LIB.find(x=>x.k===k)||ICON_LIB[0]).fa; }
 function iconHtml(k, sizeClass='') {
@@ -1534,6 +1535,15 @@ const THEMES={
 const DEFAULT_APPS = [
   /* ── Web ── */
   {
+    id: 'app-suggest',
+    name: 'Suggest: Want more? Suggest more.',
+    url: 'https://docs.google.com/forms/d/e/1FAIpQLSemCGt2Ukhjqpyy_msSgjqb_nt9FsY-yQsPZLC9YqPpAS891Q/viewform?usp=dialog',
+    icon: 'gear',
+    cat: 'Tools',
+    iconUrl: 'https://cdn-icons-png.flaticon.com/512/10782/10782398.png',
+    resolution: 100
+  },
+  {
     id: 'app-ie',
     name: 'Internet',
     url: 'https://storage.googleapis.com/grammarly/index.html',
@@ -1580,6 +1590,15 @@ const DEFAULT_APPS = [
     icon: 'youtube',
     cat: 'Entertainment',
     iconUrl: 'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRhy32aF9Osqt7wk4B_rfhG5StGPvBfEkB471DZSiHQ_Q&s=10',
+    resolution: 100
+  },
+  {
+    id: 'app-bideo',
+    name: 'Bideos',
+    url: './bideo/index.html',
+    icon: 'file-powerpoint',
+    cat: 'Entertainment',
+    iconUrl: '',
     resolution: 100
   },
 
@@ -2090,27 +2109,27 @@ const S_DEFAULTS=JSON.parse(JSON.stringify(S));
    Plugins can use it too:  mpc.sound('notify')   or   window.SFX.play('click')
 ══════════════════════════════════ */
 const SOUND_FILES={
-  boot:          './sounds/boot.mp3',            // you click the "click to start" screen
-  startup:       './sounds/startup.mp3',         // boot finished, lock screen appears
-  unlock:        './sounds/unlock.mp3',          // lock screen dismissed / logging in
-  lock:          './sounds/lock.mp3',            // Power > Lock
-  shutdown:      './sounds/shutdown.mp3',        // Power > Shut Down (plays with the outro video)
+  boot:          './sounds/start.ogg',            // you click the "click to start" screen
+  startup:       './sounds/startfinish.ogg',         // boot finished, lock screen appears
+  unlock:        './sounds/unlock.ogg',          // lock screen dismissed / logging in
+  lock:          './sounds/lock.ogg',            // Power > Lock
+  shutdown:      './sounds/shutdown.wav',        // Power > Shut Down (plays with the outro video)
   startOpen:     './sounds/open.wav',      // Start screen / Menu panel opens
   startClose:    './sounds/close.wav',     // Start screen / Menu panel closes
   appsOpen:      './sounds/open.wav',       // All apps list opens
   windowOpen:    './sounds/open.wav',     // an app window opens
   windowClose:   './sounds/close.wav',    // an app window closes
-  windowMinimize:'./sounds/window-minimize.mp3', // window minimized
-  windowRestore: './sounds/window-restore.mp3',  // window restored from taskbar / un-maximized
-  windowMaximize:'./sounds/window-maximize.mp3', // window maximized
+  windowMinimize:'./sounds/minimize.ogg', // window minimized
+  windowRestore: './sounds/maximize.ogg',  // window restored from taskbar / un-maximized
+  windowMaximize:'./sounds/restore.ogg', // window maximized
   click:         './sounds/click.ogg',           // buttons, tiles, icons, taskbar buttons, menu items
   contextMenu:   './sounds/context-menu.mp3',    // right-click menu opens
-  modalOpen:     './sounds/modal-open.mp3',      // dialog opens (Personalize, Add tile, ...)
+  modalOpen:     './sounds/error.wav',      // dialog opens (Personalize, Add tile, ...)
   modalClose:    './sounds/modal-close.mp3',     // dialog closes
   notify:        './sounds/notify.ogg',          // notification toast appears
   error:         './sounds/error.wav',           // error dialog (Window Avalanche notice)
-  avalanche:     './sounds/avalanche.mp3',       // Window Avalanche starts
-  bounce:        './sounds/bounce.mp3',          // a window hits the floor during Window Avalanche
+  avalanche:     '',       // Window Avalanche starts
+  bounce:        './sounds/bounce.ogg',          // a window hits the floor during Window Avalanche
   menuMove:      './sounds/moveboot.wav',       // boot manager: move selection
   menuSelect:    './sounds/selectboot.wav',     // boot manager: choose an entry
 };

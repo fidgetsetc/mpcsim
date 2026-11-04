@@ -1,0 +1,605 @@
+{
+  "accent": "#0078d4",
+  "startBgColor": "#0d1f3c",
+  "startBgImage": "",
+  "desktopBgImage": "./wp/fixandgetout.png",
+  "pattern": 1,
+  "username": "User",
+  "profilePic": "",
+  "showCredit": true,
+  "wobbly": false,
+  "wobbleAmt": 40,
+  "wobbleMode": "compiz",
+  "theme": "defaultnew",
+  "clock24": false,
+  "viewport": "800x400",
+  "titlebarHeight": 32,
+  "panelHeight": 40,
+  "apps": [
+    {
+      "id": "app-suggest",
+      "name": "Suggest: Want more? Suggest more.",
+      "url": "https://docs.google.com/forms/d/e/1FAIpQLSemCGt2Ukhjqpyy_msSgjqb_nt9FsY-yQsPZLC9YqPpAS891Q/viewform?usp=dialog",
+      "icon": "gear",
+      "cat": "Tools",
+      "iconUrl": "https://cdn-icons-png.flaticon.com/512/10782/10782398.png",
+      "resolution": 100
+    },
+    {
+      "id": "app-ie",
+      "name": "Internet",
+      "url": "https://storage.googleapis.com/grammarly/index.html",
+      "icon": "edge",
+      "cat": "Web",
+      "iconUrl": "https://static.wikia.nocookie.net/logopedia/images/b/ba/MicrosoftEdge_2015appIcon.svg",
+      "resolution": 100
+    },
+    {
+      "id": "app-ppt",
+      "name": "PPTX Maker (DeckCraft, like PowerPoint)",
+      "url": "./ppt/index.html",
+      "icon": "file-powerpoint",
+      "cat": "Office",
+      "iconUrl": "./ppt/deckcraft-b8fcbb36ecec0385.ico",
+      "resolution": 100
+    },
+    {
+      "id": "app-doc",
+      "name": "DOCX Maker (WordCraft, like Word)",
+      "url": "./doc/index.html",
+      "icon": "gear",
+      "cat": "Office",
+      "iconUrl": "./doc/wordcraft-fa59e09a3f921e03.ico",
+      "resolution": 100
+    },
+    {
+      "id": "app-edit",
+      "name": "Video Editor",
+      "url": "./edit/index.html",
+      "icon": "gear",
+      "cat": "Office",
+      "iconUrl": "https://cdn-icons-png.flaticon.com/512/6979/6979672.png",
+      "resolution": 80
+    },
+    {
+      "id": "app-yt",
+      "name": "YouTube",
+      "url": "./tube/index.html",
+      "icon": "youtube",
+      "cat": "Entertainment",
+      "iconUrl": "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRhy32aF9Osqt7wk4B_rfhG5StGPvBfEkB471DZSiHQ_Q&s=10",
+      "resolution": 100
+    },
+    {
+      "id": "app-calc",
+      "name": "Calculator",
+      "url": "./calc/index.html",
+      "icon": "calculator",
+      "cat": "Tools",
+      "iconUrl": "https://i5.walmartimages.com/asr/2f493faf-12b9-454e-8d7f-aea81de40e6f.d91932f59c2d53b60f1d7c3c7e619fb3.jpeg",
+      "resolution": 80
+    },
+    {
+      "id": "app-tts",
+      "name": "Text to Speech",
+      "url": "./tts/index.html",
+      "icon": "gear",
+      "cat": "Tools",
+      "iconUrl": "https://cdn-icons-png.flaticon.com/512/5256/5256064.png",
+      "resolution": 100
+    },
+    {
+      "id": "app-xwp",
+      "name": "Extra Wallpapers",
+      "url": "./extrawp/index.html",
+      "icon": "image",
+      "cat": "Tools",
+      "iconUrl": "",
+      "resolution": 100
+    },
+    {
+      "id": "app-plug",
+      "name": "Plugins",
+      "url": "./plugins/index.html",
+      "icon": "puzzle",
+      "cat": "Tools",
+      "iconUrl": "",
+      "resolution": 100
+    },
+    {
+      "id": "app-set",
+      "name": "Settings",
+      "url": "",
+      "icon": "gear",
+      "cat": "System",
+      "iconUrl": "https://static.wikia.nocookie.net/logopedia/images/4/46/Settings_Windows_8.svg/",
+      "resolution": 100
+    },
+    {
+      "id": "app-desk",
+      "name": "Desktop",
+      "url": "__desktop__",
+      "icon": "desktop",
+      "cat": "System",
+      "iconUrl": "",
+      "resolution": 100
+    },
+    {
+      "id": "app-term",
+      "name": "Terminal",
+      "url": "__terminal__",
+      "icon": "terminal",
+      "cat": "System",
+      "iconUrl": "",
+      "resolution": 100
+    },
+    {
+      "id": "app-ai",
+      "name": "AI Chat",
+      "url": "./ai/index.html",
+      "icon": "gear",
+      "cat": "Chat",
+      "iconUrl": "https://assets.streamlinehq.com/image/private/w_240,h_240,ar_1/f_auto/v1/icons/ai-actions/ai-chat-spark-gqpotmo80h88iytqljg4o9.png/ai-chat-spark-n76s7ehrah2tdmhwoxso9.png?_a=DATAiZAAZAA0",
+      "resolution": 100
+    },
+    {
+      "id": "app-crash",
+      "name": "Window Avalanche",
+      "url": "__physics__",
+      "icon": "bolt",
+      "cat": "Fun",
+      "iconUrl": "",
+      "resolution": 100
+    },
+    {
+      "id": "app-mc262",
+      "name": "MC (26.2)",
+      "url": "./mc/index.html",
+      "icon": "gear",
+      "cat": "Games",
+      "iconUrl": "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcS-coghtBjhY3r1o6nz6TjaZMbOxCrwgxQjscBs0heEpA&s=10",
+      "resolution": 100
+    },
+    {
+      "id": "app-ab",
+      "name": "Angry Birds SWF",
+      "url": "./ab/index.html",
+      "icon": "gear",
+      "cat": "Games",
+      "iconUrl": "https://static.wikia.nocookie.net/angrybirds/images/9/98/Angry_Birds_Original_2009_Icon.svg",
+      "resolution": 100
+    },
+    {
+      "id": "app-au",
+      "name": "Among Us",
+      "url": "./au/index.html",
+      "icon": "gear",
+      "cat": "Games",
+      "iconUrl": "https://static.wikia.nocookie.net/among-us-wiki/images/8/84/Among_Us.png/",
+      "resolution": 100
+    },
+    {
+      "id": "app-bp",
+      "name": "Bad Piggies",
+      "url": "./bp/index.html",
+      "icon": "gear",
+      "cat": "Games",
+      "iconUrl": "https://play-lh.googleusercontent.com/iXET8vmU1PZJ5BepnivZ7016tDgxhmNZUXc6xN8nbimnRl_-jWvmtONxS5Y069JshzKKZgZPIZ4S4u0URySLEQ",
+      "resolution": 100
+    },
+    {
+      "id": "app-br",
+      "name": "Brick",
+      "url": "./brick/index.html",
+      "icon": "gear",
+      "cat": "Games",
+      "iconUrl": "http://gplay-18.surge.sh/img/brick.png",
+      "resolution": 100
+    },
+    {
+      "id": "app-brp",
+      "name": "Brick Plus",
+      "url": "./brickplus/index.html",
+      "icon": "gear",
+      "cat": "Games",
+      "iconUrl": "http://gplay-18.surge.sh/img/brickplus.png",
+      "resolution": 100
+    },
+    {
+      "id": "app-block-blast",
+      "name": "Block Blast",
+      "url": "./bb2/index.html",
+      "icon": "gear",
+      "cat": "Games",
+      "iconUrl": "http://gplay-18.surge.sh/img/bb.webp",
+      "resolution": 100
+    },
+    {
+      "id": "app-dm",
+      "name": "DuckMath",
+      "url": "./dm/index.svg",
+      "icon": "gear",
+      "cat": "Games",
+      "iconUrl": "https://avatars.fastly.steamstatic.com/6323b1e849243967b1c201993581ce6065e1b740_full.jpg",
+      "resolution": 100
+    },
+    {
+      "id": "app-baseb",
+      "name": "Baseball Bros",
+      "url": "./gplay-tmp/html/baseb/index.html",
+      "icon": "gamepad",
+      "cat": "Games",
+      "iconUrl": "./gplay-tmp/img/baseb.png",
+      "resolution": 100
+    },
+    {
+      "id": "app-basket-bros",
+      "name": "Basket Bros",
+      "url": "./gplay-tmp/html/bb/index.html?h",
+      "icon": "gamepad",
+      "cat": "Games",
+      "iconUrl": "./gplay-tmp/img/bb.png",
+      "resolution": 100
+    },
+    {
+      "id": "app-fob",
+      "name": "Football Bros",
+      "url": "./gplay-tmp/html/fob/index.html",
+      "icon": "gamepad",
+      "cat": "Games",
+      "iconUrl": "./gplay-tmp/img/fob.png",
+      "resolution": 100
+    },
+    {
+      "id": "app-ctr",
+      "name": "Cut the Rope",
+      "url": "./gplay-tmp/html/ctr/resize/index.html",
+      "icon": "gamepad",
+      "cat": "Games",
+      "iconUrl": "./gplay-tmp/img/ctr.png",
+      "resolution": 100
+    },
+    {
+      "id": "app-dd4",
+      "name": "Droistroy 4",
+      "url": "./gplay-tmp/html/dd4/index.html?basic",
+      "icon": "gamepad",
+      "cat": "Games",
+      "iconUrl": "./gplay-tmp/img/dd4.png",
+      "resolution": 100
+    },
+    {
+      "id": "app-gdo",
+      "name": "Geometry Dash",
+      "url": "./gplay-tmp/html/gd/index.html?no-vc",
+      "icon": "gamepad",
+      "cat": "Games",
+      "iconUrl": "./gplay-tmp/img/gd.png",
+      "resolution": 100
+    },
+    {
+      "id": "app-slope",
+      "name": "Slope",
+      "url": "./gplay-tmp/html/slope/index.html",
+      "icon": "gamepad",
+      "cat": "Games",
+      "iconUrl": "./gplay-tmp/img/slope.png",
+      "resolution": 100
+    },
+    {
+      "id": "app-sm",
+      "name": "Slice Master",
+      "url": "./gplay-tmp/html/sm/index.html",
+      "icon": "gamepad",
+      "cat": "Games",
+      "iconUrl": "./gplay-tmp/img/sm.png",
+      "resolution": 100
+    },
+    {
+      "id": "app-tif",
+      "name": "Tiny Fishing",
+      "url": "./gplay-tmp/html/tif/index.html",
+      "icon": "gamepad",
+      "cat": "Games",
+      "iconUrl": "./gplay-tmp/img/tif.png",
+      "resolution": 100
+    },
+    {
+      "id": "app-gs",
+      "name": "Google Snake",
+      "url": "./gplay-tmp/html/gs/resize/index.html",
+      "icon": "gamepad",
+      "cat": "Games",
+      "iconUrl": "./gplay-tmp/img/gs.png",
+      "resolution": 100
+    },
+    {
+      "id": "app-fb",
+      "name": "Flappy Bird",
+      "url": "./gplay-tmp/html/scratchget/index.html?id=1376043784",
+      "icon": "gamepad",
+      "cat": "Games",
+      "iconUrl": "./gplay-tmp/img/fb.jpg",
+      "resolution": 100
+    },
+    {
+      "id": "app-cc1",
+      "name": "Cookie Clicker",
+      "url": "./gplay-tmp/html/duckget/index.html#/class/cookie-clicker",
+      "icon": "gamepad",
+      "cat": "Games",
+      "iconUrl": "./gplay-tmp/img/cc1.webp",
+      "resolution": 100
+    },
+    {
+      "id": "app-db",
+      "name": "Drift Boss",
+      "url": "./gplay-tmp/html/duckget/index.html#/class/drift-boss",
+      "icon": "gamepad",
+      "cat": "Games",
+      "iconUrl": "./gplay-tmp/img/db.webp",
+      "resolution": 100
+    },
+    {
+      "id": "app-r1",
+      "name": "Run 1",
+      "url": "./gplay-tmp/html/r1/index.html",
+      "icon": "gamepad",
+      "cat": "Games",
+      "iconUrl": "./gplay-tmp/img/run.png",
+      "resolution": 100
+    },
+    {
+      "id": "app-r2",
+      "name": "Run 2",
+      "url": "./gplay-tmp/html/r2/index.html",
+      "icon": "gamepad",
+      "cat": "Games",
+      "iconUrl": "./gplay-tmp/img/r2.png",
+      "resolution": 100
+    },
+    {
+      "id": "app-r3",
+      "name": "Run 3",
+      "url": "./gplay-tmp/html/duckget/index.html#/class/run-3",
+      "icon": "gamepad",
+      "cat": "Games",
+      "iconUrl": "./gplay-tmp/img/r3.png",
+      "resolution": 100
+    },
+    {
+      "id": "app-chess-ai",
+      "name": "Chess AI",
+      "url": "./gplay-tmp/html/scratchget/index.html?id=148769358",
+      "icon": "gamepad",
+      "cat": "Games",
+      "iconUrl": "./gplay-tmp/img/chess.jpg",
+      "resolution": 100
+    },
+    {
+      "id": "app-bloxorz",
+      "name": "Bloxorz",
+      "url": "./gplay-tmp/html/blo/index.html",
+      "icon": "gamepad",
+      "cat": "Games",
+      "iconUrl": "./gplay-tmp/img/blo.png",
+      "resolution": 100
+    },
+    {
+      "id": "app-smb",
+      "name": "Mario Bros",
+      "url": "./gplay-tmp/html/duckget/index.html#/class/super-mario-bros",
+      "icon": "gamepad",
+      "cat": "Games",
+      "iconUrl": "./gplay-tmp/img/smb.ico",
+      "resolution": 100
+    },
+    {
+      "id": "app-smb3",
+      "name": "Mario Bros 3",
+      "url": "./gplay-tmp/html/scratchget/index.html?id=396544900",
+      "icon": "gamepad",
+      "cat": "Games",
+      "iconUrl": "./gplay-tmp/img/smb3.png",
+      "resolution": 100
+    },
+    {
+      "id": "app-mm",
+      "name": "Megaman",
+      "url": "./gplay-tmp/html/scratchget/index.html?id=26274285&mm",
+      "icon": "gamepad",
+      "cat": "Games",
+      "iconUrl": "./gplay-tmp/img/mm.png",
+      "resolution": 100
+    },
+    {
+      "id": "app-uno",
+      "name": "UNO!",
+      "url": "./gplay-tmp/html/duckget/index.html#/class/uno",
+      "icon": "gamepad",
+      "cat": "Games",
+      "iconUrl": "./gplay-tmp/img/uno.webp",
+      "resolution": 100
+    },
+    {
+      "id": "app-jj",
+      "name": "Jetpack Joyride",
+      "url": "./gplay-tmp/html/duckget/index.html#/class/jetpack-joyride",
+      "icon": "gamepad",
+      "cat": "Games",
+      "iconUrl": "./gplay-tmp/img/jj.webp",
+      "resolution": 100
+    },
+    {
+      "id": "app-cricket",
+      "name": "Google Cricket",
+      "url": "./gplay-tmp/html/c/resize/index.html",
+      "icon": "gamepad",
+      "cat": "Games",
+      "iconUrl": "./gplay-tmp/img/c.png",
+      "resolution": 100
+    },
+    {
+      "id": "app-gso",
+      "name": "Google Solitaire",
+      "url": "./gplay-tmp/html/gso/index.html",
+      "icon": "gamepad",
+      "cat": "Games",
+      "iconUrl": "./gplay-tmp/img/gso.png",
+      "resolution": 100
+    },
+    {
+      "id": "app-gb",
+      "name": "Google Baseball",
+      "url": "./gplay-tmp/html/gb/index.html",
+      "icon": "gamepad",
+      "cat": "Games",
+      "iconUrl": "./gplay-tmp/img/gb.png",
+      "resolution": 100
+    },
+    {
+      "id": "app-pvz",
+      "name": "Plants vs Zombies",
+      "url": "./gplay-tmp/html/duckget/index.html#/class/plants-vs-zombies",
+      "icon": "gamepad",
+      "cat": "Games",
+      "iconUrl": "./gplay-tmp/img/pvz.webp",
+      "resolution": 100
+    },
+    {
+      "id": "app-fnf",
+      "name": "F-N-F",
+      "url": "./big-tmp/playing/html/fnf/index.html",
+      "icon": "gamepad",
+      "cat": "Games",
+      "iconUrl": "./big-tmp/playing/img/fnf.webp",
+      "resolution": 100
+    },
+    {
+      "id": "app-cc",
+      "name": "Collab Clicker",
+      "url": "./big-tmp/playing/html/cc/index.html",
+      "icon": "gamepad",
+      "cat": "Games",
+      "iconUrl": "./big-tmp/playing/img/cc.png",
+      "resolution": 100
+    },
+    {
+      "id": "app-yio",
+      "name": "YellItOut",
+      "url": "./big-tmp/playing/html/yio/index.html?x=1",
+      "icon": "gamepad",
+      "cat": "Games",
+      "iconUrl": "./big-tmp/playing/img/yio.png",
+      "resolution": 100
+    },
+    {
+      "id": "app-abe",
+      "name": "Angry Birds Epic",
+      "url": "./abe/index.html",
+      "icon": "gamepad",
+      "cat": "Games",
+      "iconUrl": "https://cdn.jsdelivr.net/gh/daknux/covers@main/208.png",
+      "resolution": 100
+    },
+    {
+      "id": "app-ab2",
+      "name": "Angry Birds 2",
+      "url": "./ab2/index.html",
+      "icon": "gamepad",
+      "cat": "Games",
+      "iconUrl": "https://cdn.jsdelivr.net/gh/daknux/covers@main/72.png",
+      "resolution": 100
+    }
+  ],
+  "tiles": [
+    {
+      "id": "tl1",
+      "appId": "app-desk",
+      "size": "wide",
+      "group": "System",
+      "color": "#2d7d9a"
+    },
+    {
+      "id": "tl2",
+      "appId": "app-set",
+      "size": "wide",
+      "group": "System",
+      "color": "#2d7d9a"
+    },
+    {
+      "id": "tl3",
+      "appId": "app-mc262",
+      "size": "medium",
+      "group": "Games",
+      "color": "#2d7d9a"
+    },
+    {
+      "id": "tl4",
+      "appId": "app-calc",
+      "size": "medium",
+      "group": "Tools and Utilities",
+      "color": "#2d7d9a"
+    },
+    {
+      "id": "tl5",
+      "appId": "app-yt",
+      "size": "medium",
+      "group": "Entertainment",
+      "color": "#2d7d9a"
+    },
+    {
+      "id": "tl6",
+      "appId": "app-ppt",
+      "size": "small",
+      "group": "Office",
+      "color": "#2d7d9a"
+    },
+    {
+      "id": "tl7",
+      "appId": "app-ai",
+      "size": "wide",
+      "group": "Chat",
+      "color": "#2d7d9a"
+    },
+    {
+      "id": "tl8",
+      "appId": "app-term",
+      "size": "medium",
+      "group": "System",
+      "color": "#0c0c0c"
+    },
+    {
+      "id": "tl9",
+      "appId": "app-crash",
+      "size": "medium",
+      "group": "Games",
+      "color": "#e74856"
+    },
+    {
+      "id": "tl10",
+      "appId": "app-xwp",
+      "size": "medium",
+      "group": "Tools and Utilities",
+      "color": "#8e44ad"
+    },
+    {
+      "id": "tl11",
+      "appId": "app-plug",
+      "size": "medium",
+      "group": "Tools and Utilities",
+      "color": "#744da9"
+    }
+  ],
+  "dicons": [
+  ],
+  "groups": [
+    "Web & Social",
+    "Productivity",
+    "Entertainment",
+    "Tools",
+    "System"
+  ],
+  "tbPins": [
+  ]
+}
