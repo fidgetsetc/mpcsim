@@ -1305,7 +1305,7 @@ const ICON_LIB = [
   {k:'spotify',  fa:'fa-brands fa-spotify'},
   {k:'youtube',  fa:'fa-brands fa-youtube'},
   {k:'google',   fa:'fa-brands fa-google'},
-  {k:'file-powerpoint',   fa:'fa-solid fa-file-powerpoint'},
+  {k:'book',   fa:'fa-solid fa-book'},
 ];
 function faForKey(k) { return (ICON_LIB.find(x=>x.k===k)||ICON_LIB[0]).fa; }
 function iconHtml(k, sizeClass='') {
@@ -1386,6 +1386,8 @@ const WALLPAPER_PRESETS = [
   {name:'Minimal',    url:'https://picsum.photos/seed/win81-minimal/1600/900'},
   {name:'Snow',       url:'https://picsum.photos/seed/win81-snow/1600/900'},
   {name:'Space',      url:'https://picsum.photos/seed/win81-space/1600/900'},
+    { name: 'f45-day', url: 'https://images.squarespace-cdn.com/content/v1/5c1c4f1ce2ccd162f0621944/57d49b5d-9ce3-4cdb-b221-4ac269846f32/F45-wallpaper-day-96dpi.png' },
+    { name: 'f45-night', url: 'https://images.squarespace-cdn.com/content/v1/5c1c4f1ce2ccd162f0621944/1ae739c9-0c67-43ee-ab5e-78b7404cc04d/F45-wallpaper-night-96dpi.png' },
     { name: 'f44-day', url: base + 'F44-wallpaper_day_(small).png?width=1600' },
 { name: 'f44-night', url: base + 'F44-wallpaper_night_(small).png?width=1600' },
 
@@ -1593,10 +1595,10 @@ const DEFAULT_APPS = [
     resolution: 100
   },
   {
-    id: 'app-bideo',
-    name: 'Bideos',
-    url: './bideo/index.html',
-    icon: 'file-powerpoint',
+    id: 'app-book',
+    name: 'Reader',
+    url: './read/index.html',
+    icon: 'book',
     cat: 'Entertainment',
     iconUrl: '',
     resolution: 100
@@ -2063,6 +2065,7 @@ const DEFAULT_APPS = [
 
 ];
 const DEFAULT_TILES = [
+  {id:'tl0',appId:'app-suggest', size:'medium',   group:'System',        color:'#2d7d9a'},
   {id:'tl1',appId:'app-desk', size:'wide',   group:'System',        color:'#2d7d9a'},
   {id:'tl2',appId:'app-set', size:'wide',   group:'System',        color:'#2d7d9a'},
   {id:'tl3',appId:'app-mc262', size:'medium',   group:'Games',        color:'#2d7d9a'},
@@ -3891,7 +3894,7 @@ function performReset(){
     S.wobbly=false;
     S.wobbleAmt=40;
     S.wobbleMode='compiz';
-    S.theme='default';
+    S.theme='defaultnew';
     S.clock24=false;
     S.viewport='auto';
     S.tiles=JSON.parse(JSON.stringify(DEFAULT_TILES));
@@ -3904,7 +3907,7 @@ function performReset(){
     S.startBgColor='#0d1f3c';
     S.startBgImage='';
     S.pattern=1;
-    S.theme='default';
+    S.theme='defaultnew';
     notify('Theme and colors reset');
   }else if(scope==='tiles'){
     S.tiles=JSON.parse(JSON.stringify(DEFAULT_TILES));

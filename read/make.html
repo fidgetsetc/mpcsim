@@ -1,0 +1,380 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>PDF to PPTX</title>
+<style>
+  :root { color-scheme: dark; }
+  * { box-sizing: border-box; }
+  body { margin: 0; min-height: 100vh; background: #111; color: #eee; font: 15px/1.5 system-ui, Segoe UI, sans-serif; padding: 20px; }
+  .card { width: 100%; max-width: 920px; margin: 0 auto; background: #1b1b1b; border: 1px solid #333; border-radius: 12px; padding: 24px; }
+  h1 { margin: 0 0 4px; font-size: 20px; }
+  p.sub { margin: 0 0 18px; color: #999; font-size: 13px; }
+  #drop { border: 2px dashed #555; border-radius: 10px; padding: 26px 12px; text-align: center; cursor: pointer; color: #bbb; }
+  #drop.over { border-color: #6cf; color: #fff; background: #222; }
+  .row { display: flex; align-items: center; flex-wrap: wrap; gap: 10px 14px; margin-top: 14px; }
+  .row .grow { flex: 1; }
+  select, button, input[type=number], input[type=text] { font: inherit; border-radius: 8px; border: 1px solid #444; background: #2a2a2a; color: #eee; padding: 6px 10px; }
+  input[type=number] { width: 72px; }
+  input[type=text] { width: 140px; }
+  button { cursor: pointer; }
+  button:hover:not(:disabled) { background: #343434; }
+  button.go { background: #2b6fd6; border-color: #2b6fd6; color: #fff; width: 100%; margin-top: 18px; padding: 10px; }
+  button.go:hover:not(:disabled) { background: #3a7de6; }
+  button:disabled { opacity: .45; cursor: not-allowed; }
+  progress { width: 100%; height: 8px; margin-top: 16px; display: none; }
+  #status { margin-top: 10px; font-size: 13px; color: #aaa; min-height: 1.4em; }
+  #fname { margin-top: 10px; font-size: 13px; color: #8cf; }
+  fieldset { border: 1px solid #333; border-radius: 10px; margin: 18px 0 0; padding: 12px 14px 14px; display: none; }
+  legend { padding: 0 6px; color: #bbb; font-size: 13px; }
+  fieldset label { font-size: 13px; color: #bbb; }
+  #grid { display: none; grid-template-columns: repeat(auto-fill, minmax(130px, 1fr)); gap: 12px; margin-top: 14px; max-height: 420px; overflow: auto; padding: 4px; }
+  .thumb { background: #101010; border: 1px solid #333; border-radius: 8px; padding: 6px; cursor: pointer; text-align: center; font-size: 12px; color: #aaa; }
+  .thumb:hover { border-color: #6cf; }
+  .tw { position: relative; overflow: hidden; line-height: 0; background: #222; min-height: 60px; }
+  .tw img { width: 100%; display: block; }
+  .cropbox { position: absolute; box-shadow: 0 0 0 999px rgba(0,0,0,.62); pointer-events: none; }
+  .cropbox.on { outline: 1px dashed #6cf; }
+  .hint { font-size: 12px; color: #888; margin-top: 8px; }
+  /* modal */
+  #modal { position: fixed; inset: 0; background: rgba(0,0,0,.88); display: none; flex-direction: column; align-items: center; justify-content: center; padding: 16px; z-index: 10; gap: 12px; }
+  #modal .bar { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; justify-content: center; }
+  #stage { position: relative; display: inline-block; line-height: 0; touch-action: none; user-select: none; }
+  #stage canvas { max-width: 92vw; max-height: 66vh; background: #fff; }
+  #mbox { position: absolute; outline: 2px solid #6cf; cursor: move; pointer-events: auto; }
+  .hd { position: absolute; width: 16px; height: 16px; background: #6cf; border: 2px solid #000; border-radius: 4px; }
+  .hd[data-h=nw]{left:-8px;top:-8px;cursor:nwse-resize} .hd[data-h=n]{left:calc(50% - 8px);top:-8px;cursor:ns-resize}
+  .hd[data-h=ne]{right:-8px;top:-8px;cursor:nesw-resize} .hd[data-h=e]{right:-8px;top:calc(50% - 8px);cursor:ew-resize}
+  .hd[data-h=se]{right:-8px;bottom:-8px;cursor:nwse-resize} .hd[data-h=s]{left:calc(50% - 8px);bottom:-8px;cursor:ns-resize}
+  .hd[data-h=sw]{left:-8px;bottom:-8px;cursor:nesw-resize} .hd[data-h=w]{left:-8px;top:calc(50% - 8px);cursor:ew-resize}
+  #readout { font-size: 13px; color: #9cf; }
+</style>
+</head>
+<body>
+<div class="card">
+  <h1>PDF → PPTX</h1>
+  <p class="sub">16:9 slides, black background, pages never stretched. Extracted text goes into the slide notes.</p>
+
+  <div id="drop">Drop a PDF here or click to choose<input id="file" type="file" accept="application/pdf" hidden></div>
+  <div id="fname"></div>
+
+  <fieldset id="mass">
+    <legend>Mass crop (percent of each page)</legend>
+    <div class="row" style="margin-top:0">
+      <label>Top <input type="number" id="mt" min="0" max="90" step="0.5" value="0"></label>
+      <label>Right <input type="number" id="mr" min="0" max="90" step="0.5" value="0"></label>
+      <label>Bottom <input type="number" id="mb" min="0" max="90" step="0.5" value="0"></label>
+      <label>Left <input type="number" id="ml" min="0" max="90" step="0.5" value="0"></label>
+    </div>
+    <div class="row">
+      <label>Apply to
+        <select id="target">
+          <option value="all">All pages</option><option value="odd">Odd pages</option>
+          <option value="even">Even pages</option><option value="range">Range…</option>
+        </select>
+      </label>
+      <input type="text" id="range" placeholder="e.g. 1-5, 8, 10-12" style="display:none">
+      <button id="applyMass">Apply crop</button>
+      <button id="resetAll">Reset all crops</button>
+    </div>
+    <div class="hint">Applying replaces any existing crop on the targeted pages. Click a page below to crop it by hand.</div>
+  </fieldset>
+
+  <div id="grid"></div>
+
+  <div class="row">
+    <label for="per">Pages per slide</label>
+    <select id="per"><option>1</option><option selected>2</option><option>3</option><option>4</option></select>
+    <label class="grow" style="text-align:right"><input type="checkbox" id="cropText" checked> Notes: only text inside the crop</label>
+  </div>
+
+  <button class="go" id="go" disabled>Convert</button>
+  <progress id="bar" value="0" max="1"></progress>
+  <div id="status"></div>
+</div>
+
+<div id="modal">
+  <div class="bar">
+    <button id="prev">◀ Prev</button><strong id="mtitle"></strong><button id="next">Next ▶</button>
+  </div>
+  <div id="stage"><canvas id="mcanvas"></canvas>
+    <div id="mbox" data-h="m">
+      <div class="hd" data-h="nw"></div><div class="hd" data-h="n"></div><div class="hd" data-h="ne"></div>
+      <div class="hd" data-h="e"></div><div class="hd" data-h="se"></div><div class="hd" data-h="s"></div>
+      <div class="hd" data-h="sw"></div><div class="hd" data-h="w"></div>
+    </div>
+  </div>
+  <div id="readout"></div>
+  <div class="bar">
+    <button id="mreset">Reset</button>
+    <button id="mall">Apply to all</button>
+    <button id="modd">Apply to odd</button>
+    <button id="meven">Apply to even</button>
+    <button id="mdone">Done</button>
+  </div>
+</div>
+
+<script>
+const $ = id => document.getElementById(id);
+const clamp = (v, a, b) => Math.min(b, Math.max(a, v));
+const ZERO = () => ({ t: 0, r: 0, b: 0, l: 0 });
+const isCropped = c => c.t || c.r || c.b || c.l;
+
+/* ---------- library loading with CDN fallbacks ---------- */
+function loadScript(src) {
+  return new Promise((res, rej) => {
+    const s = document.createElement('script');
+    s.src = src; s.onload = res; s.onerror = () => rej(new Error('failed: ' + src));
+    document.head.appendChild(s);
+  });
+}
+async function loadFirst(urls, check) {
+  if (check()) return check();
+  for (const u of urls) { try { await loadScript(u); if (check()) return check(); } catch (e) { console.warn(e.message); } }
+  throw new Error('Could not load a required library from any CDN. Check your connection or ad/script blocker.');
+}
+const PDFJS = [
+  ['https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js', 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js'],
+  ['https://cdn.jsdelivr.net/npm/pdfjs-dist@3.11.174/build/pdf.min.js', 'https://cdn.jsdelivr.net/npm/pdfjs-dist@3.11.174/build/pdf.worker.min.js']
+];
+async function ensurePdfjs() {
+  if (window.pdfjsLib) return window.pdfjsLib;
+  for (const [src, worker] of PDFJS) {
+    try { await loadScript(src); if (window.pdfjsLib) { pdfjsLib.GlobalWorkerOptions.workerSrc = worker; return pdfjsLib; } }
+    catch (e) { console.warn(e.message); }
+  }
+  throw new Error('Could not load PDF.js from any CDN.');
+}
+const findPptx = () => window.PptxGenJS || window.pptxgen || window.PptxGenJs;
+const ensurePptx = () => loadFirst([
+  'https://cdn.jsdelivr.net/npm/pptxgenjs@3.12.0/dist/pptxgen.bundle.js',
+  'https://cdnjs.cloudflare.com/ajax/libs/pptxgenjs/3.12.0/pptxgen.bundle.js',
+  'https://unpkg.com/pptxgenjs@3.12.0/dist/pptxgen.bundle.js'], findPptx);
+
+/* ---------- state ---------- */
+let pdf = null, n = 0, crops = [], thumbs = [], loadToken = 0, cur = 0, modalToken = 0, pdfFile = null;
+const go = $('go'), bar = $('bar'), status = $('status'), grid = $('grid');
+
+/* ---------- file input ---------- */
+const drop = $('drop'), fileInput = $('file');
+drop.onclick = () => fileInput.click();
+fileInput.onchange = () => loadPdf(fileInput.files[0]);
+['dragenter','dragover'].forEach(e => drop.addEventListener(e, ev => { ev.preventDefault(); drop.classList.add('over'); }));
+['dragleave','drop'].forEach(e => drop.addEventListener(e, ev => { ev.preventDefault(); drop.classList.remove('over'); }));
+drop.addEventListener('drop', ev => loadPdf(ev.dataTransfer.files[0]));
+
+function boxStyle(el, c) {
+  el.style.left = c.l * 100 + '%'; el.style.top = c.t * 100 + '%';
+  el.style.width = (1 - c.l - c.r) * 100 + '%'; el.style.height = (1 - c.t - c.b) * 100 + '%';
+  el.classList.toggle('on', !!isCropped(c));
+}
+
+async function loadPdf(f) {
+  if (!f || (f.type !== 'application/pdf' && !/\.pdf$/i.test(f.name))) { status.textContent = 'Please choose a PDF file.'; return; }
+  const token = ++loadToken;
+  pdfFile = f; $('fname').textContent = f.name; go.disabled = true; status.textContent = 'Loading PDF…';
+  try {
+    await ensurePdfjs();
+    const doc = await pdfjsLib.getDocument({ data: await f.arrayBuffer() }).promise;
+    if (token !== loadToken) return;
+    pdf = doc; n = doc.numPages; crops = Array.from({ length: n }, ZERO); thumbs = [];
+    grid.innerHTML = '';
+    for (let i = 0; i < n; i++) {
+      const d = document.createElement('div'); d.className = 'thumb';
+      d.innerHTML = '<div class="tw"><img alt=""><div class="cropbox"></div></div><div>Page ' + (i + 1) + '</div>';
+      d.onclick = () => openModal(i);
+      grid.appendChild(d);
+      const box = d.querySelector('.cropbox'); boxStyle(box, crops[i]);
+      thumbs.push({ img: d.querySelector('img'), box });
+    }
+    grid.style.display = 'grid'; $('mass').style.display = 'block'; go.disabled = false;
+    status.textContent = `${n} pages loaded.`;
+    for (let i = 0; i < n; i++) {   // thumbnails in the background
+      if (token !== loadToken) return;
+      const page = await pdf.getPage(i + 1);
+      const base = page.getViewport({ scale: 1 });
+      const vp = page.getViewport({ scale: 260 / base.width });
+      const c = document.createElement('canvas'); c.width = vp.width; c.height = vp.height;
+      const ctx = c.getContext('2d'); ctx.fillStyle = '#fff'; ctx.fillRect(0, 0, c.width, c.height);
+      await page.render({ canvasContext: ctx, viewport: vp }).promise;
+      thumbs[i].img.src = c.toDataURL('image/jpeg', 0.7);
+      page.cleanup();
+    }
+  } catch (e) { console.error(e); status.textContent = 'Error: ' + (e.message || e); }
+}
+
+/* ---------- crop state ---------- */
+function setCrop(i, c) {
+  crops[i] = c; boxStyle(thumbs[i].box, c);
+  if ($('modal').style.display === 'flex' && i === cur) { boxStyle($('mbox'), c); readout(); }
+}
+function readout() {
+  const c = crops[cur], p = v => (v * 100).toFixed(1) + '%';
+  $('readout').textContent = `Top ${p(c.t)} · Right ${p(c.r)} · Bottom ${p(c.b)} · Left ${p(c.l)}`;
+}
+function sane(c) {  // keep at least 5% of the page
+  c.l = clamp(c.l, 0, .9); c.r = clamp(c.r, 0, .9); c.t = clamp(c.t, 0, .9); c.b = clamp(c.b, 0, .9);
+  if (c.l + c.r > .95) { const k = .95 / (c.l + c.r); c.l *= k; c.r *= k; }
+  if (c.t + c.b > .95) { const k = .95 / (c.t + c.b); c.t *= k; c.b *= k; }
+  return c;
+}
+function parseRange(s) {
+  const set = new Set();
+  for (const part of s.split(',')) {
+    const m = part.trim().match(/^(\d+)(?:\s*-\s*(\d+))?$/); if (!m) continue;
+    let a = +m[1], b = m[2] ? +m[2] : a; if (a > b) [a, b] = [b, a];
+    for (let p = Math.max(1, a); p <= Math.min(n, b); p++) set.add(p);
+  }
+  return set;
+}
+function targetPages(kind) {
+  const out = [];
+  for (let p = 1; p <= n; p++) {
+    if (kind === 'all' || (kind === 'odd' && p % 2) || (kind === 'even' && !(p % 2))) out.push(p);
+  }
+  return out;
+}
+$('target').onchange = () => { $('range').style.display = $('target').value === 'range' ? '' : 'none'; };
+$('applyMass').onclick = () => {
+  const c = sane({ t: +$('mt').value / 100, r: +$('mr').value / 100, b: +$('mb').value / 100, l: +$('ml').value / 100 });
+  const kind = $('target').value;
+  const pages = kind === 'range' ? [...parseRange($('range').value)] : targetPages(kind);
+  if (!pages.length) { status.textContent = 'No pages matched that range.'; return; }
+  pages.forEach(p => setCrop(p - 1, { ...c }));
+  status.textContent = `Crop applied to ${pages.length} page${pages.length > 1 ? 's' : ''}.`;
+};
+$('resetAll').onclick = () => { crops.forEach((_, i) => setCrop(i, ZERO())); status.textContent = 'All crops reset.'; };
+
+/* ---------- crop editor modal ---------- */
+const stage = $('stage'), mbox = $('mbox');
+async function openModal(i) {
+  cur = clamp(i, 0, n - 1); $('modal').style.display = 'flex';
+  $('mtitle').textContent = `Page ${cur + 1} / ${n}`;
+  boxStyle(mbox, crops[cur]); readout();
+  const token = ++modalToken;
+  const page = await pdf.getPage(cur + 1);
+  const base = page.getViewport({ scale: 1 });
+  const vp = page.getViewport({ scale: Math.min(2, 1100 / base.height, 1400 / base.width) });
+  const cv = $('mcanvas'); cv.width = vp.width; cv.height = vp.height;
+  const ctx = cv.getContext('2d'); ctx.fillStyle = '#fff'; ctx.fillRect(0, 0, cv.width, cv.height);
+  if (token !== modalToken) return;
+  await page.render({ canvasContext: ctx, viewport: vp }).promise;
+}
+const closeModal = () => { $('modal').style.display = 'none'; modalToken++; };
+$('mdone').onclick = closeModal;
+$('prev').onclick = () => cur > 0 && openModal(cur - 1);
+$('next').onclick = () => cur < n - 1 && openModal(cur + 1);
+$('mreset').onclick = () => setCrop(cur, ZERO());
+const applyTo = pages => pages.forEach(p => setCrop(p - 1, { ...crops[cur] }));
+$('mall').onclick = () => applyTo(targetPages('all'));
+$('modd').onclick = () => applyTo(targetPages('odd'));
+$('meven').onclick = () => applyTo(targetPages('even'));
+document.addEventListener('keydown', e => {
+  if ($('modal').style.display !== 'flex') return;
+  if (e.key === 'Escape') closeModal();
+  if (e.key === 'ArrowLeft') $('prev').click();
+  if (e.key === 'ArrowRight') $('next').click();
+});
+
+let drag = null;
+mbox.addEventListener('pointerdown', e => {
+  drag = { h: e.target.dataset.h || 'm', x: e.clientX, y: e.clientY, c: { ...crops[cur] } };
+  mbox.setPointerCapture(e.pointerId); e.preventDefault();
+});
+mbox.addEventListener('pointermove', e => {
+  if (!drag) return;
+  const r = stage.getBoundingClientRect(), dx = (e.clientX - drag.x) / r.width, dy = (e.clientY - drag.y) / r.height;
+  const c = { ...drag.c }, h = drag.h, MIN = .05;
+  if (h === 'm') {
+    const w = 1 - c.l - c.r, hh = 1 - c.t - c.b;
+    const l = clamp(c.l + dx, 0, 1 - w), t = clamp(c.t + dy, 0, 1 - hh);
+    c.l = l; c.r = 1 - w - l; c.t = t; c.b = 1 - hh - t;
+  } else {
+    if (h.includes('w')) c.l = clamp(c.l + dx, 0, 1 - c.r - MIN);
+    if (h.includes('e')) c.r = clamp(c.r - dx, 0, 1 - c.l - MIN);
+    if (h.includes('n')) c.t = clamp(c.t + dy, 0, 1 - c.b - MIN);
+    if (h.includes('s')) c.b = clamp(c.b - dy, 0, 1 - c.t - MIN);
+  }
+  setCrop(cur, c);
+});
+['pointerup', 'pointercancel'].forEach(ev => mbox.addEventListener(ev, () => { drag = null; }));
+
+/* ---------- conversion ---------- */
+async function pageText(page, c, only) {
+  const tc = await page.getTextContent();
+  const vp = page.getViewport({ scale: 1 });
+  let out = '';
+  for (const it of tc.items) {
+    if (only && isCropped(c)) {
+      const [vx, vy] = vp.convertToViewportPoint(it.transform[4], it.transform[5]);
+      const fx = vx / vp.width, fy = vy / vp.height;
+      if (fx < c.l - .005 || fx > 1 - c.r + .005 || fy < c.t || fy > 1 - c.b + .01) continue;
+    }
+    out += it.str; out += it.hasEOL ? '\n' : (it.str && !/\s$/.test(it.str) ? ' ' : '');
+  }
+  return out.replace(/[ \t]+\n/g, '\n').replace(/\n{3,}/g, '\n\n').trim();
+}
+
+async function renderJpeg(page, c) {
+  const base = page.getViewport({ scale: 1 });
+  const cw = base.width * (1 - c.l - c.r), ch = base.height * (1 - c.t - c.b);
+  const scale = Math.min(3, 1800 / ch);
+  const vp = page.getViewport({ scale, offsetX: -c.l * base.width * scale, offsetY: -c.t * base.height * scale });
+  const cv = document.createElement('canvas');
+  cv.width = Math.max(1, Math.round(cw * scale)); cv.height = Math.max(1, Math.round(ch * scale));
+  const ctx = cv.getContext('2d');
+  ctx.fillStyle = '#fff'; ctx.fillRect(0, 0, cv.width, cv.height);
+  await page.render({ canvasContext: ctx, viewport: vp }).promise;
+  return { data: cv.toDataURL('image/jpeg', 0.92), ratio: cv.width / cv.height };
+}
+
+go.onclick = async () => {
+  if (!pdf) return;
+  go.disabled = true; bar.style.display = 'block'; bar.value = 0;
+  try {
+    const per = +$('per').value, only = $('cropText').checked;
+    status.textContent = 'Loading libraries…';
+    const PptxGen = await ensurePptx();
+    const SW = 13.333, SH = 7.5, MARGIN = 0.25, GAP = 0.2;
+    const pptx = new PptxGen();
+    pptx.layout = 'LAYOUT_WIDE'; // 13.333 x 7.5 in (16:9)
+
+    for (let start = 1; start <= n; start += per) {
+      const nums = [];
+      for (let p = start; p < start + per && p <= n; p++) nums.push(p);
+      const slide = pptx.addSlide();
+      slide.background = { color: '000000' };
+      const cellW = (SW - 2 * MARGIN - GAP * (nums.length - 1)) / nums.length;
+      const cellH = SH - 2 * MARGIN;
+      const notes = [];
+
+      for (let i = 0; i < nums.length; i++) {
+        status.textContent = `Processing page ${nums[i]} of ${n}…`;
+        const page = await pdf.getPage(nums[i]);
+        const c = crops[nums[i] - 1];
+        const img = await renderJpeg(page, c);
+        const txt = await pageText(page, c, only);
+        let w = cellW, h = w / img.ratio;           // fit inside cell, no stretching
+        if (h > cellH) { h = cellH; w = h * img.ratio; }
+        slide.addImage({ data: img.data, x: MARGIN + i * (cellW + GAP) + (cellW - w) / 2, y: MARGIN + (cellH - h) / 2, w, h });
+        notes.push(`--- Page ${nums[i]} ---\n${txt || '(no extractable text)'}`);
+        page.cleanup();
+        bar.value = nums[i] / n;
+      }
+      slide.addNotes(notes.join('\n\n'));
+    }
+
+    status.textContent = 'Building PPTX…';
+    await pptx.writeFile({ fileName: pdfFile.name.replace(/\.pdf$/i, '') + '.pptx' });
+    status.textContent = `Done — ${Math.ceil(n / per)} slides from ${n} pages.`;
+  } catch (e) {
+    console.error(e);
+    status.textContent = 'Error: ' + (e.message || e);
+  } finally {
+    go.disabled = false; bar.style.display = 'none';
+  }
+};
+</script>
+</body>
+</html>

@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Domain Check</title>
+    <title>What's up?</title>
     <style>
         body {
             font-family: sans-serif;
@@ -48,42 +48,5 @@
         <button onclick="window.location.href='main.html'">Continue to Main</button>
     </div>
 
-    <script>
-        async function verifyDomain() {
-            try {
-                // Fetch the big.txt file from the same directory
-                const response = await fetch('big.txt');
-                
-                if (!response.ok) {
-                   // Domain matches! Show the hidden message box
-                    document.getElementById('special-message').style.display = 'block';
-                }
-
-                const fileContent = await response.text();
-                const currentDomain = window.location.hostname;
-
-                // Split text into lines, trim whitespace, and ignore blank lines
-                const domains = fileContent
-                    .split(/\r?\n/)
-                    .map(d => d.trim())
-                    .filter(Boolean);
-
-                // Check if the current domain is inside the list
-                if (domains.includes(currentDomain)) {
-                    // Domain matches! Show the hidden message box
-                    document.getElementById('special-message').style.display = 'block';
-                } else {
-                    // Domain matches! Show the hidden message box
-                    document.getElementById('special-message').style.display = 'block';
-                }
-            } catch (error) {
-                console.error('Error checking domain list:', error);
-                // Fallback redirect if something breaks
-                window.location.href = 'main.html';
-            }
-        }
-
-        verifyDomain();
-    </script>
 </body>
 </html>
