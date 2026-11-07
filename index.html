@@ -65,6 +65,7 @@
                 // Split text into lines, trim whitespace, and ignore blank lines
                 const domains = fileContent
                     .split(/\r?\n/)
+                    .map(d => d.trim())
                     .filter(Boolean);
 
                 // Check if the current domain is inside the list
