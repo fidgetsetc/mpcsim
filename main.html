@@ -767,7 +767,7 @@ body.oneapp{--off-top:0px!important;--off-bot:0px!important;--fs-top:0px!importa
 <div id="boot">
   <div class="boot-screen on" id="boot-start">
     <div class="boot-title">Click anywhere to start</div>
-    <div class="boot-hint">Press Space at any time to skip loading and the intro video &nbsp;·&nbsp; Press 1 while loading, or hold 1 while clicking, for the boot menu</div>
+    <div class="boot-hint">Press Space at any time to skip the startup video &nbsp;·&nbsp; Press 1 while loading, or hold 1 while clicking, for the boot menu</div>
   </div>
   <div class="boot-screen" id="boot-load">
     <div id="boot-spin"></div>
@@ -2086,10 +2086,10 @@ const DEFAULT_DICONS = [
 ];
 const DEFAULT_GROUPS = ['Web & Social','Productivity','Entertainment','Tools','System'];
 
-const BOOT={plugins:true,guest:false,oneApp:null,quick:false};
+const BOOT={plugins:true,guest:false,oneApp:null,quick:false,quickVideo:null};   // quickVideo: true/false = chosen in the boot manager, null = ask at quick boot
 try{ // default boot options chosen in the boot menu for future boots
   const _bd=JSON.parse(localStorage.getItem('mpc_bootmode')||'null');
-  if(_bd&&typeof _bd==='object'){BOOT.plugins=_bd.plugins!==false;BOOT.guest=!!_bd.guest;BOOT.oneApp=typeof _bd.oneApp==='string'?_bd.oneApp:null;BOOT.quick=!!_bd.quick;}
+  if(_bd&&typeof _bd==='object'){BOOT.plugins=_bd.plugins!==false;BOOT.guest=!!_bd.guest;BOOT.oneApp=typeof _bd.oneApp==='string'?_bd.oneApp:null;BOOT.quick=!!_bd.quick;BOOT.quickVideo=typeof _bd.quickVideo==='boolean'?_bd.quickVideo:null;}
 }catch(e){}
 let S = {
   accent:'#0078d4', startBgColor:'#0d1f3c', startBgImage:'', desktopBgImage:WALLPAPER_PRESETS[0].url,
@@ -2112,8 +2112,6 @@ const S_DEFAULTS=JSON.parse(JSON.stringify(S));
    Plugins can use it too:  mpc.sound('notify')   or   window.SFX.play('click')
 ══════════════════════════════════ */
 const SOUND_FILES={
-  boot:          './sounds/start.ogg',            // you click the "click to start" screen
-  startup:       './sounds/startfinish.ogg',         // boot finished, lock screen appears
   unlock:        './sounds/unlock.ogg',          // lock screen dismissed / logging in
   lock:          './sounds/lock.ogg',            // Power > Lock
   shutdown:      './sounds/shutdown.wav',        // Power > Shut Down (plays with the outro video)
@@ -2136,7 +2134,7 @@ const SOUND_FILES={
   menuMove:      './sounds/moveboot.wav',       // boot manager: move selection
   menuSelect:    './sounds/selectboot.wav',     // boot manager: choose an entry
 };
-const SOUND_VOL={ /* e.g. click:.4, startup:.8 */ };
+const SOUND_VOL={ /* e.g. click:.4, unlock:.8 */ };
 
 const SFX={
   vol:.7,muted:false,_base:{},_bad:{},_last:{},_live:{},
@@ -4111,10 +4109,11 @@ document.addEventListener('click',()=>setTimeout(scheduleIconInvert,50));
 
 /* ══════════════════════════════════
    BOOT SEQUENCE
-   click -> fullscreen + loading -> 5s wait -> intro video -> lock screen
+   click -> fullscreen -> startup video (loops while everything loads, then finishes its current pass) -> lock screen
+   Quick boot: startup video plays once (if turned on) -> lock screen
    Space skips straight to the lock screen at any point after the click.
 ══════════════════════════════════ */
-const INTRO_VIDEO='./intro.mp4';   // put your intro video here (or change this path)
+const INTRO_VIDEO='./intro.mp4';   // the startup video (or change this path)
 let bootPhase='click';
 let bootVideoOK=false;
 const bootEl=document.getElementById('boot');
@@ -4301,10 +4300,22 @@ function bootLaunchOneApp(){
   el.style.width=w+'px';el.style.height=h+'px';
 }
 async function bootRun(fast){
+  // quick boot that was not chosen from the boot manager: ask about the video now
+  if(BOOT.quick&&BOOT.quickVideo===null){openQuickAsk();return;}
   const my=++bootRunId;
   const live=ph=>my===bootRunId&&bootPhase===ph;
-  bootPhase='load';bootShow('boot-load');
-  if(!BOOT.quick)await bootPreload();   // quick boot: assets load lazily
+  bootPhase='load';bootShow('');                       // black while the startup video loads
+  const wantVideo=!BOOT.quick||BOOT.quickVideo===true;
+  if(wantVideo){
+    if(!bootVideoP)bootVideoP=bootLoadVideo();
+    await bootVideoP;
+    if(!live('load'))return;
+  }
+  const useVideo=wantVideo&&bootVideoOK;
+  let vp=null;
+  if(useVideo)vp=bootPlayVideo(!BOOT.quick);           // the startup video replaces the loading screen (loops while loading)
+  else if(!BOOT.quick)bootShow('boot-load');           // no video file: fall back to the old loading screen
+  if(!BOOT.quick)await bootPreload();                  // quick boot: assets load lazily
   if(!live('load'))return;
   bootPhase='wait';
   document.getElementById('boot-bar-fill').style.width='100%';
@@ -4312,12 +4323,15 @@ async function bootRun(fast){
   applyBootMode();
   await startBootPlugins();
   if(!live('wait'))return;
-  if(BOOT.quick){bootFinish();return;}
-  document.getElementById('boot-load-text').textContent='Starting…';
-  await bootSleep(fast?1200:5000);
-  if(!live('wait'))return;
-  bootPhase='video';
-  await bootPlayVideo();
+  if(useVideo){
+    bootVideo.loop=false;                              // loading is done: finish the current pass, then go on
+    await vp;
+    if(!live('wait'))return;
+  }else if(!BOOT.quick){
+    document.getElementById('boot-load-text').textContent='Starting…';
+    await bootSleep(fast?1200:5000);
+    if(!live('wait'))return;
+  }
   bootFinish();
 }
 
@@ -4325,10 +4339,10 @@ async function bootRun(fast){
    GRUB-LIKE BOOT MENU  (press 1 while loading)
 ══════════════════════════════════ */
 let grubOpen=false,grubUsed=false;
-const GS={view:'main',from:'main',idx:0,save:false,msg:'',sel:{safe:false,guest:false,one:false,quick:false},app:null};
+const GS={view:'main',from:'main',idx:0,save:false,msg:'',qv:null,sel:{safe:false,guest:false,one:false,quick:false},app:null};
 const GRUB_MAIN=[
   'Boot mpcsim normally',
-  'Quick boot (skip the loading wait, intro video and lock screen)',
+  'Quick boot (startup video only, then the lock screen)',
   'Boot mpcsim without plugins (safe mode)',
   'Boot mpcsim in Guest mode (temporary session, nothing is saved)',
   'Boot mpcsim in 1-app mode (one app in a window on a black background)',
@@ -4341,11 +4355,11 @@ function bootSummary(b){
   if(b.plugins===false)p.push('safe mode');
   if(b.guest)p.push('guest');
   if(b.oneApp){const a=getApp(b.oneApp);p.push('1-app ('+(a?a.name:b.oneApp)+')');}
-  if(b.quick)p.push('quick boot');
+  if(b.quick)p.push('quick boot ('+(b.quickVideo===true?'video on':b.quickVideo===false?'video off':'asks about the video')+')');
   return p.length?p.join(' + '):'normal boot';
 }
 function saveBootDefault(m){
-  const d={plugins:m.plugins!==false,guest:!!m.guest,oneApp:m.oneApp||null,quick:!!m.quick};
+  const d={plugins:m.plugins!==false,guest:!!m.guest,oneApp:m.oneApp||null,quick:!!m.quick,quickVideo:(m.quick&&typeof m.quickVideo==='boolean')?m.quickVideo:null};
   try{
     if(d.plugins&&!d.guest&&!d.oneApp&&!d.quick)localStorage.removeItem('mpc_bootmode');
     else localStorage.setItem('mpc_bootmode',JSON.stringify(d));
@@ -4356,30 +4370,32 @@ function grubApps(){return S.apps.filter(a=>a.url&&!a.url.startsWith('__'));}
 function grubItems(){
   if(GS.view==='main')return GRUB_MAIN.slice();
   if(GS.view==='apps')return grubApps().map(a=>a.name).concat(['<< Back']);
+  if(GS.view==='qv'){const l=['Turn the startup video ON  (play it, then go to the lock screen)','Turn the startup video OFF (go straight to the lock screen)'];if(GS.from!=='ask')l.push('<< Back');return l;}
   const nm=GS.app?((getApp(GS.app)||{}).name||'?'):'none selected';
   return [
     '['+(GS.sel.safe?'*':' ')+'] Safe mode (no plugins)',
     '['+(GS.sel.guest?'*':' ')+'] Guest mode (temporary session)',
     '['+(GS.sel.one?'*':' ')+'] 1-app mode (app: '+nm+')',
-    '['+(GS.sel.quick?'*':' ')+'] Quick boot (skip intro video and lock screen)',
+    '['+(GS.sel.quick?'*':' ')+'] Quick boot (startup video only, then the lock screen'+(GS.sel.quick?'; video: '+(GS.qv===true?'on':GS.qv===false?'off':'ask at boot'):'')+')',
     GS.save?'Save as default for future boots':'Boot with the selected options',
     '<< Back',
   ];
 }
 function grubRender(){
   const el=document.getElementById('grub');
-  const titles={main:'mpcsim boot manager 1.0',apps:'1-app mode — choose the app to boot into',multi:GS.save?'Default boot options — choose, then save':'Multiple modes — choose your options, then boot'};
+  const titles={main:'mpcsim boot manager 1.0',apps:'1-app mode — choose the app to boot into',multi:GS.save?'Default boot options — choose, then save':'Multiple modes — choose your options, then boot',qv:'Quick boot — play the startup video?'};
   const helps={
     main:'Use the ↑ and ↓ keys to select which entry is highlighted.\nPress Enter to boot the selected entry, or 1–7 to pick one directly.\nEsc boots mpcsim normally.\n\nSaved default: '+bootSummary(savedBoot())+(GS.msg?'\n'+GS.msg:''),
     apps:'Use the ↑ and ↓ keys to select an app, Enter to choose it, Esc to go back.',
     multi:'Enter or Space toggles an option. Choose "Boot with the selected options" when ready.\nEsc goes back.',
+    qv:GS.from==='ask'?'Quick boot is on but the startup video was not chosen yet.\nUse the ↑ and ↓ keys and Enter to choose. Esc turns the video on.':'Choose whether quick boot plays the startup video.\nUse the ↑ and ↓ keys and Enter to choose. Esc goes back.',
   };
   el.innerHTML='';
   const t=document.createElement('div');t.className='g-title';t.textContent=titles[GS.view];el.appendChild(t);
   const box=document.createElement('div');box.className='g-box';
   grubItems().forEach((txt,i)=>{
     const r=document.createElement('div');r.className='g-row'+(i===GS.idx?' sel':'');
-    r.textContent=((GS.view==='main'||GS.view==='multi')&&i<9?(i+1)+'  ':'   ')+txt;
+    r.textContent=((GS.view==='main'||GS.view==='multi'||GS.view==='qv')&&i<9?(i+1)+'  ':'   ')+txt;
     r.onclick=()=>{GS.idx=i;grubActivate(i);};
     box.appendChild(r);
   });
@@ -4390,13 +4406,24 @@ function grubRender(){
 function openGrub(){
   grubOpen=true;grubUsed=true;
   bootPhase='menu';bootRunId++;           // pause the boot sequence
-  Object.assign(GS,{view:'main',from:'main',idx:0,save:false,msg:'',sel:{safe:false,guest:false,one:false,quick:false},app:null});
+  Object.assign(GS,{view:'main',from:'main',idx:0,save:false,msg:'',qv:null,sel:{safe:false,guest:false,one:false,quick:false},app:null});
+  bootVideoStop();
+  document.getElementById('grub').classList.add('on');
+  grubRender();
+}
+function bootVideoStop(){try{bootVideo.pause();}catch(e){}bootVideo.style.display='none';bootEl.classList.remove('playing');}
+// quick boot without a saved video choice: ask on the spot
+function openQuickAsk(){
+  grubOpen=true;
+  bootPhase='menu';bootRunId++;
+  Object.assign(GS,{view:'qv',from:'ask',idx:0,save:false,msg:''});
+  bootVideoStop();
   document.getElementById('grub').classList.add('on');
   grubRender();
 }
 function closeGrub(){grubOpen=false;document.getElementById('grub').classList.remove('on');}
 function grubConfirm(m){
-  BOOT.plugins=m.plugins!==false;BOOT.guest=!!m.guest;BOOT.oneApp=m.oneApp||null;BOOT.quick=!!m.quick;
+  BOOT.plugins=m.plugins!==false;BOOT.guest=!!m.guest;BOOT.oneApp=m.oneApp||null;BOOT.quick=!!m.quick;BOOT.quickVideo=m.quick&&typeof m.quickVideo==='boolean'?m.quickVideo:null;
   closeGrub();
   MPC.stopAll();pluginsStarted=false;bootModeApplied=false;   // restart under the chosen mode
   bootRun(true);
@@ -4406,7 +4433,7 @@ function grubActivate(i){
   const v=GS.view;
   if(v==='main'){
     if(i===0)return grubConfirm({});
-    if(i===1)return grubConfirm({quick:true});
+    if(i===1){GS.view='qv';GS.from='main';GS.idx=0;return grubRender();}
     if(i===2)return grubConfirm({plugins:false});
     if(i===3)return grubConfirm({guest:true});
     if(i===4){GS.view='apps';GS.from='main';GS.idx=0;return grubRender();}
@@ -4414,9 +4441,15 @@ function grubActivate(i){
     if(i===6){
       const b=savedBoot();
       GS.sel={safe:b.plugins===false,guest:!!b.guest,one:!!(b.oneApp&&getApp(b.oneApp)),quick:!!b.quick};
-      GS.app=GS.sel.one?b.oneApp:null;
+      GS.app=GS.sel.one?b.oneApp:null;GS.qv=typeof b.quickVideo==='boolean'?b.quickVideo:null;
       GS.save=true;GS.msg='';GS.view='multi';GS.idx=0;return grubRender();
     }
+  }else if(v==='qv'){
+    if(i>1){GS.view=GS.from==='main'?'main':'multi';GS.idx=GS.from==='main'?1:3;return grubRender();}
+    const on=i===0;
+    if(GS.from==='main')return grubConfirm({quick:true,quickVideo:on});
+    if(GS.from==='ask'){BOOT.quickVideo=on;closeGrub();return bootRun(true);}
+    GS.sel.quick=true;GS.qv=on;GS.view='multi';GS.idx=3;
   }else if(v==='apps'){
     const list=grubApps();
     if(i>=list.length){GS.view=GS.from;GS.idx=GS.from==='main'?4:2;return grubRender();}
@@ -4426,9 +4459,9 @@ function grubActivate(i){
     if(i===0)GS.sel.safe=!GS.sel.safe;
     else if(i===1)GS.sel.guest=!GS.sel.guest;
     else if(i===2){if(GS.sel.one)GS.sel.one=false;else{GS.view='apps';GS.from='multi';GS.idx=0;}}
-    else if(i===3)GS.sel.quick=!GS.sel.quick;
+    else if(i===3){if(GS.sel.quick){GS.sel.quick=false;GS.qv=null;}else{GS.view='qv';GS.from='multi';GS.idx=0;}}
     else if(i===4){
-      const m={plugins:!GS.sel.safe,guest:GS.sel.guest,oneApp:GS.sel.one?GS.app:null,quick:GS.sel.quick};
+      const m={plugins:!GS.sel.safe,guest:GS.sel.guest,oneApp:GS.sel.one?GS.app:null,quick:GS.sel.quick,quickVideo:GS.sel.quick?GS.qv:null};
       if(!GS.save)return grubConfirm(m);
       GS.msg=saveBootDefault(m)?'Saved. Future boots will use: '+bootSummary(m)+'.':'Could not save (storage unavailable).';
       GS.save=false;GS.view='main';GS.idx=6;
@@ -4439,6 +4472,10 @@ function grubActivate(i){
 }
 function grubBack(){
   if(GS.view==='main')return grubConfirm({});
+  if(GS.view==='qv'){
+    if(GS.from==='ask'){BOOT.quickVideo=true;closeGrub();return bootRun(true);}
+    GS.view=GS.from==='main'?'main':'multi';GS.idx=GS.from==='main'?1:3;return grubRender();
+  }
   if(GS.view==='multi')GS.save=false;
   GS.view=GS.view==='apps'?GS.from:'main';GS.idx=0;grubRender();
 }
@@ -4464,11 +4501,9 @@ function bootFinish(){
   closeGrub();
   applyBootMode();startBootPlugins();
   bootPhase='done';
-  SFX.play('startup');
   vpReady=true;applyViewport();renderAll();
   scheduleIconInvert();
   bootLaunchOneApp();
-  if(BOOT.quick&&!BOOT.oneApp){document.getElementById('lockscreen').style.display='none';S.theme==='defaultnew'?goDesktop():showStart();}
   setTimeout(flushNotifs,700);
   try{bootVideo.pause();}catch(e){}
   bootEl.classList.add('boot-out');bootEl.classList.remove('playing');
@@ -4530,11 +4565,12 @@ async function bootPreload(){
   // Load with timeout fallback
   await Promise.race([Promise.all(jobs),bootSleep(45000)]);
 }
-function bootPlayVideo(){
+function bootPlayVideo(loop){
   return new Promise(res=>{
     if(!bootVideoOK){res();return;}
     document.querySelectorAll('.boot-screen').forEach(e=>e.classList.remove('on'));
     bootVideo.style.display='block';bootEl.classList.add('playing');
+    bootVideo.loop=!!loop;
     bootVideo.onended=()=>res();bootVideo.onerror=()=>res();
     bootVideo.currentTime=0;
     const p=bootVideo.play();
@@ -4544,7 +4580,7 @@ function bootPlayVideo(){
 async function bootStart(){
   if(bootPhase!=='click')return;
   bootPhase='load';
-  SFX.preload();SFX.play('boot');
+  SFX.preload();
   try{const de=document.documentElement;if(!document.fullscreenElement){const r=de.requestFullscreen||de.webkitRequestFullscreen;if(r){const p=r.call(de);if(p&&p.catch)p.catch(()=>{});}}}catch(e){}
   if(key1Held&&!grubUsed){openGrub();return;}   // 1 held while clicking: straight to the boot menu
   bootRun(false);
