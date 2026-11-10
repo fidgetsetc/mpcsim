@@ -15,3 +15,4 @@ https://idouseanarchbaseddistrotho.surge.sh
 https://mpcsim.surge.sh
 https://mpcplay.surge.sh
 https://desktopviewerprofessional26.surge.sh
+https://cmpc.surge.sh

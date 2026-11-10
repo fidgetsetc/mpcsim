@@ -54,10 +54,18 @@ if [ ! -d "$TARGET_DIR" ]; then
     mkdir ~/byod/
     cd ~/byod/
     git clone https://github.com/fidgetsetc/blockingames.git "win81"
+else
+rm -rf win81
+echo "Cloning repo with git..."
+    mkdir ~/byod/
+    cd ~/byod/
+    git clone https://github.com/fidgetsetc/blockingames.git "win81"
 fi
-
+sleep 1
 # CD into the directory
-cd "$TARGET_DIR" || exit 1
+cd
+cd byod
+cd win81
 echo "Switched to directory: $(pwd)"
 
 # Check if big.txt exists
