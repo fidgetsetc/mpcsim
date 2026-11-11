@@ -2177,29 +2177,38 @@ const DEFAULT_APPS = [
     iconUrl: 'https://cdn.jsdelivr.net/gh/daknux/covers@main/72.png',
     resolution: 100
   },
-
+  {
+    id: 'app-te',
+    name: 'TossIt',
+    url: './te/index.html',
+    icon: 'gamepad',
+    cat: 'Games',
+    iconUrl: './te/index.png',
+    resolution: 100
+  },
 ];
 const DEFAULT_TILES = [
-  {id:'tl0',appId:'app-suggest', size:'medium',   group:'System',        color:'#2d7d9a'},
-  {id:'tl1',appId:'app-desk', size:'wide',   group:'System',        color:'#2d7d9a'},
-  {id:'tl2',appId:'app-set', size:'wide',   group:'System',        color:'#2d7d9a'},
-  {id:'tl3',appId:'app-mc262', size:'medium',   group:'Games',        color:'#2d7d9a'},
-  {id:'tl4',appId:'app-calc', size:'medium',   group:'Tools and Utilities',        color:'#2d7d9a'},
-  {id:'tl5',appId:'app-yt', size:'medium',   group:'Entertainment',        color:'#2d7d9a'},
-  {id:'tl6',appId:'app-ppt', size:'small',   group:'Office',        color:'#2d7d9a'},
-  {id:'tl7',appId:'app-ai', size:'wide',   group:'Chat',        color:'#2d7d9a'},
-  {id:'tl8',appId:'app-term', size:'medium',   group:'System',        color:'#0c0c0c'},
-  {id:'tl9',appId:'app-crash', size:'medium',   group:'Games',        color:'#e74856'},
-  {id:'tl10',appId:'app-xwp', size:'medium',   group:'Tools and Utilities',        color:'#8e44ad'},
-  {id:'tl11',appId:'app-plug', size:'medium',   group:'Tools and Utilities',        color:'#744da9'},
+  {id:'tl0',appId:'app-suggest', size:'small',   group:'Apps',        color:'#2d7d9a'},
+  {id:'tl1',appId:'app-desk', size:'small',   group:'Apps',        color:'#2d7d9a'},
+  {id:'tl2',appId:'app-set', size:'small',   group:'Apps',        color:'#2d7d9a'},
+  {id:'tl3',appId:'app-mc262', size:'smll',   group:'Apps',        color:'#2d7d9a'},
+  {id:'tl4',appId:'app-calc', size:'small',   group:'Apps',        color:'#2d7d9a'},
+  {id:'tl5',appId:'app-yt', size:'small',   group:'Apps',        color:'#2d7d9a'},
+  {id:'tl6',appId:'app-ppt', size:'small',   group:'Apps',        color:'#2d7d9a'},
+  {id:'tl7',appId:'app-ai', size:'small',   group:'Apps',        color:'#2d7d9a'},
+  {id:'tl8',appId:'app-term', size:'small',   group:'Apps',        color:'#0c0c0c'},
+  {id:'tl9',appId:'app-crash', size:'small',   group:'Apps',        color:'#e74856'},
+  {id:'tl10',appId:'app-xwp', size:'small',   group:'Apps',        color:'#8e44ad'},
+  {id:'tl11',appId:'app-plug', size:'small',   group:'Apps',        color:'#744da9'},
 
 ];
 const DEFAULT_DICONS = [
   {id:'di1',appId:'app-ie'},
   {id:'di3',appId:'app-set'},
   {id:'di4',appId:'app-term'},
+  {id:'di5',appId:'app-xwp'},
 ];
-const DEFAULT_GROUPS = ['Web & Social','Productivity','Entertainment','Tools','System'];
+const DEFAULT_GROUPS = ['Apps'];
 
 const BOOT={plugins:true,guest:false,oneApp:null,quick:false,quickVideo:null};   // quickVideo: true/false = chosen in the boot manager, null = ask at quick boot
 try{ // default boot options chosen in the boot menu for future boots
