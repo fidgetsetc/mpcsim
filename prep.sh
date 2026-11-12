@@ -141,6 +141,9 @@ while true; do
         verify)
             npx surge verify
             ;;
+        clean)
+            rm -rf ~/byod/win81
+            ;;
         help)
             echo "Available commands:"
             echo "  deploy     Run deployment"
@@ -149,6 +152,7 @@ while true; do
             echo "  verify     Verify Surge account"
             echo "  help       Show this help"
             echo "  exit       Exit BYOD shell"
+            echo "  clean      Required: Clean up cache from deployment, required before deploying another time"
             ;;
         exit|quit)
             break

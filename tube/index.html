@@ -394,6 +394,9 @@
         .save-row.saved .save-icon { border-color: #3ea6ff; background: #1a3a5c; }
         .save-note { font-size: 12px; color: #666; margin-top: 4px; }
 
+        /* Direct video sources */
+        .direct-src-url { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 300px; }
+
         /* ── Shorts ── */
         #shorts-holder { position: fixed; left: -9999px; top: 0; width: 2px; height: 2px; opacity: 0; pointer-events: none; overflow: hidden; }
         #shorts-root { position: absolute; inset: 0; background: #0f0f0f; }
@@ -580,7 +583,7 @@ const state = {
     view: 'home',      // home | search | player | settings | saved | savedPlayer
     selectedItem: null,
     searchQuery: '',
-    ytMethod: 'manual',
+    ytMethod: 'direct',
     ytInstance: 'https://invidious.f5.si',
     isLoading: false,
     feedLoading: false,
@@ -599,6 +602,42 @@ function saveFeedQueries(q) {
 let feedQueries = loadFeedQueries() || ['youtube'];
 
 const db = { feed: [], search: [] };
+
+// ─── Direct video sources (hardcoded) ─────────────────────────────────────────
+// Add direct links per video ID here. Up to 3 sources per ID; empty strings are ignored,
+// so leave unused slots as '' (or just list fewer). Used by the "Direct links" playback method;
+// videos not listed here fall back to YouTube 720p.
+const DIRECT_MAX = 3;
+const DIRECT_SOURCES = {
+    // 'VIDEO_ID': ['https://example.com/a.mp4', 'https://example.com/b.mp4', 'https://example.com/c.mp4'],
+    // 'VIDEO_ID': ['https://example.com/only-one.mp4', '', ''],
+};
+function getDirectSources(id) {
+    const l = DIRECT_SOURCES[id];
+    if (!Array.isArray(l)) return [];
+    return l.map(u => String(u || '').trim())
+            .filter((u, i, a) => /^https?:\/\/\S+$/i.test(u) && a.indexOf(u) === i)
+            .slice(0, DIRECT_MAX);
+}
+function directSidebarHTML(item) {
+    if (state.ytMethod !== 'direct') return '';
+    const list = getDirectSources(item.id);
+    if (!list.length) return `
+        <h3 style="margin-top:24px">Direct sources</h3>
+        <div class="settings-desc">No direct sources are set for this video, so it's playing through YouTube 720p.</div>`;
+    return `
+        <h3 style="margin-top:24px">Direct sources</h3>
+        <div class="settings-desc" style="margin-bottom:8px">Tap a source to switch. A failing source falls through to the next automatically.</div>
+        ${list.map((u, i) => `
+        <div class="method-option" id="dsrc-${i}" onclick="pickDirectSource && pickDirectSource(${i})">
+            <div class="method-radio"></div>
+            <div style="min-width:0">
+                <div class="method-label">Source ${i + 1}</div>
+                <div class="method-desc direct-src-url">${esc(u)}</div>
+            </div>
+        </div>`).join('')}`;
+}
+let pickDirectSource = null;   // set by the player while a direct source is playing
 
 // ─── Proxy ────────────────────────────────────────────────────────────────────
 const PROXY = 'https://swp.scrappywriter.workers.dev/?url=';
@@ -1088,10 +1127,14 @@ function renderGrid(items, loading, heading) {
 function renderPlayer() {
     const item = state.selectedItem;
     let playerHTML = '';
-    const is720 = state.ytMethod !== 'pre';
+    // "Direct links" plays the user's own sources for this ID; without any it falls back to YouTube 720p.
+    const directList = state.ytMethod === 'direct' ? getDirectSources(item.id) : [];
+    const isDirect = directList.length > 0;
+    const is720 = !isDirect && state.ytMethod !== 'pre';
     const mediaInstances = getMediaInstances();
-    const videoUrl = mediaUrl(mediaInstances[0], item.id, is720 ? 136 : 18);
+    const videoUrl = isDirect ? proxied(directList[0]) : mediaUrl(mediaInstances[0], item.id, is720 ? 136 : 18);
     const audioUrl = is720 ? mediaUrl(mediaInstances[0], item.id, 140) : '';
+    const errBtn = isDirect ? ['manual', 'Use YouTube instead'] : is720 ? ['pre', 'Switch to 360p'] : ['manual', 'Try 720p'];
     playerHTML = `
         <div id="yt-custom-player" class="ytcp" style="position:relative;width:100%;height:100%;background:#000;overflow:hidden;user-select:none" oncontextmenu="return false">
             <video id="yt-dash-video" style="position:absolute;inset:0;width:100%;height:100%;object-fit:contain" ${is720 ? 'muted' : ''} playsinline preload="auto" src="${videoUrl}" controlsList="nodownload noremoteplayback" disablePictureInPicture disableRemotePlayback></video>
@@ -1101,7 +1144,7 @@ function renderPlayer() {
             <div id="ytcp-error" class="ytcp-overlay ytcp-error ytcp-hidden">
                 <i class="fa fa-triangle-exclamation" style="font-size:36px;color:#fbbf24"></i>
                 <div id="ytcp-error-msg" style="color:#f1f1f1;font-size:14px"></div>
-                <button onclick="setYTMethod('${is720 ? 'pre' : 'manual'}')">${is720 ? 'Switch to 360p' : 'Try 720p'}</button>
+                <button onclick="setYTMethod('${errBtn[0]}')">${errBtn[1]}</button>
             </div>
             <div id="ytcp-controls" class="ytcp-controls">
                 <div id="ytcp-progress" class="ytcp-progress">
@@ -1118,7 +1161,7 @@ function renderPlayer() {
                     <span id="ytcp-time" class="ytcp-time">0:00 / 0:00</span>
                     <span style="flex:1"></span>
                     <button id="ytcp-cc" class="ytcp-btn ytcp-hidden" title="Captions"><i class="fa fa-closed-captioning"></i></button>
-                    <span class="ytcp-badge">${is720 ? '720p' : '360p'}</span>
+                    <span class="ytcp-badge">${isDirect ? 'Direct' : is720 ? '720p' : '360p'}</span>
                     <button id="ytcp-fs" class="ytcp-btn"><i id="ytcp-fs-icon" class="fa fa-expand"></i></button>
                 </div>
             </div>
@@ -1150,6 +1193,14 @@ function renderPlayer() {
                         <div class="method-desc">360p — single combined stream, more compatible</div>
                     </div>
                 </div>
+                <div class="method-option ${state.ytMethod === 'direct' ? 'selected' : ''}" onclick="setYTMethod('direct')">
+                    <div class="method-radio"></div>
+                    <div>
+                        <div class="method-label">Direct links</div>
+                        <div class="method-desc">Your own video links for this ID (up to ${DIRECT_MAX})</div>
+                    </div>
+                </div>
+                ${directSidebarHTML(item)}
                 ${saveSectionHTML(item)}
                 ${playlistSidebarHTML(item)}
             </div>
@@ -1265,7 +1316,15 @@ function renderSettings() {
                         <div class="method-desc">Single combined stream. More compatible, lower quality.</div>
                     </div>
                 </div>
+                <div class="method-option ${state.ytMethod === 'direct' ? 'selected' : ''}" onclick="setYTMethod('direct')" style="border:1px solid #272727;border-radius:8px;margin-top:8px">
+                    <div class="method-radio"></div>
+                    <div>
+                        <div class="method-label">Direct links</div>
+                        <div class="method-desc">Play direct video links hardcoded for specific video IDs (DIRECT_SOURCES in the code). Videos without links use YouTube 720p.</div>
+                    </div>
+                </div>
             </div>
+
         </div>
     `;
 }
@@ -1668,11 +1727,16 @@ function attachManualSyncLogic() {
     if (!root || !vid) return;
     const hasAudio = !!aud;
     const itagV = hasAudio ? 136 : 18;
+    const directList = state.ytMethod === 'direct' ? getDirectSources(state.selectedItem.id) : [];
+    const isDirect = directList.length > 0;           // direct links: one self-contained file per source, no audio element
     const qualityLabel = hasAudio ? '720p' : '360p';
 
-    const instances = getMediaInstances();
+    const instances = isDirect ? directList.map(proxied) : getMediaInstances();
     let instanceIdx = 0, errIdx = -1;
-
+    function markDirect() {
+        if (!isDirect) return;
+        instances.forEach((_, i) => { const el = document.getElementById('dsrc-' + i); if (el) el.classList.toggle('selected', i === instanceIdx); });
+    }
     const HIDDEN = 'ytcp-hidden';
     const START_BUFFER = 1.5;
     const ui = {
@@ -1747,8 +1811,9 @@ function attachManualSyncLogic() {
         if (destroyed) return;
         const base = instances[idx], id = state.selectedItem.id, ct = vid.currentTime || 0;
         pauseBoth(); lastAlignVt = -1; lastLoadAt = performance.now();
-        vid.src = mediaUrl(base, id, itagV);
+        vid.src = isDirect ? base : mediaUrl(base, id, itagV);
         if (hasAudio) aud.src = mediaUrl(base, id, 140);
+        markDirect();
         vid.load(); if (hasAudio) aud.load();
         const onMeta = () => { vid.currentTime = ct; vid.removeEventListener('loadedmetadata', onMeta); };
         vid.addEventListener('loadedmetadata', onMeta);
@@ -1767,7 +1832,7 @@ function attachManualSyncLogic() {
             ui.error.classList.add(HIDDEN);
             loadInstance(instanceIdx);
         } else {
-            fail("Couldn't load the " + qualityLabel + " stream from any Invidious server.");
+            fail(isDirect ? "Couldn't load any of the direct sources for this video." : "Couldn't load the " + qualityLabel + " stream from any Invidious server.");
         }
     };
     vid.addEventListener('error', onMediaError);
@@ -1808,7 +1873,7 @@ function attachManualSyncLogic() {
 
         if (!playing && (vid.readyState === 0 || (hasAudio && aud.readyState === 0)) && performance.now() - lastLoadAt > 25000) {
             if (instanceIdx + 1 < instances.length) { instanceIdx++; loadInstance(instanceIdx); }
-            else fail('All Invidious servers timed out on the ' + qualityLabel + ' stream.');
+            else fail(isDirect ? 'All direct sources timed out.' : 'All Invidious servers timed out on the ' + qualityLabel + ' stream.');
         }
         updateUI(dur, vt);
     }
@@ -1869,11 +1934,20 @@ function attachManualSyncLogic() {
     document.addEventListener('fullscreenchange', onFs);
     document.addEventListener('webkitfullscreenchange', onFs);
 
+    if (isDirect) {
+        pickDirectSource = i => {
+            if (destroyed || i < 0 || i >= instances.length) return;
+            instanceIdx = i; errIdx = -1; failed = false; ended = false; wantPlay = true;
+            ui.error.classList.add(HIDDEN);
+            loadInstance(i); showControls();
+        };
+        markDirect();
+    }
     applyVolume(); showControls();
     const interval = setInterval(tick, 120); tick();
 
     ytPlayerCleanup = () => {
-        destroyed = true; clearInterval(interval); clearTimeout(hideTimer); clearTimeout(clickTimer);
+        destroyed = true; pickDirectSource = null; clearInterval(interval); clearTimeout(hideTimer); clearTimeout(clickTimer);
         document.removeEventListener('keydown', onKey);
         document.removeEventListener('fullscreenchange', onFs);
         document.removeEventListener('webkitfullscreenchange', onFs);

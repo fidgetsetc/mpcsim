@@ -843,6 +843,207 @@ body[data-color-mode="light"] #grub .g-box{border-color:#c0c0c0}
 body[data-color-mode="light"] #grub .g-row{color:#424242}
 body[data-color-mode="light"] #grub .g-row.sel{background:#c0c0c0;color:#fff}
 body[data-color-mode="light"] #grub .g-help{color:#616161}
+
+/* ── Setup wizard ── */
+#setup{position:fixed;inset:0;z-index:10003;display:none;background:#000;color:#fff;font-family:'Segoe UI',sans-serif;--sa:#0078d4;overflow:hidden}
+#setup.on{display:block}
+#setup input,#setup button,#setup select{font-family:inherit}
+#setup input[type=text],#setup input[type=url],#setup input[type=search]{user-select:text;-webkit-user-select:text}
+#setup-bg{position:absolute;inset:-4%;background:center/cover no-repeat;filter:blur(16px) brightness(.5) saturate(1.1);opacity:0;transition:opacity 1.2s,background-image .6s}
+#setup.reveal #setup-bg{opacity:1}
+
+/* intro animation */
+#setup-intro{position:absolute;inset:0;z-index:5;background:#000;display:flex;align-items:center;justify-content:center;cursor:pointer;transition:opacity .9s .15s}
+#setup.reveal #setup-intro{opacity:0;pointer-events:none}
+.si-rings{position:absolute;left:50%;top:50%;width:0;height:0}
+.si-rings i{position:absolute;left:-210px;top:-210px;width:420px;height:420px;border-radius:50%;border:2px solid var(--sa);opacity:0;animation:si-ring 4.2s cubic-bezier(.2,.6,.3,1) infinite}
+.si-rings i:nth-child(2){animation-delay:1.4s;border-color:rgba(255,255,255,.55)}
+.si-rings i:nth-child(3){animation-delay:2.8s}
+@keyframes si-ring{0%{transform:scale(.15);opacity:0}25%{opacity:.85}100%{transform:scale(3.4);opacity:0}}
+.si-orb{position:absolute;left:50%;top:calc(50% + 88px);width:10px;height:10px;margin:-5px;border-radius:50%;background:var(--sa);box-shadow:0 0 40px 12px var(--sa);animation:si-orb 2.4s ease-in-out infinite}
+@keyframes si-orb{0%,100%{transform:scale(.8);opacity:.7}50%{transform:scale(1.5);opacity:1}}
+#si-text{position:relative;font-size:60px;font-weight:200;letter-spacing:1px;text-align:center;padding:0 24px;animation:si-greet .8s ease both}
+#si-text.final{font-size:40px;font-weight:300}
+@keyframes si-greet{0%{opacity:0;transform:translateY(14px);filter:blur(6px)}25%,75%{opacity:1;transform:none;filter:none}100%{opacity:0;transform:translateY(-10px);filter:blur(4px)}}
+#si-text.final{animation:si-final 1.4s ease both}
+@keyframes si-final{0%{opacity:0;transform:scale(.94);filter:blur(6px)}35%{opacity:1;transform:none;filter:none}100%{opacity:1;transform:none}}
+#si-skip{position:absolute;bottom:26px;left:0;right:0;text-align:center;font-size:11px;letter-spacing:3px;text-transform:uppercase;color:rgba(255,255,255,.32)}
+
+/* shell */
+#setup-shell{position:absolute;left:50%;top:50%;width:min(1080px,94%);height:min(680px,90%);display:flex;border-radius:14px;overflow:hidden;background:rgba(14,18,26,.8);backdrop-filter:blur(24px);-webkit-backdrop-filter:blur(24px);box-shadow:0 24px 80px rgba(0,0,0,.6),0 0 0 1px rgba(255,255,255,.08);opacity:0;transform:translate(-50%,-47%) scale(.95);transition:opacity .9s .35s,transform .9s .35s cubic-bezier(.2,.8,.3,1)}
+#setup.reveal #setup-shell{opacity:1;transform:translate(-50%,-50%) scale(1)}
+#setup.closing #setup-shell{opacity:0;transform:translate(-50%,-52%) scale(1.03);transition:opacity .5s,transform .5s}
+#setup-side{width:240px;flex-shrink:0;background:rgba(0,0,0,.28);padding:26px 18px;display:flex;flex-direction:column;gap:22px;border-right:1px solid rgba(255,255,255,.07)}
+.ss-logo{width:42px;height:42px;border-radius:10px;background:var(--sa);display:flex;align-items:center;justify-content:center;font-size:20px;box-shadow:0 4px 16px rgba(0,0,0,.35)}
+#setup-steps{list-style:none;display:flex;flex-direction:column;gap:2px;overflow:auto}
+#setup-steps li{display:flex;align-items:center;gap:11px;padding:8px 10px;border-radius:6px;font-size:13px;color:rgba(255,255,255,.45);transition:color .2s,background .2s}
+#setup-steps li b{width:22px;height:22px;border-radius:50%;border:1.5px solid rgba(255,255,255,.3);display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:600;flex-shrink:0}
+#setup-steps li.done{color:rgba(255,255,255,.7)}
+#setup-steps li.done b{background:var(--sa);border-color:var(--sa);color:#fff}
+#setup-steps li.cur{color:#fff;background:rgba(255,255,255,.09)}
+#setup-steps li.cur b{border-color:var(--sa);color:#fff;box-shadow:0 0 0 3px color-mix(in srgb,var(--sa) 35%,transparent)}
+#setup-main{flex:1;min-width:0;display:flex;flex-direction:column;padding:30px 36px 22px}
+#setup-title{font-size:28px;font-weight:300;letter-spacing:.2px;flex-shrink:0}
+#setup-sub{font-size:13px;color:rgba(255,255,255,.6);margin-top:6px;line-height:1.5;flex-shrink:0;min-height:1px}
+#setup-body{flex:1;min-height:0;overflow-y:auto;overflow-x:hidden;margin:20px -10px 0 0;padding:2px 10px 6px 2px;animation:s-swap .35s ease both}
+#setup-body::-webkit-scrollbar{width:6px}#setup-body::-webkit-scrollbar-thumb{background:rgba(255,255,255,.22);border-radius:3px}
+@keyframes s-swap{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:none}}
+#setup-foot{display:flex;align-items:center;gap:10px;padding-top:16px;flex-shrink:0}
+#setup-exit{margin-right:auto;font-size:11px;color:rgba(255,255,255,.35);cursor:pointer;padding:6px 4px}
+#setup-exit:hover{color:rgba(255,255,255,.75);text-decoration:underline}
+.sbtn{background:rgba(255,255,255,.12);border:1px solid rgba(255,255,255,.16);color:#fff;padding:9px 22px;font-size:13px;border-radius:6px;cursor:pointer;transition:background .15s,transform .1s}
+.sbtn:hover{background:rgba(255,255,255,.2)}
+.sbtn:active{transform:scale(.97)}
+.sbtn.primary{background:var(--sa);border-color:var(--sa)}
+.sbtn.primary:hover{filter:brightness(1.15);background:var(--sa)}
+.sbtn.big{padding:13px 34px;font-size:15px;min-width:280px}
+.sbtn:disabled{opacity:.4;pointer-events:none}
+
+/* welcome */
+#setup.welcome #setup-side,#setup.welcome #setup-foot,#setup.welcome #setup-sub{display:none}
+#setup.welcome #setup-shell{width:min(760px,94%);height:min(460px,90%)}
+#setup.welcome #setup-main{align-items:center;justify-content:center;text-align:center}
+#setup.welcome #setup-title{font-size:52px;font-weight:200;letter-spacing:1px}
+#setup.welcome #setup-body{flex:0 0 auto;overflow:visible;margin:28px 0 0;padding:0}
+.sw-sub{font-size:15px;color:rgba(255,255,255,.65);margin:2px 0 26px}
+.sw-btns{display:flex;flex-direction:column;align-items:center;gap:12px;margin-top:6px}
+.sw-err{color:#ff8a8a;font-size:12px;min-height:16px;margin-top:10px}
+
+/* common widgets */
+.s-lbl{display:block;font-size:11px;letter-spacing:1.4px;text-transform:uppercase;color:rgba(255,255,255,.5);margin:18px 0 8px}
+.s-lbl:first-child{margin-top:0}
+.sinp{width:100%;background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.14);border-bottom:2px solid rgba(255,255,255,.35);color:#fff;padding:10px 12px;font-size:14px;border-radius:4px;outline:none}
+.sinp:focus{border-bottom-color:var(--sa);background:rgba(255,255,255,.12)}
+.sinp::placeholder{color:rgba(255,255,255,.38)}
+.s-row{display:flex;align-items:center;gap:12px;padding:12px 4px;border-bottom:1px solid rgba(255,255,255,.07)}
+.s-row>div:first-child{flex:1}
+.s-row b{display:block;font-weight:400;font-size:14px}
+.s-row small{display:block;font-size:12px;color:rgba(255,255,255,.5);margin-top:2px}
+.s-seg{display:flex;border:1px solid rgba(255,255,255,.2);border-radius:5px;overflow:hidden}
+.s-seg button{background:none;border:none;color:rgba(255,255,255,.65);padding:7px 16px;font-size:12px;cursor:pointer}
+.s-seg button+button{border-left:1px solid rgba(255,255,255,.2)}
+.s-seg button.sel{background:var(--sa);color:#fff}
+.s-tog{width:42px;height:22px;border-radius:11px;background:rgba(255,255,255,.2);border:none;position:relative;cursor:pointer;flex-shrink:0;transition:background .2s}
+.s-tog::after{content:'';position:absolute;left:3px;top:3px;width:16px;height:16px;border-radius:50%;background:#fff;transition:left .2s}
+.s-tog.on{background:var(--sa)}.s-tog.on::after{left:23px}
+#setup input[type=range]{accent-color:var(--sa);cursor:pointer}
+
+/* owner */
+.so-wrap{display:flex;gap:30px;align-items:flex-start;flex-wrap:wrap}
+.so-pic{display:flex;flex-direction:column;align-items:center;gap:12px;width:170px}
+.so-av{width:130px;height:130px;border-radius:50%;background:rgba(255,255,255,.1);border:2px solid rgba(255,255,255,.2);display:flex;align-items:center;justify-content:center;font-size:58px;color:rgba(255,255,255,.55);overflow:hidden}
+.so-av img{width:100%;height:100%;object-fit:cover}
+.so-form{flex:1;min-width:240px}
+
+/* choice cards */
+.s-cards{display:grid;grid-template-columns:repeat(2,1fr);gap:16px}
+.s-choice{background:rgba(255,255,255,.07);border:2px solid transparent;border-radius:10px;padding:26px 22px;cursor:pointer;color:#fff;text-align:left;display:flex;flex-direction:column;gap:8px;transition:background .15s,border-color .15s,transform .15s}
+.s-choice:hover{background:rgba(255,255,255,.12);transform:translateY(-2px)}
+.s-choice.sel{border-color:var(--sa);background:color-mix(in srgb,var(--sa) 22%,rgba(255,255,255,.06))}
+.s-choice i{font-size:34px;color:var(--sa);margin-bottom:6px}
+.s-choice b{font-size:18px;font-weight:400}
+.s-choice span{font-size:13px;color:rgba(255,255,255,.6);line-height:1.5}
+
+/* wallpapers */
+.swp-bar{display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin-bottom:14px}
+.swp-bar .sinp{max-width:240px}
+.s-chip{background:rgba(255,255,255,.09);border:1px solid rgba(255,255,255,.14);color:rgba(255,255,255,.8);padding:5px 13px;border-radius:14px;font-size:12px;cursor:pointer}
+.s-chip:hover{background:rgba(255,255,255,.16)}
+.s-chip.sel{background:var(--sa);border-color:var(--sa);color:#fff}
+.swp-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:12px}
+.swp{position:relative;aspect-ratio:16/10;border-radius:7px;overflow:hidden;border:2px solid transparent;background:rgba(255,255,255,.07);cursor:pointer;padding:0;transition:transform .15s,border-color .15s}
+.swp:hover{transform:scale(1.03)}
+.swp.sel{border-color:var(--sa);box-shadow:0 0 0 2px var(--sa)}
+.swp img{width:100%;height:100%;object-fit:cover;display:block}
+.swp.bad img{visibility:hidden}
+.swp span{position:absolute;left:0;right:0;bottom:0;padding:16px 8px 5px;font-size:11px;color:#fff;text-align:left;background:linear-gradient(transparent,rgba(0,0,0,.8));white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.swp.sel::after{content:'\2713';position:absolute;top:6px;right:6px;width:22px;height:22px;border-radius:50%;background:var(--sa);display:flex;align-items:center;justify-content:center;font-size:12px}
+.s-msg{padding:40px 10px;text-align:center;color:rgba(255,255,255,.65);font-size:14px;line-height:1.7}
+.s-msg .sbtn{margin:6px 4px 0}
+.s-spin{width:34px;height:34px;border:3px solid rgba(255,255,255,.2);border-top-color:var(--sa);border-radius:50%;margin:0 auto 14px;animation:s-rot .8s linear infinite}
+@keyframes s-rot{to{transform:rotate(360deg)}}
+.s-check{display:flex;align-items:center;gap:8px;font-size:12px;color:rgba(255,255,255,.65);margin-top:14px;cursor:pointer}
+.s-check input{accent-color:var(--sa)}
+
+/* theme previews */
+.sth-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:16px}
+.sth{background:rgba(255,255,255,.07);border:2px solid transparent;border-radius:10px;padding:10px;cursor:pointer;color:#fff;text-align:center;transition:background .15s,border-color .15s,transform .15s}
+.sth:hover{background:rgba(255,255,255,.12);transform:translateY(-2px)}
+.sth.sel{border-color:var(--sa);background:color-mix(in srgb,var(--sa) 20%,rgba(255,255,255,.06))}
+.sth span{display:block;margin-top:9px;font-size:13px}
+.pv{position:relative;aspect-ratio:16/10;border-radius:6px;overflow:hidden;background:#27415f center/cover no-repeat;box-shadow:inset 0 0 0 1px rgba(255,255,255,.1)}
+.pv i{position:absolute;display:block}
+
+/* accent */
+.sac-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(46px,1fr));gap:8px;max-width:560px}
+.sac{aspect-ratio:1;border-radius:6px;border:2px solid transparent;cursor:pointer;padding:0;transition:transform .12s}
+.sac:hover{transform:scale(1.1)}
+.sac.sel{border-color:#fff;box-shadow:0 0 0 2px rgba(0,0,0,.5) inset}
+.sac-custom{display:flex;align-items:center;gap:10px;margin-top:12px;font-size:12px;color:rgba(255,255,255,.65)}
+.sac-custom input{width:46px;height:30px;border:none;background:none;padding:0;cursor:pointer}
+.sac-demo{margin-top:18px;padding:16px;border-radius:8px;background:rgba(0,0,0,.25);display:flex;align-items:center;gap:16px;flex-wrap:wrap}
+.sac-demo .sbtn{background:var(--sa);border-color:var(--sa)}
+.sac-demo u{color:var(--sa);font-size:13px;text-decoration:none;border-bottom:1px solid var(--sa)}
+.sac-bar{flex:1;min-width:120px;height:5px;border-radius:3px;background:rgba(255,255,255,.18);overflow:hidden}
+.sac-bar i{display:block;width:62%;height:100%;background:var(--sa)}
+.spat-grid{display:flex;gap:10px;flex-wrap:wrap}
+.spat{border:2px solid transparent;border-radius:6px;overflow:hidden;cursor:pointer;background:none;padding:0;color:#fff;font-size:11px;text-align:center}
+.spat canvas{display:block;width:96px;height:60px}
+.spat span{display:block;padding:4px 0;background:rgba(0,0,0,.4)}
+.spat.sel{border-color:#fff}
+
+/* plugins */
+.spl-frame{width:100%;height:100%;min-height:340px;border:1px solid rgba(255,255,255,.15);border-radius:8px;background:#fff}
+#setup-body.fill{display:flex;flex-direction:column;overflow:hidden}
+#setup-body.fill .spl-note{font-size:12px;color:rgba(255,255,255,.5);margin-top:8px}
+
+/* resolution */
+.sr-tabs{margin-bottom:18px;display:inline-flex}
+.sr-big{font-size:42px;font-weight:200;margin:6px 0 2px}
+.sr-hint{font-size:12px;color:rgba(255,255,255,.55);line-height:1.5}
+.sr-ends{display:flex;justify-content:space-between;font-size:11px;letter-spacing:1px;text-transform:uppercase;color:rgba(255,255,255,.45);margin-top:4px}
+.sr-slider{width:100%;margin-top:14px}
+.sr-chips{display:flex;gap:8px;flex-wrap:wrap;margin-top:16px}
+.sr-demo{margin-top:20px;padding:14px;background:rgba(0,0,0,.25);border-radius:8px;font-size:12px;color:rgba(255,255,255,.6)}
+
+/* apps table */
+.sa-top{display:flex;gap:10px;align-items:center;margin-bottom:10px;flex-wrap:wrap}
+.sa-top .sinp{max-width:230px}
+.sa-head,.sa-row{display:grid;grid-template-columns:1fr 70px 70px 70px;align-items:center;gap:6px;padding:7px 8px}
+.sa-head{font-size:11px;letter-spacing:1px;text-transform:uppercase;color:rgba(255,255,255,.5);position:sticky;top:-2px;background:rgba(18,22,30,.96);z-index:2}
+.sa-head button{background:none;border:none;color:inherit;font:inherit;letter-spacing:inherit;text-transform:inherit;cursor:pointer;text-align:center}
+.sa-head button:hover{color:#fff;text-decoration:underline}
+.sa-head span:not(:first-child){text-align:center}
+.sa-row{border-bottom:1px solid rgba(255,255,255,.06);font-size:13px}
+.sa-row:hover{background:rgba(255,255,255,.05)}
+.sa-name{display:flex;align-items:center;gap:10px;min-width:0}
+.sa-name>span{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.sa-ico{width:26px;height:26px;display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:16px;color:#fff}
+.sa-ico img{width:24px;height:24px;object-fit:contain}
+.sa-cell{display:flex;justify-content:center}
+.sa-cell .s-tog{transform:scale(.8)}
+
+/* done */
+#setup-done{position:absolute;inset:0;z-index:6;display:none;flex-direction:column;align-items:center;justify-content:center;gap:20px;background:rgba(0,0,0,.55);backdrop-filter:blur(8px);opacity:0}
+#setup.finishing #setup-done{display:flex;animation:s-fade .5s ease forwards}
+@keyframes s-fade{to{opacity:1}}
+.sd-ring{width:92px;height:92px;border-radius:50%;border:4px solid var(--sa);display:flex;align-items:center;justify-content:center;font-size:40px;animation:sd-pop .7s cubic-bezier(.2,1.4,.4,1) both}
+@keyframes sd-pop{from{transform:scale(.3);opacity:0}to{transform:none;opacity:1}}
+#sd-text{font-size:28px;font-weight:200;letter-spacing:.5px;animation:s-swap .6s .25s both}
+#setup.out{opacity:0;transition:opacity .6s}
+
+/* small virtual resolutions */
+#setup.compact #setup-shell{width:100%;height:100%;border-radius:0}
+#setup.compact #setup-side{display:none}
+#setup.compact #setup-main{padding:18px 18px 14px}
+#setup.compact #setup-title{font-size:22px}
+#setup.compact.welcome #setup-title{font-size:38px}
+#setup.compact .s-cards{grid-template-columns:1fr}
+#setup.compact #si-text{font-size:40px}
+
+#setup-video{position:absolute;inset:0;width:100%;height:100%;object-fit:fill;background:#000;pointer-events:none;display:none}
+#setup-intro.has-video .si-rings,#setup-intro.has-video .si-orb,#setup-intro.has-video #si-text{display:none}
+#setup-intro.has-video #si-skip{z-index:2;color:rgba(255,255,255,.18)}
 </style>
 <script src="./plugins/builtin.js"></script>
 </head>
@@ -872,6 +1073,36 @@ body[data-color-mode="light"] #grub .g-help{color:#616161}
 
 <!-- Boot menu -->
 <div id="grub"></div>
+
+<!-- Setup wizard (first run) -->
+<div id="setup">
+  <div id="setup-bg"></div>
+  <div id="setup-intro" onclick="setupReveal()">
+    <video id="setup-video" playsinline preload="auto" disablepictureinpicture></video>
+    <div class="si-rings"><i></i><i></i><i></i></div>
+    <div class="si-orb"></div>
+    <div id="si-text"></div>
+    <div id="si-skip">Click to skip</div>
+  </div>
+  <div id="setup-shell">
+    <aside id="setup-side">
+      <div class="ss-logo"><i class="fa-solid fa-grip"></i></div>
+      <ol id="setup-steps"></ol>
+    </aside>
+    <main id="setup-main">
+      <h1 id="setup-title"></h1>
+      <div id="setup-sub"></div>
+      <div id="setup-body"></div>
+      <div id="setup-foot">
+        <span id="setup-exit" onclick="setupExit()">Exit setup</span>
+        <button class="sbtn" id="setup-back" onclick="setupBack()">Back</button>
+        <button class="sbtn primary" id="setup-next" onclick="setupNext()">Next</button>
+      </div>
+    </main>
+  </div>
+  <div id="setup-done"><div class="sd-ring"><i class="fa-solid fa-check"></i></div><div id="sd-text"></div></div>
+  <input type="file" id="setup-cfg" accept=".json,application/json" style="display:none">
+</div>
 
 <!-- Lock Screen -->
 <div id="lockscreen">
@@ -1105,7 +1336,8 @@ body[data-color-mode="light"] #grub .g-help{color:#616161}
       <button class="btn-s" onclick="doExport()"><i class="fa fa-download"></i> Export</button>
       <button class="btn-s" onclick="document.getElementById('imp-file').click()"><i class="fa fa-upload"></i> Import</button>
       <input type="file" id="imp-file" accept=".json" style="display:none" onchange="doImport(this)">
-      <button class="btn-s" onclick="openModal('m-reset')" style="margin-right:auto;"><i class="fa fa-redo"></i> Reset</button>
+      <button class="btn-s" onclick="openModal('m-reset')"><i class="fa fa-redo"></i> Reset</button>
+      <button class="btn-s" onclick="closeModal();runSetupAgain()" style="margin-right:auto;"><i class="fa fa-wand-magic-sparkles"></i> Setup</button>
       <button class="btn-p" onclick="saveSettings()">Apply</button>
       <button class="btn-s" onclick="closeModal()">Cancel</button>
     </div>
@@ -2502,6 +2734,8 @@ function cr(c,w,h){c.strokeStyle='#fff';c.lineWidth=.7;for(let x=0;x<w;x+=26)for
 const VP={w:0,h:0};
 let vpReady=false; // the forced resolution only applies once the boot/loading screen is gone
 function parseViewport(v){
+  const pc=/^(\d{2,3})%$/.exec(v||'');   // a scale such as 125% (bigger % = bigger UI), worked out from the window size
+  if(pc){const s=+pc[1];if(s<50||s>400)return null;const w=Math.round(window.innerWidth*100/s),h=Math.round(window.innerHeight*100/s);return (w>=320&&h>=240)?{w,h}:null;}
   const m=/^(\d{3,5})x(\d{3,5})$/.exec(v||'');
   if(!m)return null;
   const w=+m[1],h=+m[2];
@@ -4683,6 +4917,7 @@ function bootFinish(){
   applyBootMode();startBootPlugins();
   bootPhase='done';
   vpReady=true;applyViewport();renderAll();
+  try{maybeStartSetup();}catch(e){console.error('setup wizard',e);}   // first-run setup wizard (covers the screen before the boot overlay fades)
   scheduleIconInvert();
   bootLaunchOneApp();
   setTimeout(flushNotifs,700);
@@ -4798,6 +5033,505 @@ document.addEventListener('keydown',e=>{
   if(e.key==='1'&&!e.repeat&&!grubUsed&&(bootPhase==='load'||bootPhase==='wait')){e.preventDefault();openGrub();return;}
   if(e.code==='Space'&&bootPhase!=='click'&&bootPhase!=='done'&&bootPhase!=='menu'){e.preventDefault();bootFinish();}
 },true);
+/* ══════════════════════════════════
+   SETUP WIZARD
+   Shows after startup until it is completed (localStorage 'mpc_setup_done').
+   Run it again any time: Personalize > Setup, or open the page with ?setup
+   (or call runSetupAgain() from the console).
+══════════════════════════════════ */
+const SETUP_KEY='mpc_setup_done';
+const SETUP_VIDEO='./setup.mp4';   // the setup start video (or change this path). If it is missing, the built-in animation plays instead.
+const SETUP_XWP_URL='./extrawp/index.html';   // the wizard reads  const WALLPAPERS=[{name,group,url},…]  from this page
+const SETUP_STEPS=[
+  {id:'start',  title:'Welcome'},
+  {id:'owner',  title:'Who owns this device?',   side:'Owner',      sub:'Choose a name and a picture for your account.'},
+  {id:'wpsrc',  title:'Select wallpaper source', side:'Wallpaper source', sub:'Where should your wallpaper come from?'},
+  {id:'wp',     title:'Select wallpaper',        side:'Wallpaper',  sub:''},
+  {id:'theme',  title:'Select theme',            side:'Theme',      sub:'A theme restyles the taskbar, menus, windows and more. You can change it later in Personalize.'},
+  {id:'accent', title:'Choose accent colors',    side:'Colors',     sub:''},
+  {id:'plugins',title:'Plugins',                 side:'Plugins',    sub:'Plugins add new features. Install anything you like, or skip this step.'},
+  {id:'res',    title:'Resolution',              side:'Resolution', sub:'Pick how big everything looks.'},
+  {id:'apps',   title:'Add apps',                side:'Apps',       sub:'Choose where each app should appear: the taskbar, the desktop and the Start menu.'},
+  {id:'misc',   title:'Misc setup',              side:'Final touches', sub:'A few last things.'},
+];
+const SETUP_GREETINGS=['Hello','Hola','Bonjour','こんにちは','Hallo','Ciao','안녕하세요'];
+const SETUP_RES=['640x360','800x600','1024x576','1024x768','1280x720','1366x768','1600x900','1920x1080','2560x1440','3840x2160'];
+const SETUP_SCALES=[100,110,125,150,175,200];
+const SETUP={step:0,src:'wp',running:false,xwp:null,xwpLoading:false,xwpErr:'',grp:'All',q:'',alsoStart:false,resMode:'res',appQ:'',timers:[],revealed:false,_vpOnResize:false};
+const sGet=id=>document.getElementById(id);
+function sEl(tag,cls,text){const e=document.createElement(tag);if(cls)e.className=cls;if(text!=null)e.textContent=text;return e;}
+function setupIsDone(){try{return localStorage.getItem(SETUP_KEY)==='1';}catch(e){return true;}}
+function setupMarkDone(){try{localStorage.setItem(SETUP_KEY,'1');}catch(e){}}
+
+/* ── start / stop ── */
+function maybeStartSetup(){
+  if(SETUP.running)return;
+  if(BOOT.guest||BOOT.oneApp)return;                       // guest / 1-app sessions never run setup
+  const forced=/[?&]setup(=|&|$)/.test(location.search);
+  if(!forced&&setupIsDone())return;
+  startSetup();
+}
+function runSetupAgain(){SETUP.running=false;startSetup();}
+function startSetup(){
+  SETUP.running=true;SETUP.step=0;SETUP.revealed=false;SETUP.timers.forEach(clearTimeout);SETUP.timers=[];
+  const root=sGet('setup');
+  root.className='on welcome';root.style.display='';
+  sGet('setup-done').style.removeProperty('display');
+  setupPaintBg();setupFit();setupRender();
+  if(!SETUP._vpOnResize){SETUP._vpOnResize=true;window.addEventListener('resize',setupFit);}
+  setupPlayIntro();
+}
+function setupFit(){const r=sGet('setup');if(r)r.classList.toggle('compact',vw()<820||vh()<520);}
+function setupPaintBg(){
+  const r=sGet('setup');r.style.setProperty('--sa',S.accent);
+  const bg=sGet('setup-bg');bg.style.backgroundColor=S.accent;
+  const u=S.desktopBgImage;bg.style.backgroundImage=u?`url("${String(u).replace(/["\\\n]/g,m=>encodeURIComponent(m))}")`:'none';
+}
+
+/* ── intro: plays SETUP_VIDEO (like the startup video); falls back to a built-in animation if the file is missing ── */
+function setupPlayIntro(){
+  const intro=sGet('setup-intro'),v=sGet('setup-video');
+  const id=SETUP.introId=(SETUP.introId||0)+1,live=()=>SETUP.introId===id&&SETUP.running&&!SETUP.revealed;
+  let started=false,settled=false,guard=null;
+  intro.style.display='';intro.classList.remove('has-video');v.style.display='none';
+  try{v.pause();}catch(e){}
+  const giveUp=()=>{                       // no video (or it would not play): use the built-in animation
+    if(settled||!live())return;settled=true;clearTimeout(guard);
+    try{v.pause();}catch(e){}v.style.display='none';intro.classList.remove('has-video');
+    setupPlayAnimation();
+  };
+  guard=setTimeout(()=>{if(!started)giveUp();},5000);
+  v.onplaying=()=>{if(!live())return;started=true;settled=true;clearTimeout(guard);v.style.display='block';intro.classList.add('has-video');};
+  v.onended=()=>{if(live())setupReveal();};
+  v.onerror=()=>{if(started){if(live())setupReveal();}else giveUp();};
+  v.muted=false;v.loop=false;v.src=SETUP_VIDEO;
+  try{v.load();}catch(e){}
+  const p=v.play();
+  if(p&&p.catch)p.catch(()=>{v.muted=true;const q=v.play();if(q&&q.catch)q.catch(giveUp);});   // sound blocked: retry silently
+}
+function setupPlayAnimation(){
+  const t=sGet('si-text');
+  const later=(fn,ms)=>{SETUP.timers.push(setTimeout(fn,ms));};
+  const show=(txt,final)=>{t.textContent=txt;t.className=final?'final':'';t.style.animation='none';void t.offsetWidth;t.style.animation='';};
+  later(()=>{show(SETUP_GREETINGS[0]);},700);
+  SETUP_GREETINGS.slice(1).forEach((g,k)=>later(()=>show(g),700+(k+1)*850));
+  const end=700+SETUP_GREETINGS.length*850;
+  later(()=>show("Let's get you set up",true),end);
+  later(setupReveal,end+1500);
+}
+function setupReveal(){
+  if(SETUP.revealed)return;SETUP.revealed=true;
+  SETUP.timers.forEach(clearTimeout);SETUP.timers=[];
+  sGet('setup').classList.add('reveal');
+  setTimeout(()=>{
+    if(!SETUP.revealed)return;
+    sGet('setup-intro').style.display='none';
+    const v=sGet('setup-video');try{v.pause();}catch(e){}v.style.display='none';v.removeAttribute('src');try{v.load();}catch(e){}
+  },1200);
+}
+
+/* ── shell / navigation ── */
+function setupRender(){
+  const st=SETUP_STEPS[SETUP.step],root=sGet('setup'),body=sGet('setup-body');
+  root.classList.toggle('welcome',SETUP.step===0);
+  let title=st.title,sub=st.sub||'';
+  if(st.id==='wp'){title=SETUP.src==='xwp'?'Select an extra wallpaper':'Select wallpaper';sub=SETUP.src==='xwp'?'Wallpapers from specific fandoms and more.':'Pick a background for your desktop.';}
+  if(st.id==='accent')sub=S.theme==='default'?'Pick an accent color, plus the Start screen color and pattern for the classic theme.':'Pick the color used for highlights, buttons and window borders.';
+  sGet('setup-title').textContent=title;sGet('setup-sub').textContent=sub;
+  body.className='';body.innerHTML='';body.style.animation='none';void body.offsetWidth;body.style.animation='';
+  setupBuildSteps();
+  SETUP_R[st.id](body);
+  const last=SETUP.step===SETUP_STEPS.length-1;
+  sGet('setup-back').style.visibility=SETUP.step<=1?'hidden':'visible';
+  sGet('setup-next').textContent=last?'Finish':'Next';
+  sGet('setup-body').scrollTop=0;
+}
+function setupBuildSteps(){
+  const ol=sGet('setup-steps');ol.innerHTML='';
+  SETUP_STEPS.forEach((s,i)=>{
+    if(i===0)return;
+    const li=sEl('li',i<SETUP.step?'done':i===SETUP.step?'cur':'');
+    const b=sEl('b',null,i<SETUP.step?'✓':String(i));li.appendChild(b);li.appendChild(sEl('span',null,s.side||s.title));
+    ol.appendChild(li);
+  });
+}
+function setupGo(n){
+  setupLeave();
+  SETUP.step=Math.max(0,Math.min(SETUP_STEPS.length-1,n));
+  try{saveS();}catch(e){}
+  setupRender();
+}
+function setupLeave(){
+  const id=SETUP_STEPS[SETUP.step].id;
+  if(id==='owner'){const n=sGet('so-name');if(n)S.username=n.value.trim()||'User';}
+}
+function setupNext(){if(SETUP.step>=SETUP_STEPS.length-1)setupFinish();else setupGo(SETUP.step+1);}
+function setupBack(){if(SETUP.step>1)setupGo(SETUP.step-1);}
+function setupExit(){
+  if(!confirm('Exit setup? Your choices so far are kept and setup will not show again. You can run it from Personalize > Setup.'))return;
+  setupLeave();setupFinish(true);
+}
+function setupFinish(quick,msg){
+  setupLeave();setupMarkDone();
+  try{saveS();}catch(e){}
+  try{applyViewport();applyTheme();tickClock();renderAll();renderWin7StartMenu();}catch(e){console.error(e);}
+  const root=sGet('setup');
+  const nm=(S.username&&S.username!=='User')?', '+S.username:'';
+  sGet('sd-text').textContent=msg||('All set'+nm+'!');
+  root.classList.add('finishing');
+  setTimeout(()=>{root.classList.add('out');},quick?500:1700);
+  setTimeout(()=>{root.className='';root.style.display='none';SETUP.running=false;},quick?1100:2300);
+}
+
+/* ── step renderers ── */
+const SETUP_R={};
+
+/* 0: Start */
+SETUP_R.start=function(body){
+  body.appendChild(sEl('div','sw-sub','Let’s set up your device. It only takes a minute.'));
+  const wrap=sEl('div','sw-btns');
+  const go=sEl('button','sbtn primary big','Start Setup');go.onclick=()=>setupGo(1);
+  const imp=sEl('button','sbtn big','Import Configuration File');imp.onclick=()=>{sGet('setup-cfg').value='';sGet('setup-cfg').click();};
+  wrap.appendChild(go);wrap.appendChild(imp);
+  const err=sEl('div','sw-err');err.id='sw-err';
+  body.appendChild(wrap);body.appendChild(err);
+  sGet('setup-cfg').onchange=function(){if(this.files[0])setupImportFile(this.files[0]);};
+};
+function setupImportFile(f){
+  const r=new FileReader();
+  r.onload=e=>{
+    try{
+      const d=JSON.parse(e.target.result);
+      if(!d||typeof d!=='object'||Array.isArray(d))throw new Error('bad');
+      ['accent','startBgColor','startBgImage','desktopBgImage','pattern','username','profilePic','showCredit','wobbly','wobbleAmt','wobbleMode','theme','clock24','viewport','menuW','menuH','colorMode','titlebarHeight','panelSize'].forEach(k=>{if(d[k]!==undefined)S[k]=d[k];});
+      ['tiles','dicons','groups','tbPins'].forEach(k=>{if(Array.isArray(d[k])&&d[k].length)S[k]=d[k];});
+      if(Array.isArray(d.apps)&&d.apps.length)S.apps=d.apps;
+      setupPaintBg();
+      setupFinish(false,'Configuration imported!');
+    }catch(err){const x=sGet('sw-err');if(x)x.textContent='That file is not a valid configuration file.';}
+  };
+  r.onerror=()=>{const x=sGet('sw-err');if(x)x.textContent='Could not read that file.';};
+  r.readAsText(f);
+}
+
+/* 1: Who owns this device? */
+function setupResizeImage(file,cb){
+  const r=new FileReader();
+  r.onload=()=>{const im=new Image();
+    im.onload=()=>{const n=192,c=document.createElement('canvas');c.width=c.height=n;const x=c.getContext('2d');const s=Math.min(im.width,im.height);x.drawImage(im,(im.width-s)/2,(im.height-s)/2,s,s,0,0,n,n);cb(c.toDataURL('image/jpeg',.88));};
+    im.onerror=()=>cb(null);im.src=r.result;};
+  r.onerror=()=>cb(null);r.readAsDataURL(file);
+}
+SETUP_R.owner=function(body){
+  const wrap=sEl('div','so-wrap');
+  const pic=sEl('div','so-pic'),av=sEl('div','so-av');
+  const paint=()=>{av.innerHTML='';if(S.profilePic){const im=document.createElement('img');im.alt='';im.src=S.profilePic;im.onerror=()=>{av.innerHTML='<i class="fa-solid fa-user"></i>';};av.appendChild(im);}else av.innerHTML='<i class="fa-solid fa-user"></i>';};
+  paint();
+  const file=document.createElement('input');file.type='file';file.accept='image/*';file.style.display='none';
+  const up=sEl('button','sbtn','Upload picture');up.onclick=()=>file.click();
+  const rm=sEl('button','sbtn','Remove');rm.onclick=()=>{S.profilePic='';url.value='';paint();};
+  const url=sEl('input','sinp');url.type='url';url.placeholder='https://example.com/me.png';url.value=(S.profilePic||'').startsWith('data:')?'':(S.profilePic||'');
+  file.onchange=()=>{const f=file.files[0];if(!f)return;setupResizeImage(f,d=>{if(d){S.profilePic=d;url.value='';paint();}});};
+  url.oninput=()=>{S.profilePic=url.value.trim();paint();};
+  pic.appendChild(av);pic.appendChild(up);pic.appendChild(rm);pic.appendChild(file);
+  const form=sEl('div','so-form');
+  form.appendChild(sEl('label','s-lbl','Username'));
+  const nm=sEl('input','sinp');nm.id='so-name';nm.type='text';nm.maxLength=32;nm.placeholder='Your name';nm.value=S.username==='User'?'':(S.username||'');
+  nm.oninput=()=>{S.username=nm.value.trim()||'User';};
+  form.appendChild(nm);
+  form.appendChild(sEl('label','s-lbl','Or use a picture from a link'));
+  form.appendChild(url);
+  wrap.appendChild(pic);wrap.appendChild(form);body.appendChild(wrap);
+  setTimeout(()=>{try{nm.focus();}catch(e){}},400);
+};
+
+/* 2: Wallpaper source */
+SETUP_R.wpsrc=function(body){
+  const cards=sEl('div','s-cards');
+  const mk=(key,ico,title,desc)=>{
+    const b=sEl('button','s-choice'+(SETUP.src===key?' sel':''));
+    b.innerHTML=`<i class="${ico}"></i>`;b.appendChild(sEl('b',null,title));b.appendChild(sEl('span',null,desc));
+    b.onclick=()=>{SETUP.src=key;SETUP.grp='All';SETUP.q='';cards.querySelectorAll('.s-choice').forEach(x=>x.classList.remove('sel'));b.classList.add('sel');};
+    cards.appendChild(b);
+  };
+  mk('wp','fa-solid fa-image','Wallpapers','Regular backgrounds.');
+  mk('xwp','fa-solid fa-wand-magic-sparkles','Extra Wallpapers','Wallpapers from specific fandoms and such.');
+  body.appendChild(cards);
+};
+
+/* 3: Wallpaper */
+function setupParseWallpapers(src){
+  let m=null;const dre=/(?:const|let|var)\s+WALLPAPERS\s*=\s*\[/g;
+  while((m=dre.exec(src))){const ls=src.lastIndexOf('\n',m.index)+1;if(!/\/\/|\/\*/.test(src.slice(ls,m.index)))break;}   // skip commented-out copies
+  if(!m)return null;
+  const start=m.index+m[0].length;let depth=1,q=null,out='';
+  for(let i=start;i<src.length;i++){            // find the matching ] while skipping strings and comments
+    const c=src[i];
+    if(q){out+=c;if(c==='\\'){out+=src[++i]||'';}else if(c===q)q=null;continue;}
+    if(c==='"'||c==="'"||c==='`'){q=c;out+=c;continue;}
+    if(c==='/'&&src[i+1]==='/'){while(i<src.length&&src[i]!=='\n')i++;out+='\n';continue;}
+    if(c==='/'&&src[i+1]==='*'){const e=src.indexOf('*/',i+2);i=e<0?src.length:e+1;continue;}
+    if(c==='[')depth++;else if(c===']'){depth--;if(depth===0)break;}
+    out+=c;
+  }
+  const field=(o,k)=>{const r=new RegExp('(?:^|[\\s,{])[\'"]?'+k+'[\'"]?\\s*:\\s*([\'"`])((?:\\\\[\\s\\S]|(?!\\1)[^\\\\])*)\\1').exec(o);return r?r[2].replace(/\\([\s\S])/g,'$1'):'';};
+  const list=[];let om;const re=/\{([^{}]*)\}/g;
+  while((om=re.exec(out))){
+    const o=om[1],url=field(o,'url');if(!url)continue;
+    list.push({name:field(o,'name')||'Untitled',group:field(o,'group')||'Other',url:setupFixUrl(url)});
+  }
+  return list;
+}
+function setupFixUrl(u){
+  if(/^(https?:|data:|\.\/)/i.test(u))return u;      // same rule the Extra Wallpapers bridge uses
+  try{return new URL(u,new URL(SETUP_XWP_URL,location.href)).href;}catch(e){return u;}
+}
+async function setupLoadXwp(force){
+  if(SETUP.xwpLoading||(SETUP.xwp&&!force))return;
+  SETUP.xwpLoading=true;SETUP.xwpErr='';
+  try{
+    const r=await fetch(SETUP_XWP_URL,{cache:'no-cache'});
+    if(!r.ok)throw new Error('HTTP '+r.status);
+    const list=setupParseWallpapers(await r.text());
+    if(!list||!list.length)throw new Error('No WALLPAPERS list found in '+SETUP_XWP_URL);
+    SETUP.xwp=list;
+  }catch(e){SETUP.xwpErr=(e&&e.message)||String(e);if(location.protocol==='file:')SETUP.xwpErr+=' (browsers block this when the page is opened from a file; run it from a web server)';}
+  SETUP.xwpLoading=false;
+  if(SETUP.running&&SETUP_STEPS[SETUP.step].id==='wp'&&SETUP.src==='xwp')setupRender();
+}
+function setupWpGrid(host,list){
+  host.innerHTML='';
+  if(!list.length){host.appendChild(sEl('div','s-msg','No wallpapers match.'));return;}
+  list.forEach(p=>{
+    const c=sEl('button','swp'+(p.url===S.desktopBgImage?' sel':''));c.title=p.name;
+    const im=document.createElement('img');im.loading='lazy';im.alt='';im.src=p.url;im.onerror=()=>c.classList.add('bad');
+    c.appendChild(im);c.appendChild(sEl('span',null,p.name));
+    c.onclick=()=>{
+      S.desktopBgImage=p.url;if(SETUP.alsoStart)S.startBgImage=p.url;
+      host.querySelectorAll('.swp').forEach(x=>x.classList.remove('sel'));c.classList.add('sel');setupPaintBg();
+    };
+    host.appendChild(c);
+  });
+}
+function setupAlsoStart(body){
+  const l=sEl('label','s-check');const c=document.createElement('input');c.type='checkbox';c.checked=SETUP.alsoStart;
+  c.onchange=()=>{SETUP.alsoStart=c.checked;if(c.checked&&S.desktopBgImage)S.startBgImage=S.desktopBgImage;};
+  l.appendChild(c);l.appendChild(document.createTextNode('Also use it for the lock screen and Start background'));
+  body.appendChild(l);
+}
+SETUP_R.wp=function(body){
+  if(SETUP.src!=='xwp'){
+    const grid=sEl('div','swp-grid');setupWpGrid(grid,WALLPAPER_PRESETS);body.appendChild(grid);setupAlsoStart(body);return;
+  }
+  if(SETUP.xwpErr){
+    const m=sEl('div','s-msg');m.appendChild(sEl('div',null,'Couldn’t load Extra Wallpapers.'));
+    const d=sEl('div',null,SETUP.xwpErr);d.style.cssText='font-size:12px;opacity:.7;margin:6px 0 12px';m.appendChild(d);
+    const rt=sEl('button','sbtn','Try again');rt.onclick=()=>{SETUP.xwpErr='';setupRender();setupLoadXwp(true);};
+    const rg=sEl('button','sbtn','Use regular wallpapers');rg.onclick=()=>{SETUP.src='wp';setupRender();};
+    m.appendChild(rt);m.appendChild(rg);body.appendChild(m);return;
+  }
+  if(!SETUP.xwp){
+    const m=sEl('div','s-msg');m.appendChild(sEl('div','s-spin'));m.appendChild(sEl('div',null,'Loading extra wallpapers…'));body.appendChild(m);
+    setupLoadXwp();return;
+  }
+  const bar=sEl('div','swp-bar');
+  const q=sEl('input','sinp');q.type='search';q.placeholder='Search wallpapers';q.value=SETUP.q;bar.appendChild(q);
+  const groups=['All'];SETUP.xwp.forEach(w=>{if(!groups.includes(w.group))groups.push(w.group);});
+  const chips=sEl('div');chips.style.cssText='display:flex;gap:8px;flex-wrap:wrap';
+  const grid=sEl('div','swp-grid');
+  const paint=()=>{
+    const qq=SETUP.q.trim().toLowerCase();
+    setupWpGrid(grid,SETUP.xwp.filter(w=>(SETUP.grp==='All'||w.group===SETUP.grp)&&(!qq||(w.name+' '+w.group).toLowerCase().includes(qq))));
+    chips.querySelectorAll('.s-chip').forEach(c=>c.classList.toggle('sel',c.dataset.g===SETUP.grp));
+  };
+  if(groups.length>2)groups.forEach(g=>{const c=sEl('button','s-chip',g);c.dataset.g=g;c.onclick=()=>{SETUP.grp=g;paint();};chips.appendChild(c);});
+  q.oninput=()=>{SETUP.q=q.value;paint();};
+  bar.appendChild(chips);body.appendChild(bar);body.appendChild(grid);paint();setupAlsoStart(body);
+};
+
+/* 4: Theme (with previews) */
+function setupPreviewHTML(k){
+  const A=S.accent;
+  const R=(l,t,w,h,bg,rad)=>`<i style="left:${l}%;top:${t}%;width:${w}%;height:${h}%;background:${bg};border-radius:${rad||'0'}"></i>`;
+  const win=(l,t,w,h,rad)=>R(l,t,w,h,'rgba(245,245,248,.94)',rad||'3px')+R(l,t,w,Math.min(9,h/4),A,(rad?'5px 5px 0 0':'3px 3px 0 0'));
+  switch(k){
+    case 'defaultnew':return win(40,16,44,40)+R(0,88,100,12,'rgba(10,10,12,.9)')+R(2,90,5,8,'#fff','2px')+R(86,92,11,3,'rgba(255,255,255,.7)','1px')+R(2,34,34,52,'rgba(18,18,22,.94)','3px')+[0,1,2].map(j=>R(5+j*9.5,38,8,12,A,'1px')).join('')+[0,1,2].map(j=>R(5+j*9.5,53,8,12,'rgba(255,255,255,.22)','1px')).join('');
+    case 'default':return R(0,0,100,10,'rgba(0,0,0,.3)')+R(0,10,100,1.6,A)+R(4,2.5,5,5,'#fff','1px')+R(6,18,20,26,A)+R(28,18,10,12,'#107c10')+R(28,32,10,12,'#e81123')+R(40,18,22,12,'#744da9')+R(40,32,10,12,'#ff8c00')+R(52,32,10,12,'#00b294')+R(66,18,10,26,'#e3008c')+R(6,48,32,14,'#2d7d9a')+R(40,48,22,14,'#515151');
+    case 'win11':return win(26,12,50,44,'6px')+R(0,90,100,10,'rgba(28,30,40,.82)')+[0,1,2,3,4].map(j=>R(38+j*5.5,92,4,6,j==0?'#4aa8ff':'rgba(255,255,255,.7)','2px')).join('')+R(28,40,44,46,'rgba(36,38,50,.96)','6px')+[0,1,2,3].map(j=>R(32+j*10,46,8,9,j%2?'rgba(255,255,255,.2)':A,'2px')).join('');
+    case 'win10':return win(48,14,44,40)+R(0,90,100,10,'rgba(14,14,20,.94)')+R(0,90,6,10,'#2a8fe8')+R(0,30,40,60,'rgba(24,24,30,.96)')+[0,1,2,3].map(j=>R(22+(j%2)*9,35+Math.floor(j/2)*12,8,10,A,'0')).join('')+R(3,35,13,3,'rgba(255,255,255,.5)')+R(3,42,13,3,'rgba(255,255,255,.35)');
+    case 'win7':return win(40,14,46,42,'5px')+R(0,89,100,11,'linear-gradient(#5b86c6,#1d3d78)')+R(1,86.5,9,14,'radial-gradient(circle at 40% 35%,#9ad8ff,#1a5cb3)','50%')+R(2,36,40,50,'linear-gradient(90deg,rgba(248,250,255,.97) 58%,rgba(86,116,168,.97) 58%)','4px');
+    case 'mac':return R(0,0,100,6,'rgba(255,255,255,.55)')+R(2,1.8,3,2.4,'#222','50%')+win(20,16,46,44,'7px')+R(22,84,56,13,'rgba(255,255,255,.35)','7px')+['#ff5f57','#febc2e','#28c840','#4aa8ff','#c77dff','#fff'].map((c,j)=>R(25+j*8.4,86,6.2,9,c,'2px')).join('');
+    case 'gnome':return R(0,0,100,7,'#111')+R(40,1.6,20,3.8,'rgba(255,255,255,.22)','3px')+R(2,1.4,10,4,'rgba(255,255,255,.3)','3px')+R(20,18,56,58,'#2b2b31','5px')+R(20,18,56,9,'#3b3b42','5px 5px 0 0')+R(24,32,30,3,'rgba(255,255,255,.25)')+R(24,39,40,3,'rgba(255,255,255,.18)');
+    case 'chromeos':return win(24,14,52,44,'6px')+R(0,90,100,10,'rgba(32,33,38,.88)')+R(2,92,6,6,'#fff','50%')+[0,1,2,3].map(j=>R(12+j*6,92,5,6,['#4285f4','#ea4335','#fbbc04','#34a853'][j],'50%')).join('')+R(86,92,11,6,'rgba(255,255,255,.25)','4px');
+    default:return win(30,16,44,40)+R(0,90,100,10,'rgba(12,12,16,.9)')+R(2,92,6,6,A,'2px');
+  }
+}
+SETUP_R.theme=function(body){
+  const grid=sEl('div','sth-grid');
+  Object.keys(THEMES).forEach(k=>{
+    const b=sEl('button','sth'+(S.theme===k?' sel':''));
+    const pv=sEl('div','pv');pv.innerHTML=setupPreviewHTML(k);
+    if(k==='default'){pv.style.backgroundColor=S.startBgColor;}
+    else if(S.desktopBgImage)pv.style.backgroundImage=`url("${String(S.desktopBgImage).replace(/["\\\n]/g,m=>encodeURIComponent(m))}")`;
+    else pv.style.backgroundColor=S.accent;
+    b.appendChild(pv);b.appendChild(sEl('span',null,THEMES[k].name));
+    b.onclick=()=>{S.theme=k;grid.querySelectorAll('.sth').forEach(x=>x.classList.remove('sel'));b.classList.add('sel');};
+    grid.appendChild(b);
+  });
+  body.appendChild(grid);
+};
+
+/* 5: Accent colors (+ Start pattern and color for the classic theme) */
+SETUP_R.accent=function(body){
+  body.appendChild(sEl('div','s-lbl','Accent color'));
+  const g=sEl('div','sac-grid');
+  const custom=document.createElement('input');custom.type='color';
+  const markSel=()=>{g.querySelectorAll('.sac').forEach(x=>x.classList.toggle('sel',x.dataset.c.toLowerCase()===String(S.accent).toLowerCase()));};
+  const setAcc=c=>{S.accent=c;setupPaintBg();markSel();try{custom.value=/^#[0-9a-f]{6}$/i.test(c)?c:'#0078d4';}catch(e){}};
+  ACCENT_COLORS.forEach(c=>{const b=sEl('button','sac');b.style.background=c;b.dataset.c=c;b.title=c;b.onclick=()=>setAcc(c);g.appendChild(b);});
+  body.appendChild(g);
+  const cu=sEl('label','sac-custom');custom.value=/^#[0-9a-f]{6}$/i.test(S.accent)?S.accent:'#0078d4';
+  custom.oninput=()=>setAcc(custom.value);cu.appendChild(custom);cu.appendChild(document.createTextNode('Custom color'));body.appendChild(cu);
+  const demo=sEl('div','sac-demo');demo.appendChild(sEl('button','sbtn','Button'));demo.appendChild(sEl('u',null,'A link'));
+  const bar=sEl('div','sac-bar');bar.appendChild(document.createElement('i'));demo.appendChild(bar);body.appendChild(demo);
+  markSel();
+  if(S.theme==='default'){            // classic theme: Start screen color + pattern
+    body.appendChild(sEl('div','s-lbl','Start screen color'));
+    const bg=sEl('div','sac-grid');
+    const markBg=()=>bg.querySelectorAll('.sac').forEach(x=>x.classList.toggle('sel',x.dataset.c===S.startBgColor));
+    BG_COLORS.forEach(c=>{const b=sEl('button','sac');b.style.background=c;b.dataset.c=c;b.onclick=()=>{S.startBgColor=c;markBg();drawPats();};bg.appendChild(b);});
+    body.appendChild(bg);markBg();
+    body.appendChild(sEl('div','s-lbl','Start pattern'));
+    const pg=sEl('div','spat-grid');
+    const fns=[null,wv,dt,ln,sq,cr];
+    const drawPats=()=>pg.querySelectorAll('canvas').forEach((cv,i)=>{
+      const x=cv.getContext('2d');x.fillStyle=S.startBgColor;x.fillRect(0,0,cv.width,cv.height);
+      if(fns[i]){x.globalAlpha=.4;fns[i](x,cv.width,cv.height);x.globalAlpha=1;}
+    });
+    PATTERNS.forEach((n,i)=>{
+      const b=sEl('button','spat'+(S.pattern===i?' sel':''));const cv=document.createElement('canvas');cv.width=192;cv.height=120;
+      b.appendChild(cv);b.appendChild(sEl('span',null,n));
+      b.onclick=()=>{S.pattern=i;pg.querySelectorAll('.spat').forEach(x=>x.classList.remove('sel'));b.classList.add('sel');};
+      pg.appendChild(b);
+    });
+    body.appendChild(pg);drawPats();
+  }
+};
+
+/* 6: Plugins (the Plugins app, shown right here) */
+SETUP_R.plugins=function(body){
+  body.classList.add('fill');
+  const f=document.createElement('iframe');f.className='spl-frame';f.src=getApp('app-plug')?getApp('app-plug').url:'./plugins/index.html';f.title='Plugins';
+  body.appendChild(f);
+  body.appendChild(sEl('div','spl-note','This is the Plugins app. You can open it again later from the Start menu.'));
+};
+
+/* 7: Resolution */
+function setupResSet(v){
+  S.viewport=v;applyViewport();setupFit();
+}
+SETUP_R.res=function(body){
+  const pctNow=/^(\d{2,3})%$/.exec(S.viewport||'');
+  if(pctNow)SETUP.resMode='scale';
+  const tabs=sEl('div','s-seg sr-tabs');
+  const t1=sEl('button',SETUP.resMode==='res'?'sel':'','Resolution'),t2=sEl('button',SETUP.resMode==='scale'?'sel':'','Scale');
+  t1.onclick=()=>{SETUP.resMode='res';setupRender();};t2.onclick=()=>{SETUP.resMode='scale';setupRender();};
+  tabs.appendChild(t1);tabs.appendChild(t2);body.appendChild(tabs);
+  const info=sEl('div','sr-hint');info.textContent='Your window is '+window.innerWidth+' × '+window.innerHeight+' pixels.';
+  if(SETUP.resMode==='res'){
+    const cur=SETUP_RES.indexOf(S.viewport);
+    const big=sEl('div','sr-big');
+    const upd=v=>{big.textContent=v==='auto'?'Auto':v.replace('x',' × ');};
+    upd(cur>=0?S.viewport:'auto');
+    body.appendChild(big);
+    body.appendChild(sEl('div','sr-hint','A smaller number makes everything bigger. A bigger number makes everything smaller.'));
+    const sl=document.createElement('input');sl.type='range';sl.className='sr-slider';sl.min=0;sl.max=SETUP_RES.length-1;sl.step=1;sl.value=cur>=0?cur:4;
+    sl.oninput=()=>{const v=SETUP_RES[+sl.value];upd(v);setupResSet(v);};
+    body.appendChild(sl);
+    const ends=sEl('div','sr-ends');ends.appendChild(sEl('span',null,'Bigger'));ends.appendChild(sEl('span',null,'Smaller'));body.appendChild(ends);
+    const chips=sEl('div','sr-chips');const au=sEl('button','s-chip'+((S.viewport||'auto')==='auto'?' sel':''),'Auto (match window)');
+    au.onclick=()=>{upd('auto');setupResSet('auto');au.classList.add('sel');};
+    sl.addEventListener('input',()=>au.classList.remove('sel'));
+    chips.appendChild(au);body.appendChild(chips);
+  }else{
+    const cur=pctNow?+pctNow[1]:100;
+    const big=sEl('div','sr-big',cur+'%');body.appendChild(big);
+    body.appendChild(sEl('div','sr-hint','Scale makes everything larger (like 125%) without picking a resolution. 100% is the normal size.'));
+    const chips=sEl('div','sr-chips');
+    const sl=document.createElement('input');sl.type='range';sl.className='sr-slider';sl.min=50;sl.max=300;sl.step=5;sl.value=cur;
+    const apply=p=>{big.textContent=p+'%';sl.value=p;setupResSet(p===100?'auto':p+'%');chips.querySelectorAll('.s-chip').forEach(c=>c.classList.toggle('sel',+c.dataset.p===p));};
+    SETUP_SCALES.forEach(p=>{const c=sEl('button','s-chip'+(p===cur?' sel':''),p+'%');c.dataset.p=p;c.onclick=()=>apply(p);chips.appendChild(c);});
+    sl.oninput=()=>apply(+sl.value);
+    body.appendChild(sl);
+    const ends=sEl('div','sr-ends');ends.appendChild(sEl('span',null,'50%'));ends.appendChild(sEl('span',null,'300%'));body.appendChild(ends);
+    body.appendChild(chips);
+  }
+  body.appendChild(sEl('div','sr-demo','This window changes size as you move the control, so you can see the result right away. If it looks wrong, '+(SETUP.resMode==='scale'?'choose 100%.':'choose Auto.')));
+  body.appendChild(info);info.style.marginTop='10px';
+};
+
+/* 8: Add apps (taskbar / desktop / Start) */
+function setupAppState(id){return{tb:S.tbPins.includes(id),dk:S.dicons.some(d=>d.appId===id),st:S.tiles.some(t=>t.appId===id)};}
+function setupSetApp(id,where,on){
+  if(where==='tb'){const i=S.tbPins.indexOf(id);if(on&&i<0)S.tbPins.push(id);if(!on&&i>=0)S.tbPins.splice(i,1);}
+  else if(where==='dk'){if(on&&!S.dicons.some(d=>d.appId===id))S.dicons.push({id:uid(),appId:id});if(!on)S.dicons=S.dicons.filter(d=>d.appId!==id);}
+  else{
+    if(on&&!S.tiles.some(t=>t.appId===id)){const grp=S.groups.includes('Apps')?'Apps':(S.groups[0]||'Apps');if(!S.groups.includes(grp))S.groups.push(grp);S.tiles.push({id:uid(),appId:id,size:'small',group:grp,color:TILE_COLORS[S.tiles.length%TILE_COLORS.length]});}
+    if(!on)S.tiles=S.tiles.filter(t=>t.appId!==id);
+  }
+}
+SETUP_R.apps=function(body){
+  const top=sEl('div','sa-top');
+  const q=sEl('input','sinp');q.type='search';q.placeholder='Search apps';q.value=SETUP.appQ;top.appendChild(q);
+  const rs=sEl('button','sbtn','Reset to defaults');
+  rs.onclick=()=>{S.tbPins=[...S_DEFAULTS.tbPins];S.dicons=JSON.parse(JSON.stringify(S_DEFAULTS.dicons));S.tiles=JSON.parse(JSON.stringify(S_DEFAULTS.tiles));paint();};
+  top.appendChild(rs);body.appendChild(top);
+  const wrap=sEl('div');body.appendChild(wrap);
+  const apps=()=>S.apps.filter(a=>a.url!=='__desktop__'&&a.id!=='app-desk');
+  function paint(){
+    wrap.innerHTML='';
+    const qq=SETUP.appQ.trim().toLowerCase();
+    const list=apps().filter(a=>!qq||a.name.toLowerCase().includes(qq)||(a.cat||'').toLowerCase().includes(qq));
+    const head=sEl('div','sa-head');head.appendChild(sEl('span',null,list.length+' apps'));
+    [['tb','Taskbar'],['dk','Desktop'],['st','Start']].forEach(([w,l])=>{
+      const b=sEl('button',null,l);b.title='Toggle all';
+      b.onclick=()=>{const all=list.every(a=>setupAppState(a.id)[w]);list.forEach(a=>setupSetApp(a.id,w,!all));paint();};
+      head.appendChild(b);
+    });
+    wrap.appendChild(head);
+    list.forEach(a=>{
+      const row=sEl('div','sa-row'),st=setupAppState(a.id);
+      const nm=sEl('div','sa-name'),ic=sEl('div','sa-ico');
+      try{ic.appendChild(makeIconEl(a,'small'));}catch(e){ic.innerHTML='<i class="fa-solid fa-window-maximize"></i>';}
+      nm.appendChild(ic);nm.appendChild(sEl('span',null,a.name));row.appendChild(nm);
+      ['tb','dk','st'].forEach(w=>{
+        const cell=sEl('div','sa-cell'),t=sEl('button','s-tog'+(st[w]?' on':''));
+        t.onclick=()=>{const on=!t.classList.contains('on');t.classList.toggle('on',on);setupSetApp(a.id,w,on);};
+        cell.appendChild(t);row.appendChild(cell);
+      });
+      wrap.appendChild(row);
+    });
+  }
+  q.oninput=()=>{SETUP.appQ=q.value;paint();};
+  paint();
+};
+
+/* 9: Misc */
+SETUP_R.misc=function(body){
+  const row=(title,desc,ctl)=>{const r=sEl('div','s-row');const d=sEl('div');d.appendChild(sEl('b',null,title));if(desc)d.appendChild(sEl('small',null,desc));r.appendChild(d);r.appendChild(ctl);body.appendChild(r);return r;};
+  const tog=(on,fn)=>{const t=sEl('button','s-tog'+(on?' on':''));t.onclick=()=>{const v=!t.classList.contains('on');t.classList.toggle('on',v);fn(v);};return t;};
+  const seg=(opts,cur,fn)=>{const s=sEl('div','s-seg');opts.forEach(([v,l])=>{const b=sEl('button',cur===v?'sel':'',l);b.onclick=()=>{s.querySelectorAll('button').forEach(x=>x.classList.remove('sel'));b.classList.add('sel');fn(v);};s.appendChild(b);});return s;};
+  const sw=tog(!SFX.muted,v=>{SFX.set({muted:!v});vr.style.opacity=v?'1':'.4';});
+  row('Sound effects','Clicks, window sounds and notifications.',sw);
+  const vol=document.createElement('input');vol.type='range';vol.min=0;vol.max=100;vol.value=Math.round(SFX.vol*100);vol.style.width='150px';
+  vol.oninput=()=>SFX.set({vol:vol.value/100});vol.onchange=()=>SFX.play('click');
+  const vr=row('Volume','',vol);vr.style.opacity=SFX.muted?'.4':'1';
+  row('Time format','',seg([['12','12-hour'],['24','24-hour']],S.clock24?'24':'12',v=>{S.clock24=v==='24';}));
+  row('Color mode','Light, dark, or follow your system.',seg([['dark','Dark'],['light','Light'],['system','System']],S.colorMode||'dark',v=>{S.colorMode=v;}));
+  row('Wobbly windows','Windows wobble when you drag them.',tog(!!S.wobbly,v=>{S.wobbly=v;}));
+  row('Show credit on the desktop','The small project credit at the bottom of the desktop.',tog(S.showCredit!==false,v=>{S.showCredit=v;}));
+};
+
 /* ══════════════════════════════════
    SHUT DOWN — outro video, then the tab closes
 ══════════════════════════════════ */
