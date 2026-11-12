@@ -345,6 +345,31 @@ body[data-theme="gnome"] .w11-pin-grid{grid-template-columns:repeat(7,1fr);gap:1
 body[data-theme="gnome"] .w11-pin-icon{width:56px;height:56px;border-radius:16px}
 body[data-theme="gnome"] .w11-pin-item{padding:4px}
 
+
+/* ── Shared grid launcher (GNOME overview / ChromeOS launcher): all apps, rearrangeable ── */
+body[data-theme="gnome"] #start-tiles-scroll{overflow-y:auto;overflow-x:hidden;align-items:flex-start;padding:34px 40px 120px}
+body[data-theme="gnome"] .w11-pin-panel{max-width:860px;margin:0 auto}
+body[data-theme="gnome"] .w11-pin-grid{grid-template-columns:repeat(6,1fr);gap:20px 6px}
+body[data-theme="gnome"] .w11-pin-icon{width:64px;height:64px;border-radius:16px}
+body[data-theme="gnome"] .w11-pin-item{padding:14px 4px 10px;border-radius:14px;gap:8px}
+body[data-theme="gnome"] .w11-pin-name{font-size:13px;max-width:110px}
+body[data-theme="gnome"] .tb-pinned{display:none}
+body[data-theme="gnome"] #start-bottom{position:absolute;right:16px;bottom:16px;padding:0;z-index:6}
+body[data-theme="gnome"] #start-bottom button:not(.btn-power),body[data-theme="chromeos"] #start-bottom button[onclick^="addTileDialog"],body[data-theme="chromeos"] #start-bottom button[onclick^="addGroupDialog"]{display:none}
+.w11-pin-item.lg-drag{opacity:.35}
+.w11-pin-item.lg-over{background:rgba(255,255,255,.18);outline:2px solid rgba(255,255,255,.35)}
+.lg-empty{grid-column:1/-1;color:rgba(255,255,255,.6);font-size:14px;padding:30px;text-align:center}
+#gn-dock{display:none}
+body[data-theme="gnome"] #gn-dock{display:flex;position:absolute;left:50%;bottom:16px;transform:translateX(-50%);z-index:6;gap:6px;padding:8px 10px;background:rgba(36,36,36,.92);border-radius:24px;box-shadow:0 4px 24px rgba(0,0,0,.55);align-items:center;max-width:calc(100% - 32px)}
+.gn-di{position:relative;width:58px;height:58px;border-radius:14px;display:flex;align-items:center;justify-content:center;cursor:pointer;flex-shrink:0}
+.gn-di:hover{background:rgba(255,255,255,.12)}
+.gn-di .w11-pin-icon{width:44px;height:44px;border-radius:12px;pointer-events:none}
+.gn-di.running::after{content:'';position:absolute;bottom:2px;left:50%;width:6px;height:6px;margin-left:-3px;border-radius:50%;background:#fff}
+.gn-di.lg-over{background:rgba(255,255,255,.25)}
+.gn-di.lg-drag{opacity:.35}
+.gn-di.gn-showapps{background:rgba(255,255,255,.22);color:#fff;font-size:22px}
+.gn-sep{width:1px;height:38px;background:rgba(255,255,255,.2);margin:0 4px;flex-shrink:0}
+
 /* ───────── Windows 11 ───────── */
 body[data-theme="win11"]{--font:'Segoe UI Variable Text','Segoe UI',sans-serif;--off-bot:48px;--fs-bot:48px;--tc:6;--tile-r:6px;--st-r:6px;
   --ui-bg:#2b2b2b;--ui-head:#2b2b2b;--ui-hbd:#3b3b3b;--ui-fg:#fff;--ui-sub:#c5c5c5;--ui-inp:#1f1f1f;--ui-bd:#4a4a4a;--ui-hov:#3a3a3a;--ui-sb:#3a3a3a;--ui-sbf:#fff;--ui-sbb:#4a4a4a;--ui-r:8px;--ui-ir:4px;--ui-br:4px;--ui-bt:1px;--ui-btc:#454545;--ui-border:1px solid #454545;--ui-sh:0 12px 40px rgba(0,0,0,.5);
@@ -1171,6 +1196,7 @@ body[data-color-mode="light"] #grub .g-help{color:#616161}
     <button onclick="addGroupDialog()"><i class="fa fa-folder-plus"></i> Group</button>
     <button class="btn-power" onclick="dnPowerMenu(event)" title="Power"><i class="fa fa-power-off"></i> Power</button>
   </div>
+  <div id="gn-dock"></div>
 </div>
 
 <!-- Apps Screen - Default Grid View -->
@@ -2457,6 +2483,7 @@ let S = {
   dicons: JSON.parse(JSON.stringify(DEFAULT_DICONS)),
   groups: [...DEFAULT_GROUPS],
   tbPins: ['app-ie','app-term','app-yt','app-ai','app-set'],
+  gridOrder:[],
   openWins:[], nextWin:1,
 };
 const S_DEFAULTS=JSON.parse(JSON.stringify(S));
@@ -2552,6 +2579,7 @@ function loadS(){
       if(p.dicons&&p.dicons.length)S.dicons=p.dicons;
       if(p.groups&&p.groups.length)S.groups=p.groups;
       if(p.tbPins)S.tbPins=p.tbPins;
+      if(Array.isArray(p.gridOrder))S.gridOrder=p.gridOrder;
     }
   }catch(e){}
 }
@@ -2956,6 +2984,7 @@ function showStart(){
     document.getElementById('start-topbar').style.display='flex';
   }
   
+  if(S.theme==='gnome'||S.theme==='chromeos'){document.getElementById('start-search').value='';renderLauncherGrid();}
   setTimeout(()=>s.classList.remove('start-entering'),230);
   hideApps();
 }
@@ -3052,6 +3081,7 @@ function hideAppsWin7(){
 const GRID_LAUNCHER_THEMES=['win11','chromeos','gnome'];
 function renderTiles(){
   if(S.theme==='defaultnew'){renderDnMenu();return;}
+  if(S.theme==='gnome'||S.theme==='chromeos'){renderLauncherGrid();return;}
   if(GRID_LAUNCHER_THEMES.includes(S.theme)){renderPinnedGrid();return;}
   _tileIdx=0;
   const area=document.getElementById('start-tiles-scroll');
@@ -3129,6 +3159,116 @@ function renderDnMenu(){
     if(document.body.classList.contains('dn-all'))dnMeasureLabels(grid);
   }
 }
+
+
+/* GNOME overview / ChromeOS launcher: every app in a rearrangeable grid.
+   GNOME hides dock-pinned apps from the grid and shows them in a bottom dock; ChromeOS keeps shelf apps in the grid. */
+let _lgDrag=null;
+function lgFullOrder(){
+  const ids=S.apps.map(a=>a.id);
+  const o=(S.gridOrder||[]).filter((i,n,arr)=>ids.includes(i)&&arr.indexOf(i)===n);
+  ids.forEach(i=>{if(!o.includes(i))o.push(i);});
+  return o;
+}
+function lgMove(id,beforeId){
+  const o=lgFullOrder().filter(i=>i!==id);
+  const t=o.indexOf(beforeId);
+  if(t<0)o.push(id);else o.splice(t,0,id);
+  S.gridOrder=o;
+}
+function lgDockMove(id,beforeId){
+  S.tbPins=S.tbPins.filter(i=>i!==id);
+  const t=S.tbPins.indexOf(beforeId);
+  if(t<0)S.tbPins.push(id);else S.tbPins.splice(t,0,id);
+}
+function lgIcon(app){
+  const iw=document.createElement('div');iw.className='w11-pin-icon';
+  iw.style.background=app.iconUrl?'transparent':S.accent;
+  const ico=makeIconEl(app,'medium',()=>{iw.style.background=S.accent;});
+  if(!app.iconUrl)ico.className+=' tile-fa';
+  iw.appendChild(ico);return iw;
+}
+function lgOpen(app){
+  const w=S.openWins.find(x=>x.appId===app.id);
+  if(w&&S.theme==='gnome'){goDesktop();if(w.minimized)toggleWin(w.id);}
+  else launchApp(app);
+}
+function lgRefresh(){saveS();renderTiles();renderTaskbar();}
+function lgCtx(e,app){
+  e.preventDefault();e.stopPropagation();
+  showCtx(e,[
+    {label:'Open',ico:'fa-solid fa-arrow-up-right-from-square',fn:()=>lgOpen(app)},
+    isTbPinned(app.id)
+      ?{label:tbDockLabel('Unpin from'),ico:'fa-solid fa-thumbtack-slash',fn:()=>unpinFromTaskbar(app.id)}
+      :{label:tbDockLabel('Pin to'),ico:'fa-solid fa-thumbtack',fn:()=>pinToTaskbar(app.id)},
+    {label:'Add to desktop',ico:'fa-solid fa-desktop',fn:()=>addIconForApp(app)},
+  ]);
+}
+function lgDragSrc(el,app,from){
+  el.draggable=true;
+  el.addEventListener('dragstart',e=>{_lgDrag={id:app.id,from};e.dataTransfer.effectAllowed='move';try{e.dataTransfer.setData('text/plain',app.id);}catch(_){}setTimeout(()=>el.classList.add('lg-drag'),0);});
+  el.addEventListener('dragend',()=>{_lgDrag=null;document.querySelectorAll('.lg-drag,.lg-over').forEach(x=>x.classList.remove('lg-drag','lg-over'));});
+}
+function lgDropTarget(el,onDrop){
+  el.addEventListener('dragover',e=>{if(!_lgDrag)return;e.preventDefault();e.stopPropagation();el.classList.add('lg-over');});
+  el.addEventListener('dragleave',()=>el.classList.remove('lg-over'));
+  el.addEventListener('drop',e=>{e.preventDefault();e.stopPropagation();el.classList.remove('lg-over');const d=_lgDrag;_lgDrag=null;if(d)onDrop(d);});
+}
+function renderLauncherGrid(){
+  const area=document.getElementById('start-tiles-scroll');
+  area.innerHTML='';
+  const gnome=S.theme==='gnome';
+  const q=(document.getElementById('start-search').value||'').toLowerCase().trim();
+  const wrap=document.createElement('div');wrap.className='w11-pin-panel';
+  const grid=document.createElement('div');grid.className='w11-pin-grid';
+  let idx=0;
+  lgFullOrder().map(getApp).filter(a=>a&&(!gnome||!S.tbPins.includes(a.id))&&(!q||a.name.toLowerCase().includes(q))).forEach(app=>{
+    const el=document.createElement('div');el.className='w11-pin-item';el.title=app.name;
+    el.style.animation=`tile-pop .2s cubic-bezier(.2,.8,.4,1) ${Math.min(idx*18,300)}ms both`;idx++;
+    const nm=document.createElement('div');nm.className='w11-pin-name';nm.textContent=app.name;
+    el.appendChild(lgIcon(app));el.appendChild(nm);
+    el.onclick=()=>launchApp(app);
+    el.oncontextmenu=e=>lgCtx(e,app);
+    lgDragSrc(el,app,'grid');
+    lgDropTarget(el,d=>{
+      if(d.id===app.id)return;
+      if(d.from==='dock')S.tbPins=S.tbPins.filter(i=>i!==d.id);
+      lgMove(d.id,app.id);lgRefresh();
+    });
+    grid.appendChild(el);
+  });
+  if(!grid.children.length){const em=document.createElement('div');em.className='lg-empty';em.textContent=q?'No apps match your search.':'All apps are in the dock.';grid.appendChild(em);}
+  // dropping on empty space: dock items are unpinned, grid items move to the end
+  grid.addEventListener('dragover',e=>{if(_lgDrag)e.preventDefault();});
+  grid.addEventListener('drop',e=>{e.preventDefault();const d=_lgDrag;_lgDrag=null;if(!d)return;if(d.from==='dock')S.tbPins=S.tbPins.filter(i=>i!==d.id);lgMove(d.id,null);lgRefresh();});
+  wrap.appendChild(grid);area.appendChild(wrap);
+  renderGnomeDock();
+}
+function renderGnomeDock(){
+  const dock=document.getElementById('gn-dock');if(!dock)return;
+  dock.innerHTML='';
+  if(S.theme!=='gnome')return;
+  const running=new Set(S.openWins.map(w=>w.appId).filter(Boolean));
+  const ids=[...S.tbPins];
+  S.openWins.forEach(w=>{if(w.appId&&!ids.includes(w.appId))ids.push(w.appId);});
+  ids.forEach(id=>{
+    const app=getApp(id);if(!app)return;
+    const el=document.createElement('div');el.className='gn-di'+(running.has(id)?' running':'');el.title=app.name;
+    el.appendChild(lgIcon(app));
+    el.onclick=()=>lgOpen(app);
+    el.oncontextmenu=e=>lgCtx(e,app);
+    lgDropTarget(el,d=>{lgDockMove(d.id,id);lgRefresh();});
+    if(S.tbPins.includes(id))lgDragSrc(el,app,'dock');
+    dock.appendChild(el);
+  });
+  if(ids.length){const sp=document.createElement('div');sp.className='gn-sep';dock.appendChild(sp);}
+  const sa=document.createElement('div');sa.className='gn-di gn-showapps';sa.title='Show Applications';
+  sa.innerHTML='<i class="fa-solid fa-grip"></i>';sa.onclick=goDesktop;
+  dock.appendChild(sa);
+  dock.ondragover=e=>{if(_lgDrag)e.preventDefault();};
+  dock.ondrop=e=>{e.preventDefault();const d=_lgDrag;_lgDrag=null;if(!d)return;lgDockMove(d.id,null);lgRefresh();};
+}
+document.getElementById('start-search').addEventListener('input',()=>{if(S.theme==='gnome'||S.theme==='chromeos')renderLauncherGrid();});
 
 /* Windows 11 style: flat centered "Pinned" icon grid instead of live tiles */
 function renderPinnedGrid(){
@@ -3516,6 +3656,7 @@ function renderTaskbar(){
     }
     area.appendChild(btn);
   });
+  renderGnomeDock();
   updateMenubar();
 }
 
@@ -4124,11 +4265,11 @@ function unpinApp(appId){S.tiles=S.tiles.filter(t=>t.appId!==appId);saveS();rend
 function isTbPinned(appId){return S.tbPins.includes(appId);}
 function pinToTaskbar(appId){
   if(S.tbPins.includes(appId))return;
-  S.tbPins.push(appId);saveS();renderTaskbar();
+  S.tbPins.push(appId);saveS();renderTaskbar();if(S.theme==='gnome')renderTiles();
   const a=getApp(appId);if(a)notify(`${a.name} pinned`);
 }
 function unpinFromTaskbar(appId){
-  S.tbPins=S.tbPins.filter(id=>id!==appId);saveS();renderTaskbar();
+  S.tbPins=S.tbPins.filter(id=>id!==appId);saveS();renderTaskbar();if(S.theme==='gnome')renderTiles();
 }
 function toggleTbPin(appId){isTbPinned(appId)?unpinFromTaskbar(appId):pinToTaskbar(appId);}
 function addTileDialog(){
