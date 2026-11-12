@@ -3718,8 +3718,8 @@ function buildWindow(w,fullscreen){
     <div class="win-frame-wrap" id="wfw-${w.id}" style="flex:1;overflow:hidden;position:relative;">
       <iframe class="win-frame" src="${w.url}"
         style="position:absolute;top:0;left:0;width:${zoom!==1?Math.round(100/zoom)+'%':'100%'};height:${zoom!==1?Math.round(100/zoom)+'%':'100%'};transform-origin:top left;transform:scale(${zoom});border:none;"
-        allow="fullscreen" allowfullscreen
-        sandbox="allow-scripts allow-same-origin allow-forms allow-top-navigation"></iframe>
+        allow="fullscreen; pointer-lock; autoplay; gamepad; keyboard-map; clipboard-write" allowfullscreen
+        sandbox="allow-scripts allow-same-origin allow-forms allow-top-navigation allow-pointer-lock allow-popups allow-modals allow-downloads"></iframe>
     </div>`}
     <div class="rh" id="rh-${w.id}"></div>`;
   // inject icon element properly (avoids HTML injection issues)
@@ -3729,6 +3729,9 @@ function buildWindow(w,fullscreen){
   makeDraggable(el,document.getElementById('wtb-'+w.id));
   makeResizable(el,document.getElementById('rh-'+w.id));
   el.addEventListener('mousedown',()=>bringFront(el));
+  // give the game frame focus right away so key/mouse + pointer lock work without an extra click
+  const _gf=el.querySelector('iframe.win-frame');
+  if(_gf){_gf.addEventListener('load',()=>{try{_gf.focus();_gf.contentWindow.focus();}catch(e){}});}
   if(isTerm)initTerminal(w.id);
 }
 
