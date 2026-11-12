@@ -35,7 +35,7 @@ while IFS= read -r domain || [ -n "$domain" ]; do
     
     # Run surge deployment
     # Note: Current directory '.' is deployed to the specified domain
-    npx surge . "$domain" &
+    npx surge@latest . "$domain" &
 
     if [ $? -eq 0 ]; then
         echo "✅ Successfully deployed to $domain"

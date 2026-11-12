@@ -3,6 +3,10 @@
 <head>
 <meta charset="UTF-8">
 <title>scratchget</title>
+<link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>
+<link rel="preconnect" href="https://trampoline.turbowarp.org" crossorigin>
+<link rel="preconnect" href="https://projects.scratch.mit.edu" crossorigin>
+<link rel="preconnect" href="https://assets.scratch.mit.edu" crossorigin>
 <script src="https://cdn.jsdelivr.net/npm/@turbowarp/scaffolding@0.4.0/dist/scaffolding-min.js"></script>
 <style>
   html, body {
@@ -72,6 +76,15 @@
     animation: spin 0.8s linear infinite;
   }
   #overlay.loading-only .spinner { display: block; }
+  #overlay.asking .spinner { display: none; }
+  #usernameRow {
+    display: none;
+    flex-direction: column;
+    align-items: center;
+    gap: 12px;
+  }
+  #overlay.asking #usernameRow { display: flex; }
+  #usernameHint { font-size: 13px; color: #aaa; max-width: 280px; text-align: center; }
   @keyframes spin { to { transform: rotate(360deg); } }
 </style>
 </head>
@@ -81,6 +94,12 @@
   <div id="inputRow" style="display: flex; flex-direction: column; align-items: center; gap: 12px;">
     <input type="text" id="projectIdInput" placeholder="Enter Scratch project ID">
     <button onclick="startFromInput()">Load Project</button>
+  </div>
+  <div id="usernameRow">
+    <div style="font-size:18px;">This project uses cloud variables</div>
+    <div id="usernameHint">Choose a username (letters, numbers, - and _, up to 20 characters).</div>
+    <input type="text" id="usernameInput" placeholder="Enter a username" maxlength="20">
+    <button id="usernameBtn">Continue</button>
   </div>
   <div class="spinner"></div>
   <div id="statusMsg"></div>
@@ -100,6 +119,125 @@
   const stageContainer = document.getElementById('stage-container');
 
   let scaffolding = null;
+
+
+  // ---- Cloud variables ----
+  // Scratch's own cloud server (clouddata.scratch.mit.edu) rejects connections from
+  // any origin other than scratch.mit.edu, so it can't be used from a self-hosted page.
+  // TurboWarp's cloud server accepts any origin, so we use that instead. Note that
+  // its data is separate from Scratch's: values set here are NOT shared with scratch.mit.edu.
+  const CLOUD_SERVER = 'wss://clouddata.turbowarp.org';
+
+  class CloudProvider {
+    constructor(vm, username, projectId) {
+      this.vm = vm;
+      this.username = username;
+      this.projectId = projectId;
+      this.queue = [];
+      this.ws = null;
+      this.closed = false;
+      this.attempts = 0;
+      this.enable();
+    }
+    // TurboWarp's VM calls enable()/disable() on the provider
+    enable() {
+      this.closed = false;
+      if (!this.ws || this.ws.readyState === WebSocket.CLOSED) this.connect();
+    }
+    disable() {
+      this.closed = true;
+      if (this.ws) this.ws.close();
+    }
+    connect() {
+      if (this.closed) return;
+      if (this.ws && (this.ws.readyState === WebSocket.OPEN || this.ws.readyState === WebSocket.CONNECTING)) return;
+      this.ws = new WebSocket(CLOUD_SERVER);
+      this.ws.onopen = () => {
+        this.attempts = 0;
+        this.send({ method: 'handshake' });
+        const q = this.queue; this.queue = [];
+        q.forEach(m => this.send(m));
+      };
+      this.ws.onmessage = (e) => {
+        String(e.data).split('\n').filter(Boolean).forEach(line => {
+          try {
+            const msg = JSON.parse(line);
+            if (msg.method === 'set') {
+              this.vm.postIOData('cloud', { varUpdate: { name: msg.name, value: msg.value } });
+            }
+          } catch (err) { console.warn('Bad cloud message', err); }
+        });
+      };
+      this.ws.onclose = () => {
+        if (this.closed) return;
+        const delay = Math.min(30000, 1000 * Math.pow(2, this.attempts++));
+        setTimeout(() => this.connect(), delay);
+      };
+      this.ws.onerror = () => {};
+    }
+    send(msg) {
+      msg.user = this.username;
+      msg.project_id = String(this.projectId);
+      if (this.ws && this.ws.readyState === WebSocket.OPEN) {
+        this.ws.send(JSON.stringify(msg) + '\n');
+      } else if (msg.method !== 'handshake') {
+        this.queue.push(msg);
+        if (this.queue.length > 500) this.queue.shift();
+      }
+    }
+    updateVariable(name, value) { this.send({ method: 'set', name, value }); }
+    createVariable(name, value) { this.send({ method: 'create', name, value }); }
+    renameVariable(oldName, newName) { this.send({ method: 'rename', name: oldName, new_name: newName }); }
+    deleteVariable(name) { this.send({ method: 'delete', name }); }
+    requestCloseConnection() {
+      this.disable();
+    }
+  }
+
+  function getUsername() {
+    const fromParam = new URLSearchParams(window.location.search).get('username');
+    if (fromParam && /^[A-Za-z0-9_-]{1,20}$/.test(fromParam)) return fromParam;
+    try {
+      let saved = localStorage.getItem('scratchget_username');
+      if (!saved) {
+        saved = 'player' + Math.floor(Math.random() * 9000 + 1000);
+        localStorage.setItem('scratchget_username', saved);
+      }
+      return saved;
+    } catch (e) {
+      return 'player' + Math.floor(Math.random() * 9000 + 1000);
+    }
+  }
+
+  function askForUsername() {
+    return new Promise((resolve) => {
+      const row = document.getElementById('usernameRow');
+      const input = document.getElementById('usernameInput');
+      const btn = document.getElementById('usernameBtn');
+      const hint = document.getElementById('usernameHint');
+      input.value = getUsername();
+      overlay.classList.add('asking');
+      setStatus('');
+      input.focus();
+      input.select();
+
+      function submit() {
+        const name = input.value.trim();
+        if (!/^[A-Za-z0-9_-]{1,20}$/.test(name)) {
+          hint.textContent = 'Invalid username. Use 1-20 letters, numbers, - or _.';
+          hint.style.color = '#ff6b6b';
+          return;
+        }
+        try { localStorage.setItem('scratchget_username', name); } catch (e) {}
+        btn.onclick = null;
+        input.onkeydown = null;
+        overlay.classList.remove('asking');
+        resolve(name);
+      }
+      btn.onclick = submit;
+      input.onkeydown = (e) => { if (e.key === 'Enter') submit(); };
+    });
+  }
 
   function getIdFromParams() {
     const params = new URLSearchParams(window.location.search);
@@ -135,17 +273,7 @@
     return { meta, projectData };
   }
 
-  async function loadProject(id) {
-    if (!/^\d+$/.test(id)) {
-      setStatus('Invalid project ID — must be numeric.');
-      return;
-    }
-
-    try {
-      const { meta, projectData } = await fetchProjectData(id);
-
-      setStatus('Booting TurboWarp engine...');
-
+  function initEngine() {
       if (typeof Scaffolding === 'undefined') {
         throw new Error('Scaffolding library failed to load from CDN.');
       }
@@ -173,9 +301,35 @@
         [storage.AssetType.ImageVector, storage.AssetType.ImageBitmap, storage.AssetType.Sound],
         (asset) => `https://assets.scratch.mit.edu/internalapi/asset/${asset.assetId}.${asset.dataFormat}/get/`
       );
+  }
+
+  async function loadProject(id) {
+    if (!/^\d+$/.test(id)) {
+      setStatus('Invalid project ID — must be numeric.');
+      return;
+    }
+
+    try {
+      // Start the download first, then boot the engine while it runs in the background
+      const dataPromise = fetchProjectData(id);
+      dataPromise.catch(() => {}); // avoid unhandled-rejection noise; error is handled below
+      initEngine();
+      const { meta, projectData } = await dataPromise;
+
+      // (engine was already set up while the download was in flight)
 
       setStatus('Loading project into engine...');
       await scaffolding.loadProject(projectData);
+
+      // Only connect to the cloud server if the project actually uses cloud variables
+      if (scaffolding.vm.runtime.hasCloudData()) {
+        const username = await askForUsername();
+        scaffolding.setUsername(username);
+        setStatus('Connecting to cloud variables...');
+        scaffolding.addCloudProvider(new CloudProvider(scaffolding.vm, username, id));
+      } else {
+        scaffolding.setUsername(getUsername());
+      }
 
       scaffolding.start();
       scaffolding.greenFlag();
