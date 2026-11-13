@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Flash Player</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    html, body {
+      width: 100%;
+      height: 100%;
+      overflow: hidden;
+      background: #000;
+    }
+
+    ruffle-player {
+      display: block;
+      width: 100vw;
+      height: 100vh;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Load Ruffle from the official CDN -->
+  <script src="https://unpkg.com/@ruffle-rs/ruffle"></script>
+
+  <script>
+    window.RufflePlayer = window.RufflePlayer || {};
+
+    window.addEventListener("load", () => {
+      const ruffle = window.RufflePlayer.newest();
+      const player = ruffle.createPlayer();
+
+      // ─── 🔧 SET YOUR SWF PATH HERE ───────────────────────────────────────────
+      const SWF_URL = "./game.swf";
+      // ─────────────────────────────────────────────────────────────────────────
+
+      player.style.width  = "100vw";
+      player.style.height = "100vh";
+      player.style.display = "block";
+
+      document.body.appendChild(player);
+
+      player.load({
+        url: SWF_URL,
+        autoplay: "on",
+        scale: "showAll",   // keeps aspect ratio; change to "exactFit" to stretch edge-to-edge
+        quality: "high",
+        bgcolor: "#000000",
+      });
+    });
+  </script>
+
+</body>
+</html>
