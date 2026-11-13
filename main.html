@@ -990,6 +990,12 @@ body[data-color-mode="light"] #grub .g-help{color:#616161}
 .s-check{display:flex;align-items:center;gap:8px;font-size:12px;color:rgba(255,255,255,.65);margin-top:14px;cursor:pointer}
 .s-check input{accent-color:var(--sa)}
 
+/* performance mode (setup > Performance): no blur effects, no animations */
+body.lite *,body.lite *::before,body.lite *::after{backdrop-filter:none!important;-webkit-backdrop-filter:none!important;animation-duration:.001s!important;animation-delay:0s!important;transition-duration:.001s!important;transition-delay:0s!important}
+body.lite .tile,body.lite .app-win{will-change:auto}
+
+.s-note{margin-top:16px;font-size:12px;color:rgba(255,255,255,.5)}
+
 /* theme previews */
 .sth-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:16px}
 .sth{background:rgba(255,255,255,.07);border:2px solid transparent;border-radius:10px;padding:10px;cursor:pointer;color:#fff;text-align:center;transition:background .15s,border-color .15s,transform .15s}
@@ -2524,7 +2530,7 @@ try{ // default boot options chosen in the boot menu for future boots
 }catch(e){}
 let S = {
   accent:'#0078d4', startBgColor:'#0d1f3c', startBgImage:'', desktopBgImage:WALLPAPER_PRESETS[0].url,
-  pattern:1, username:'User', profilePic:'', showCredit:true, wobbly:false, wobbleAmt:40, wobbleMode:'compiz', theme:'defaultnew', clock24:false, viewport:'auto',
+  pattern:1, username:'User', profilePic:'', showCredit:true, wobbly:false, wobbleAmt:40, wobbleMode:'compiz', theme:'defaultnew', clock24:false, viewport:'auto', lite:false,
   titlebarHeight:32, panelSize:0,
   menuW:0, menuH:0, colorMode:'dark',
   apps: JSON.parse(JSON.stringify(DEFAULT_APPS)),
@@ -2623,7 +2629,7 @@ function loadS(){
   try{
     const d=localStorage.getItem('win81');
     if(d){const p=JSON.parse(d);
-      ['accent','startBgColor','startBgImage','desktopBgImage','pattern','username','profilePic','showCredit','wobbly','wobbleAmt','wobbleMode','theme','clock24','viewport','menuW','menuH','colorMode'].forEach(k=>{if(p[k]!==undefined)S[k]=p[k];});
+      ['accent','startBgColor','startBgImage','desktopBgImage','pattern','username','profilePic','showCredit','wobbly','wobbleAmt','wobbleMode','theme','clock24','viewport','menuW','menuH','colorMode','lite'].forEach(k=>{if(p[k]!==undefined)S[k]=p[k];});
       if(p.tiles&&p.tiles.length)S.tiles=p.tiles;
       if(p.dicons&&p.dicons.length)S.dicons=p.dicons;
       if(p.groups&&p.groups.length)S.groups=p.groups;
@@ -2735,6 +2741,7 @@ function applyPanelSize(){
 }
 function applyTheme(){
   applyThemeLook();
+  document.body.classList.toggle('lite',!!S.lite);
   document.documentElement.style.setProperty('--accent',S.accent);
   document.documentElement.style.setProperty('--titlebar-height',S.titlebarHeight+'px');
   applyPanelSize();
@@ -4909,7 +4916,7 @@ async function bootRun(fast){
   const my=++bootRunId;
   const live=ph=>my===bootRunId&&bootPhase===ph;
   bootPhase='load';bootShow('');                       // black while the startup video loads
-  const wantVideo=!BOOT.quick||BOOT.quickVideo===true;
+  const wantVideo=(!BOOT.quick||BOOT.quickVideo===true)&&!S.lite;   // performance mode: no startup video
   if(wantVideo){
     if(!bootVideoP)bootVideoP=bootLoadVideo();
     await bootVideoP;
@@ -5141,13 +5148,12 @@ async function bootPreload(){
   add(S.startBgImage);
   add(S.profilePic);
   
-  // All app icons
-  S.apps.forEach(a=>add(a.iconUrl));
+  if(!S.lite){   // performance mode: skip the app icons, the wallpaper presets and the intro video (they load when needed)
+    S.apps.forEach(a=>add(a.iconUrl));
+    WALLPAPER_PRESETS.forEach(p=>add(p.url));
+  }
   
-  // All wallpaper presets
-  WALLPAPER_PRESETS.forEach(p=>add(p.url));
-  
-  const total=urls.length+1;
+  const total=urls.length+(S.lite?0:1);
   let done=0;
   const bar=document.getElementById('boot-bar-fill'),txt=document.getElementById('boot-load-text');
   const tick=()=>{
@@ -5168,8 +5174,10 @@ async function bootPreload(){
     }
   };
   const jobs=[...Array(workerCount)].map(()=>worker());
-  if(!bootVideoP)bootVideoP=bootLoadVideo();
-  jobs.push(bootVideoP.then(tick));
+  if(!S.lite){
+    if(!bootVideoP)bootVideoP=bootLoadVideo();
+    jobs.push(bootVideoP.then(tick));
+  }
   
   // Load with timeout fallback
   await Promise.race([Promise.all(jobs),bootSleep(45000)]);
@@ -5238,6 +5246,7 @@ const SETUP_XWP_URL='./extrawp/index.html';   // the wizard reads  const WALLPAP
 const SETUP_STEPS=[
   {id:'start',  title:'Welcome'},
   {id:'owner',  title:'Who owns this device?',   side:'Owner',      sub:'Choose a name and a picture for your account.'},
+  {id:'perf',   title:'Improve performance?',    side:'Performance', sub:'Make everything start and run faster by stripping out content you do not need.'},
   {id:'wpsrc',  title:'Select wallpaper source', side:'Wallpaper source', sub:'Where should your wallpaper come from?'},
   {id:'wp',     title:'Select wallpaper',        side:'Wallpaper',  sub:''},
   {id:'theme',  title:'Select theme',            side:'Theme',      sub:'A theme restyles the taskbar, menus, windows and more. You can change it later in Personalize.'},
@@ -5396,7 +5405,7 @@ function setupImportFile(f){
     try{
       const d=JSON.parse(e.target.result);
       if(!d||typeof d!=='object'||Array.isArray(d))throw new Error('bad');
-      ['accent','startBgColor','startBgImage','desktopBgImage','pattern','username','profilePic','showCredit','wobbly','wobbleAmt','wobbleMode','theme','clock24','viewport','menuW','menuH','colorMode','titlebarHeight','panelSize'].forEach(k=>{if(d[k]!==undefined)S[k]=d[k];});
+      ['accent','startBgColor','startBgImage','desktopBgImage','pattern','username','profilePic','showCredit','wobbly','wobbleAmt','wobbleMode','theme','clock24','viewport','menuW','menuH','colorMode','titlebarHeight','panelSize','lite'].forEach(k=>{if(d[k]!==undefined)S[k]=d[k];});
       ['tiles','dicons','groups','tbPins'].forEach(k=>{if(Array.isArray(d[k])&&d[k].length)S[k]=d[k];});
       if(Array.isArray(d.apps)&&d.apps.length)S.apps=d.apps;
       setupPaintBg();
@@ -5436,6 +5445,21 @@ SETUP_R.owner=function(body){
   form.appendChild(url);
   wrap.appendChild(pic);wrap.appendChild(form);body.appendChild(wrap);
   setTimeout(()=>{try{nm.focus();}catch(e){}},400);
+};
+
+/* 1b: Performance */
+SETUP_R.perf=function(body){
+  const cards=sEl('div','s-cards');
+  const mk=(on,ico,title,desc)=>{
+    const b=sEl('button','s-choice'+(!!S.lite===on?' sel':''));
+    b.innerHTML=`<i class="${ico}"></i>`;b.appendChild(sEl('b',null,title));b.appendChild(sEl('span',null,desc));
+    b.onclick=()=>{S.lite=on;try{document.body.classList.toggle('lite',on);}catch(e){}cards.querySelectorAll('.s-choice').forEach(x=>x.classList.remove('sel'));b.classList.add('sel');};
+    cards.appendChild(b);
+  };
+  mk(true,'fa-solid fa-bolt','Yes, make it faster','Skips the startup video and the preloading of app icons and wallpapers, and turns off blur effects and animations.');
+  mk(false,'fa-solid fa-film','No, keep everything','Plays the startup video, preloads everything and keeps all the visual effects.');
+  body.appendChild(cards);
+  body.appendChild(sEl('div','s-note','You can change this later by running Setup again from Personalize.'));
 };
 
 /* 2: Wallpaper source */
