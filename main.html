@@ -998,6 +998,10 @@ body[data-color-mode="light"] #grub .g-help{color:#616161}
 .sth span{display:block;margin-top:9px;font-size:13px}
 .pv{position:relative;aspect-ratio:16/10;border-radius:6px;overflow:hidden;background:#27415f center/cover no-repeat;box-shadow:inset 0 0 0 1px rgba(255,255,255,.1)}
 .pv i{position:absolute;display:block}
+.pv img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;display:block;pointer-events:none;user-select:none}
+.pv img.pv-b{opacity:0;animation:pv-fade 6s ease-in-out infinite}
+@keyframes pv-fade{0%,32%{opacity:0}50%,82%{opacity:1}100%{opacity:0}}
+@media (prefers-reduced-motion:reduce){.pv img.pv-b{animation:none}}
 
 /* accent */
 .sac-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(46px,1fr));gap:8px;max-width:560px}
@@ -1889,14 +1893,14 @@ const WALLPAPER_PRESETS = [
    DEFAULT STATE
 ══════════════════════════════════ */
 const THEMES={
-  defaultnew:{name:'Default (new)',orb:'fa-solid fa-grip',panel:false,alias:['new','defaultnew']},
-  default:{name:'Default (classic)',orb:'fa-solid fa-grip',panel:false,startBg:true,alias:[]},
-  win11:{name:'Windows 11',orb:'fa-brands fa-windows',panel:true,alias:['windows11','w11']},
-  win10:{name:'Windows 10',orb:'fa-brands fa-windows',panel:true,alias:['windows10','w10']},
-  win7:{name:'Windows 7',orb:'fa-brands fa-windows',panel:true,alias:['windows7','w7']},
-  mac:{name:'macOS',orb:'fa-solid fa-rocket',panel:false,alias:['macos','osx','apple']},
-  gnome:{name:'GNOME',orb:'fa-solid fa-circle',panel:false,alias:['linux']},
-  chromeos:{name:'ChromeOS',orb:'fa-solid fa-circle',panel:true,alias:['chrome','chromebook']},
+  defaultnew:{name:'Default (new)',previews:['./preview/defaultnew.png'],orb:'fa-solid fa-grip',panel:false,alias:['new','defaultnew']},
+  default:{name:'Default (classic)',previews:['./preview/defaultolddesktop.png','./preview/defaultoldstart.png'],orb:'fa-solid fa-grip',panel:false,startBg:true,alias:[]},
+  win11:{name:'Windows 11',previews:['./preview/w11.png'],orb:'fa-brands fa-windows',panel:true,alias:['windows11','w11']},
+  win10:{name:'Windows 10',previews:['./preview/w10.png'],orb:'fa-brands fa-windows',panel:true,alias:['windows10','w10']},
+  win7:{name:'Windows 7',previews:['./preview/w7.png'],orb:'fa-brands fa-windows',panel:true,alias:['windows7','w7']},
+  mac:{name:'macOS',previews:['./preview/macosdesktop.png','./preview/macosstart.png'],orb:'fa-solid fa-rocket',panel:false,alias:['macos','osx','apple']},
+  gnome:{name:'GNOME',previews:['./preview/gnomedesktop.png','./preview/gnomestart.png'],orb:'fa-solid fa-circle',panel:false,alias:['linux']},
+  chromeos:{name:'ChromeOS',previews:['./preview/chromeos.png'],orb:'fa-solid fa-circle',panel:true,alias:['chrome','chromebook']},
 };
 const DEFAULT_APPS = [
   /* ── Web ── */
@@ -5559,10 +5563,29 @@ SETUP_R.theme=function(body){
   const grid=sEl('div','sth-grid');
   Object.keys(THEMES).forEach(k=>{
     const b=sEl('button','sth'+(S.theme===k?' sel':''));
-    const pv=sEl('div','pv');pv.innerHTML=setupPreviewHTML(k);
-    if(k==='default'){pv.style.backgroundColor=S.startBgColor;}
-    else if(S.desktopBgImage)pv.style.backgroundImage=`url("${String(S.desktopBgImage).replace(/["\\\n]/g,m=>encodeURIComponent(m))}")`;
-    else pv.style.backgroundColor=S.accent;
+    const pv=sEl('div','pv');
+    const srcs=THEMES[k].previews||[];
+    let failed=0;
+    const fallback=()=>{                 // only if neither image loads: draw the old mock preview
+      pv.querySelectorAll('img').forEach(i=>i.remove());
+      pv.innerHTML=setupPreviewHTML(k);
+      if(k==='default'){pv.style.backgroundColor=S.startBgColor;}
+      else if(S.desktopBgImage)pv.style.backgroundImage=`url("${String(S.desktopBgImage).replace(/["\\\n]/g,m=>encodeURIComponent(m))}")`;
+      else pv.style.backgroundColor=S.accent;
+    };
+    if(!srcs.length)fallback();
+    else srcs.slice(0,2).forEach((src,n)=>{
+      const im=document.createElement('img');
+      im.src=src;im.alt='';im.draggable=false;im.className=n?'pv-b':'pv-a';
+      im.onerror=()=>{
+        failed++;
+        if(failed>=Math.min(2,srcs.length)){fallback();return;}   // both missing: old mock preview
+        im.remove();
+        const left=pv.querySelector('img');                       // one missing: keep the other, static
+        if(left){left.classList.remove('pv-b');left.style.opacity=1;left.style.animation='none';}
+      };
+      pv.appendChild(im);
+    });
     b.appendChild(pv);b.appendChild(sEl('span',null,THEMES[k].name));
     b.onclick=()=>{S.theme=k;grid.querySelectorAll('.sth').forEach(x=>x.classList.remove('sel'));b.classList.add('sel');};
     grid.appendChild(b);
