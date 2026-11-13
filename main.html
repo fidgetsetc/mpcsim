@@ -1599,21 +1599,91 @@ function refreshIconInversion(){
   });
 }
 
-function cacheAsset(url){
+/* ══════════════════════════════════
+   PRELOADER
+   Downloads files once, keeps them in memory as blobs and hands out blob: URLs, so everything that is
+   "linked" through PRELOAD.url(u) / getCachedAsset(u) / SFX / the videos loads instantly from memory
+   instead of hitting the network again. Hosts that block fetch() (no CORS) fall back to the browser's
+   normal HTTP cache (the original URL is used), and a file that 404s is remembered as missing.
+══════════════════════════════════ */
+const PRELOAD={
+  blobs:new Map(),     // original url -> blob: url
+  pending:new Map(),   // original url -> in-flight promise
+  fail:new Map(),      // original url -> 'http' (missing) | 'net' (blocked / offline) | 'budget' | 'timeout'
+  bytes:0,
+  LIMIT:512*1024*1024, // memory budget for blobs; past it files just fall back to the normal HTTP cache
+  skip(u){return !u||typeof u!=='string'||/^(data|blob|javascript):/i.test(u);},
+  url(u){return PRELOAD.blobs.get(u)||u;},          // preloaded blob: URL if there is one, else the original
+  has(u){return PRELOAD.blobs.has(u);},
+  blob(u,o){
+    o=o||{};
+    if(PRELOAD.skip(u))return Promise.resolve(null);
+    if(PRELOAD.blobs.has(u))return Promise.resolve(PRELOAD.blobs.get(u));
+    if(PRELOAD.pending.has(u))return PRELOAD.pending.get(u);
+    const p=(async()=>{
+      const ctl=typeof AbortController!=='undefined'?new AbortController():null;
+      const t=setTimeout(()=>{PRELOAD.fail.set(u,'timeout');try{ctl&&ctl.abort();}catch(e){}},o.timeout||(o.kind==='video'?90000:20000));
+      try{
+        const res=await fetch(u,{credentials:'omit',signal:ctl?ctl.signal:undefined});
+        if(!res.ok){PRELOAD.fail.set(u,'http');return null;}
+        const len=+res.headers.get('content-length')||0;
+        if(PRELOAD.bytes+len>PRELOAD.LIMIT){PRELOAD.fail.set(u,'budget');try{ctl&&ctl.abort();}catch(e){}return null;}
+        const b=await res.blob();
+        if(PRELOAD.bytes+b.size>PRELOAD.LIMIT){PRELOAD.fail.set(u,'budget');return null;}
+        PRELOAD.bytes+=b.size;
+        const bu=URL.createObjectURL(b);
+        PRELOAD.blobs.set(u,bu);PRELOAD.fail.delete(u);
+        return bu;
+      }catch(e){
+        if(!PRELOAD.fail.has(u))PRELOAD.fail.set(u,'net');
+        return null;
+      }finally{clearTimeout(t);}
+    })();
+    PRELOAD.pending.set(u,p);
+    p.then(()=>PRELOAD.pending.delete(u));
+    return p;
+  },
+};
+
+const ASSET_PENDING=new Map();
+function _loadImg(src,cors){
   return new Promise(res=>{
-    if(ASSET_CACHE.has(url))return res(ASSET_CACHE.get(url));
     const img=new Image();let t;
-    const done=(ok,data)=>{
-      clearTimeout(t);img.onload=img.onerror=null;
-      if(ok&&img.src){ASSET_CACHE.set(url,url);analyzeAsset(url,img);}
-      res(ok?url:null);
-    };
-    t=setTimeout(()=>done(false),8000);
-    img.crossOrigin='anonymous';
-    img.onload=()=>done(true);
-    img.onerror=()=>done(false);
-    img.src=url;
+    const fin=ok=>{clearTimeout(t);img.onload=img.onerror=null;res(ok?img:null);};
+    t=setTimeout(()=>fin(false),8000);
+    if(cors)img.crossOrigin='anonymous';
+    img.onload=()=>fin(true);img.onerror=()=>fin(false);
+    img.src=src;
   });
+}
+// Preloads an image. Resolves to the URL to use (a blob: URL when it was downloaded, the original otherwise) or null.
+function cacheAsset(url){
+  if(PRELOAD.skip(url))return Promise.resolve(null);
+  if(ASSET_CACHE.has(url))return Promise.resolve(ASSET_CACHE.get(url));
+  if(ASSET_PENDING.has(url))return ASSET_PENDING.get(url);
+  const p=(async()=>{
+    const linked=await PRELOAD.blob(url,{kind:'image'});
+    let src=linked||url,img=null;
+    if(linked){
+      img=await _loadImg(linked,false);
+      if(!img)return null;
+    }else{
+      if(PRELOAD.fail.get(url)==='http')return null;           // file does not exist
+      img=await _loadImg(url,true);                            // CORS-clean copy: lets us analyze it
+      if(!img){img=await _loadImg(url,false);src=url;}         // host has no CORS: still warms the HTTP cache
+      if(!img)return null;
+    }
+    analyzeAsset(url,img);
+    if(src!==url){                                             // the blob: URL gets the same analysis results
+      if(BLACK_ICONS.has(url))BLACK_ICONS.add(src);
+      if(ASSET_LUMA.has(url))ASSET_LUMA.set(src,ASSET_LUMA.get(url));
+    }
+    ASSET_CACHE.set(url,src);
+    return src;
+  })();
+  ASSET_PENDING.set(url,p);
+  p.then(()=>ASSET_PENDING.delete(url));
+  return p;
 }
 
 function getCachedAsset(url){
@@ -2584,12 +2654,20 @@ const SFX={
     const url=SOUND_FILES[name];if(!url||SFX._bad[name])return null;
     let a=SFX._base[name];
     if(!a){
-      try{a=new Audio();a.preload='auto';a.addEventListener('error',()=>{SFX._bad[name]=true;},{once:true});a.src=url;}catch(e){SFX._bad[name]=true;return null;}
+      try{a=new Audio();a.preload='auto';a.addEventListener('error',()=>{SFX._bad[name]=true;},{once:true});a.src=PRELOAD.url(url);}catch(e){SFX._bad[name]=true;return null;}
       SFX._base[name]=a;
     }
     return a;
   },
-  preload(){Object.keys(SOUND_FILES).forEach(n=>SFX._get(n));},
+  // Downloads every sound once (shared files like open.wav only once) and links the audio elements to the in-memory copies.
+  preload(){
+    if(SFX._pp)return SFX._pp;
+    const urls=[...new Set(Object.values(SOUND_FILES).filter(Boolean))];
+    SFX._pp=Promise.all(urls.map(u=>PRELOAD.blob(u,{kind:'audio'}).then(bu=>{
+      if(bu)Object.keys(SOUND_FILES).forEach(n=>{if(SOUND_FILES[n]===u&&SFX._base[n]&&!SFX._bad[n])delete SFX._base[n];});   // rebuilt below from the memory copy
+    }))).then(()=>{Object.keys(SOUND_FILES).forEach(n=>SFX._get(n));});
+    return SFX._pp;
+  },
   play(name,o){
     o=o||{};
     if(SFX.muted&&o.vol===undefined)return;
@@ -3384,7 +3462,7 @@ function makeTileEl(td,app){
     el.style.background='transparent';
     const bg=document.createElement('div');bg.className='tile-desktop-bg';
     bg.style.opacity='1';
-    if(S.desktopBgImage){bg.style.backgroundImage=`url('${S.desktopBgImage}')`;bg.style.backgroundSize='cover';}
+    if(S.desktopBgImage){bg.style.backgroundImage=`url('${getCachedAsset(S.desktopBgImage)}')`;bg.style.backgroundSize='cover';}
     else bg.style.backgroundColor=S.accent;
     el.appendChild(bg);
   }else{
@@ -4927,7 +5005,9 @@ async function bootRun(fast){
   if(useVideo)vp=bootPlayVideo(!BOOT.quick);           // the startup video replaces the loading screen (loops while loading)
   else if(!BOOT.quick)bootShow('boot-load');           // no video file: fall back to the old loading screen
   if(!BOOT.quick)await bootPreload();                  // quick boot: assets load lazily
+  else if(!S.lite&&setupWillRun())PRELOAD.blob(SETUP_VIDEO,{kind:'video'});   // quick boot: still warm the setup video in the background
   if(!live('load'))return;
+  if(!BOOT.quick){try{applyTheme();}catch(e){}}        // relink wallpapers to the preloaded copies
   bootPhase='wait';
   document.getElementById('boot-bar-fill').style.width='100%';
   document.getElementById('boot-load-text').textContent=BOOT.plugins?'Starting plugins…':'Starting (safe mode)…';
@@ -5130,30 +5210,39 @@ function bootLoadImage(url){
 }
 
 function bootLoadVideo(){
-  return new Promise(res=>{
+  return PRELOAD.blob(INTRO_VIDEO,{kind:'video'}).then(linked=>new Promise(res=>{   // linked = in-memory copy, or null -> stream the file as before
     let t;
     const done=ok=>{clearTimeout(t);bootVideo.oncanplaythrough=bootVideo.onerror=null;bootVideoOK=ok;res();};
     t=setTimeout(()=>done(bootVideo.readyState>=2),15000);
     bootVideo.oncanplaythrough=()=>done(true);
     bootVideo.onerror=()=>done(false);
-    bootVideo.src=INTRO_VIDEO;bootVideo.load();
-  });
+    bootVideo.src=linked||INTRO_VIDEO;bootVideo.load();
+  }));
+}
+// will the setup wizard run on this boot? (same rules as maybeStartSetup)
+function setupWillRun(){
+  if(BOOT.guest||BOOT.oneApp)return false;
+  return /[?&]setup(=|&|$)/.test(location.search)||!setupIsDone();
 }
 async function bootPreload(){
-  // Preload everything: wallpapers, app icons, user profile pic, desktop bg, start bg, intro video
-  const urls=[];const add=u=>{if(u&&u.startsWith('http')&&!urls.includes(u))urls.push(u);};
-  
-  // Current settings
-  add(S.desktopBgImage);
-  add(S.startBgImage);
-  add(S.profilePic);
-  
-  if(!S.lite){   // performance mode: skip the app icons, the wallpaper presets and the intro video (they load when needed)
-    S.apps.forEach(a=>add(a.iconUrl));
-    WALLPAPER_PRESETS.forEach(p=>add(p.url));
+  // Preload everything and link it: wallpapers, app icons, profile pic, desktop/start bg, system sounds,
+  // the intro video and (only if the setup wizard is about to run) the setup video.
+  // Local files (./wp/, ./sounds/, ./intro.mp4 …) are preloaded too, not just http(s) ones.
+  const cur=[],rest=[];
+  const addTo=(list,u)=>{if(!PRELOAD.skip(u)&&!cur.includes(u)&&!rest.includes(u))list.push(u);};
+  addTo(cur,S.desktopBgImage);addTo(cur,S.startBgImage);addTo(cur,S.profilePic);
+  if(!S.lite){   // performance mode: skip the app icons, the wallpaper presets and the videos (they load when needed)
+    S.apps.forEach(a=>addTo(rest,a.iconUrl));
+    WALLPAPER_PRESETS.forEach(p=>addTo(rest,p.url));
   }
-  
-  const total=urls.length+(S.lite?0:1);
+  const sounds=[...new Set(Object.values(SOUND_FILES).filter(Boolean))];
+  const tasks=[
+    ...cur.map(u=>()=>cacheAsset(u)),
+    ...sounds.map(u=>()=>PRELOAD.blob(u,{kind:'audio'})),
+    ...rest.map(u=>()=>cacheAsset(u)),
+  ];
+  const wantSetup=!S.lite&&setupWillRun();
+  const total=tasks.length+(S.lite?0:1)+(wantSetup?1:0);
   let done=0;
   const bar=document.getElementById('boot-bar-fill'),txt=document.getElementById('boot-load-text');
   const tick=()=>{
@@ -5162,14 +5251,14 @@ async function bootPreload(){
     if(bootPhase==='load')txt.textContent=`Loading… ${Math.min(done,total)} / ${total}`;
   };
   txt.textContent=`Loading… 0 / ${total}`;
-  
+
   // Parallel loading with worker pool
   let i=0;
-  const workerCount=Math.min(12,urls.length||1);
+  const workerCount=Math.min(12,tasks.length||1);
   const worker=async()=>{
-    while(i<urls.length&&bootPhase==='load'){
-      const u=urls[i++];
-      await bootLoadImage(u);
+    while(i<tasks.length&&bootPhase==='load'){
+      const job=tasks[i++];
+      try{await job();}catch(e){}
       tick();
     }
   };
@@ -5178,8 +5267,10 @@ async function bootPreload(){
     if(!bootVideoP)bootVideoP=bootLoadVideo();
     jobs.push(bootVideoP.then(tick));
   }
-  
-  // Load with timeout fallback
+  if(wantSetup)jobs.push(PRELOAD.blob(SETUP_VIDEO,{kind:'video'}).then(tick,tick));
+  SFX.preload();   // builds the sound elements from the in-memory copies (the files themselves are already in the queue above)
+
+  // Load with timeout fallback (anything still downloading keeps going and gets linked as soon as it arrives)
   await Promise.race([Promise.all(jobs),bootSleep(45000)]);
 }
 function bootFadeVideo(ms){
@@ -5287,7 +5378,7 @@ function setupFit(){const r=sGet('setup');if(r)r.classList.toggle('compact',vw()
 function setupPaintBg(){
   const r=sGet('setup');r.style.setProperty('--sa',S.accent);
   const bg=sGet('setup-bg');bg.style.backgroundColor=S.accent;
-  const u=S.desktopBgImage;bg.style.backgroundImage=u?`url("${String(u).replace(/["\\\n]/g,m=>encodeURIComponent(m))}")`:'none';
+  const u=S.desktopBgImage?getCachedAsset(S.desktopBgImage):'';bg.style.backgroundImage=u?`url("${String(u).replace(/["\\\n]/g,m=>encodeURIComponent(m))}")`:'none';
 }
 
 /* ── intro: plays SETUP_VIDEO (like the startup video); falls back to a built-in animation if the file is missing ── */
@@ -5306,7 +5397,8 @@ function setupPlayIntro(){
   v.onplaying=()=>{if(!live())return;started=true;settled=true;clearTimeout(guard);v.style.display='block';intro.classList.add('has-video');};
   v.onended=()=>{if(live())setupReveal();};
   v.onerror=()=>{if(started){if(live())setupReveal();}else giveUp();};
-  v.muted=false;v.loop=false;v.src=SETUP_VIDEO;
+  if(PRELOAD.fail.get(SETUP_VIDEO)==='http'){giveUp();return;}   // preloader already found the file is missing
+  v.muted=false;v.loop=false;v.src=PRELOAD.url(SETUP_VIDEO);   // preloaded copy if there is one
   try{v.load();}catch(e){}
   const p=v.play();
   if(p&&p.catch)p.catch(()=>{v.muted=true;const q=v.play();if(q&&q.catch)q.catch(giveUp);});   // sound blocked: retry silently
@@ -5521,7 +5613,7 @@ function setupWpGrid(host,list){
   if(!list.length){host.appendChild(sEl('div','s-msg','No wallpapers match.'));return;}
   list.forEach(p=>{
     const c=sEl('button','swp'+(p.url===S.desktopBgImage?' sel':''));c.title=p.name;
-    const im=document.createElement('img');im.loading='lazy';im.alt='';im.src=p.url;im.onerror=()=>c.classList.add('bad');
+    const im=document.createElement('img');im.loading='lazy';im.alt='';im.src=getCachedAsset(p.url);im.onerror=()=>c.classList.add('bad');
     c.appendChild(im);c.appendChild(sEl('span',null,p.name));
     c.onclick=()=>{
       S.desktopBgImage=p.url;if(SETUP.alsoStart)S.startBgImage=p.url;
@@ -5594,7 +5686,7 @@ SETUP_R.theme=function(body){
       pv.querySelectorAll('img').forEach(i=>i.remove());
       pv.innerHTML=setupPreviewHTML(k);
       if(k==='default'){pv.style.backgroundColor=S.startBgColor;}
-      else if(S.desktopBgImage)pv.style.backgroundImage=`url("${String(S.desktopBgImage).replace(/["\\\n]/g,m=>encodeURIComponent(m))}")`;
+      else if(S.desktopBgImage)pv.style.backgroundImage=`url("${String(getCachedAsset(S.desktopBgImage)).replace(/["\\\n]/g,m=>encodeURIComponent(m))}")`;
       else pv.style.backgroundColor=S.accent;
     };
     if(!srcs.length)fallback();

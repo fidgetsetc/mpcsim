@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>What's up?</title>
+    <style>
+        body {
+            font-family: sans-serif;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+            background-color: #1e1e2e;
+            color: #cdd6f4;
+        }
+        .card {
+            background: #313244;
+            padding: 2rem;
+            border-radius: 12px;
+            box-shadow: 0 8px 16px rgba(0,0,0,0.3);
+            text-align: center;
+            max-width: 400px;
+        }
+        button {
+            padding: 10px 20px;
+            background-color: #89b4fa;
+            color: #11111b;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 1rem;
+            font-weight: bold;
+            margin-top: 15px;
+            transition: background 0.2s;
+        }
+        button:hover {
+            background-color: #b4befe;
+        }
+        .corner-image {
+            position: fixed;
+            bottom: 0;
+            right: 0;
+            width: 30vw;      /* ~30% of the screen width */
+            height: auto;     /* keeps the original aspect ratio */
+            max-height: 100vh;
+            object-fit: contain;
+            pointer-events: none;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="card" id="special-message">
+        <h2>Changelog (Weekend update)</h2>
+        <p>- Added theme previews for setup</p>
+        <p>- Added lite mode for bad computers</p>
+        <p>- Added new Google hider</p>
+        <p>-------------------------------</p>
+        <p>Enjoy the new updates!</p>
+        <button onclick="window.location.href='main.html'">Alright, let's go!</button>
+    </div>
+
+    <!-- Hardcode your image path in the src below -->
+    <img class="corner-image" src="/img/mascot.png" alt="">
+
+</body>
+</html>
