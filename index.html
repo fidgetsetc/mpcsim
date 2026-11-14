@@ -14,11 +14,26 @@
 
   function matches(v) { return v.trim().toLowerCase() === TRIGGER.toLowerCase(); }
 
-  function openMain() {
+function openMain() {
   if (frame) return;
   if (box) box.value = "";
 
   frame = document.createElement("iframe");
+
+  // Sandbox must be set BEFORE src so it applies to the first navigation.
+  // Omitted on purpose:
+  //   allow-modals          -> blocks alert/confirm/prompt
+  //   allow-top-navigation* -> blocks redirecting your main window
+  //   allow-popups*         -> blocks new tabs/windows
+  frame.setAttribute("sandbox", [
+    "allow-scripts",
+    "allow-same-origin",
+    "allow-forms",
+    "allow-downloads",
+    "allow-pointer-lock",
+    "allow-presentation"
+  ].join(" "));
+
   frame.src = TARGET;
   frame.setAttribute("allow",
     "autoplay; fullscreen; camera; microphone; geolocation; clipboard-read; clipboard-write; " +
