@@ -5435,7 +5435,7 @@ function setupRender(){
   const st=SETUP_STEPS[SETUP.step],root=sGet('setup'),body=sGet('setup-body');
   root.classList.toggle('welcome',SETUP.step===0);
   let title=st.title,sub=st.sub||'';
-  if(st.id==='wp'){title=SETUP.src==='xwp'?'Select an extra wallpaper':'Select wallpaper';sub=SETUP.src==='xwp'?'Wallpapers from specific fandoms and more.':'Pick a background for your desktop.';}
+  if(st.id==='wp'){title=SETUP.src==='xwp'?'Select an extra wallpaper':'Select wallpaper';sub=SETUP.src==='xwp'?'Wallpapers from specific fandoms and more.':'Any wallpaper with "crpl" in the name is great for Creative Placement, where you can creatively place your icons anywhere to add some coolness to the desktop.';}
   if(st.id==='accent')sub=S.theme==='default'?'Pick an accent color, plus the Start screen color and pattern for the classic theme.':'Pick the color used for highlights, buttons and window borders.';
   sGet('setup-title').textContent=title;sGet('setup-sub').textContent=sub;
   body.className='';body.innerHTML='';body.style.animation='none';void body.offsetWidth;body.style.animation='';
