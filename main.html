@@ -4161,13 +4161,13 @@ function wobbleStart(el,gx,gy){
   const d=rest.map(r=>Math.hypot(r[0]-gx,r[1]-gy));
   const dmax=Math.max(1,...d);
   // looser springs = more wobble; stiffness falls off with distance from the grab point
-  const kFar=0.035+0.11*(1-a), kNear=0.30+0.25*(1-a);
+  const kFar=0.018+0.085*(1-a), kNear=0.20+0.25*(1-a);
   let s=wobblers.get(el);
   if(!s){s={o:[0,1,2,3].map(()=>({x:0,y:0,vx:0,vy:0})),active:true};wobblers.set(el,s);}
   s.active=true;
   s.k=d.map(di=>{const t=1-di/dmax;return kFar+(kNear-kFar)*t*t;});
-  s.c=0.10+0.10*(1-a);          // friction
-  s.lim=(30+170*a);             // max node displacement in px
+  s.c=0.045+0.08*(1-a);         // friction (lower = rings longer)
+  s.lim=(45+300*a);             // max node displacement in px
   el.classList.add('win-settled'); // stop the open animation from overriding our transform
   el.style.transformOrigin='0 0';
   wobbleEnsureLoop();
@@ -4175,7 +4175,7 @@ function wobbleStart(el,gx,gy){
 function wobbleShift(el,dx,dy){
   const s=wobblers.get(el);if(!s||!s.active)return;
   // window moved rigidly, nodes keep their inertia -> offset relative to the window grows
-  s.o.forEach(p=>{p.x-=dx;p.y-=dy;const m=Math.hypot(p.x,p.y);if(m>s.lim){p.x*=s.lim/m;p.y*=s.lim/m;}});
+  s.o.forEach(p=>{p.x-=dx*1.6;p.y-=dy*1.6;const m=Math.hypot(p.x,p.y);if(m>s.lim){p.x*=s.lim/m;p.y*=s.lim/m;}});
 }
 function wobbleRelease(el){const s=wobblers.get(el);if(s)s.active=false;}
 function wobbleKill(el){if(wobblers.has(el)){wobblers.delete(el);if(!crashActive)el.style.transform='';}}
@@ -4247,7 +4247,7 @@ function makeDraggable(win,handle){
     document.body.classList.add('win-interacting');
     if(S.wobbly){
       if(S.wobbleMode==='proto'){
-        win.style.setProperty('--wobble-deg',(Math.max(0,Math.min(100,S.wobbleAmt??40))/100*7).toFixed(2));
+        win.style.setProperty('--wobble-deg',(Math.max(0,Math.min(100,S.wobbleAmt??40))/100*12).toFixed(2));
         win.classList.add('wobbling');
       }else{
         wobbleStart(win,cx(e)-win.offsetLeft,cy(e)-win.offsetTop);
