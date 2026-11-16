@@ -879,7 +879,7 @@ if(typeof cacheAsset==='undefined')var cacheAsset=function(url){
 ══════════════════════════════════ */
 function loadS(){
   try{
-    const d=localStorage.getItem('win81');
+    const d=localStorage.getItem('earlyshell');
     if(d){const p=JSON.parse(d);
       ['accent','startBgColor','startBgImage','desktopBgImage','pattern','username','showCredit','wobbly','wobbleAmt','wobbleMode','theme'].forEach(k=>{if(p[k]!==undefined)S[k]=p[k];});
       if(p.tiles&&p.tiles.length)S.tiles=p.tiles;
@@ -889,12 +889,12 @@ function loadS(){
   }catch(e){}
 }
 function saveS(){
-  try{const{openWins,nextWin,...r}=S;localStorage.setItem('win81',JSON.stringify(r));}catch(e){}
+  try{const{openWins,nextWin,...r}=S;localStorage.setItem('earlyshell',JSON.stringify(r));}catch(e){}
 }
 function doExport(){
   const{openWins,nextWin,...r}=S;
   const b=new Blob([JSON.stringify(r,null,2)],{type:'application/json'});
-  const a=document.createElement('a');a.href=URL.createObjectURL(b);a.download='win81.json';a.click();
+  const a=document.createElement('a');a.href=URL.createObjectURL(b);a.download='earlyshell.json';a.click();
 }
 function doImport(inp){
   const f=inp.files[0];if(!f)return;
@@ -1524,7 +1524,7 @@ function initTerminal(winId){
       const raw=inp.value;inp.value='';
       if(!raw.trim())return;
       hist.push(raw);histIdx=hist.length;
-      termPrint(winId,`${(S.username||'User').toLowerCase()}@win81:~$ ${raw}`,'term-line-in');
+      termPrint(winId,`${(S.username||'User').toLowerCase()}@earlyshell:~$ ${raw}`,'term-line-in');
       runTerminalCmd(raw.trim(),winId);
     } else if(e.key==='ArrowUp'){
       e.preventDefault();if(histIdx>0){histIdx--;inp.value=hist[histIdx]||'';}
@@ -2105,9 +2105,9 @@ window.addEventListener('resize',drawPattern);
 function renderAll(){renderTiles();renderDesktopIcons();renderTaskbar();}
 loadS();applyTheme();renderAll();tickClock();setInterval(tickClock,1000);
 try{ // add the Plugins tile once to layouts saved before the app existed
-  if(!BOOT.guest&&!localStorage.getItem('win81_plug_tile')){
+  if(!BOOT.guest&&!localStorage.getItem('earlyshell_plug_tile')){
     if(!S.tiles.some(x=>x.appId==='app-plug'))S.tiles.push({id:'tl'+Date.now()+'p',appId:'app-plug',size:'medium',group:'Tools and Utilities',color:'#744da9'});
-    localStorage.setItem('win81_plug_tile','1');saveS();
+    localStorage.setItem('earlyshell_plug_tile','1');saveS();
   }
 }catch(e){}
 
