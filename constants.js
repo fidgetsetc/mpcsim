@@ -195,6 +195,15 @@ const DEFAULT_APPS = [
     resolution: 100
   },
   {
+    id: 'app-mo',
+    name: 'Mascot Opinion: Leave your opinion on our mascot.',
+    url: 'https://docs.google.com/forms/d/e/1FAIpQLSf0SkNePsWoWq-y-ldfQs8bHRyyeJmuM4I_1GOBMtOCQ1o2lg/viewform?usp=publish-editor',
+    icon: 'gear',
+    cat: 'Tools',
+    iconUrl: './img/mascotidk.png',
+    resolution: 100
+  },
+  {
     id: 'app-ie',
     name: 'Internet',
     url: './browse/index.html',
