@@ -794,7 +794,7 @@ const DEFAULT_APPS = [
   },
   {
     id: 'app-linux',
-    name: 'Linux Terminal (Devuan)',
+    name: 'Linux Terminal',
     url: './linux/index.html',
     icon: 'gamepad',
     cat: 'Games',

@@ -102,10 +102,10 @@
 <div id="notice">
   <div class="spinner"></div>
   <div class="text">
-    <strong>Booting Linux&hellip;</strong>
-    This may take about 5 minutes, and can take even longer.
+    <strong>Booting Linux from CD&hellip;</strong>
+    This may take quite a while.
     Please be patient; the screen may stay blank or unchanged for a while.
-    If it does not work, the file likely isn't accessible.
+    If it does not work, the ISO likely isn't accessible on your network.
     <span class="timer" id="timer">(0:00)</span>
   </div>
   <button id="dismiss" type="button">Hide</button>
@@ -122,20 +122,26 @@
 /* Configuration                                                       */
 /* ------------------------------------------------------------------ */
 
-// Path/URL to your raw disk image (e.g. a .img file with a bootable Linux install).
-const DISK_IMAGE_URL = "https://shy-shape-35f8.scrappywriter.workers.dev/linux.img";
+// Path/URL to a bootable CD image (.iso).
+const CD_IMAGE_URL = "https://shy-shape-35f8.scrappywriter.workers.dev/alpine-standard-3.24.4-x86.iso";
 
-// true  = fetch disk sectors on demand via HTTP Range requests (server must
+// true  = fetch CD sectors on demand via HTTP Range requests (server must
 //         support Range; best for large images).
-// false = download the entire image into memory before booting.
-// Keep this true for large images (e.g. 10 GB): only the sectors the guest
-// actually reads are fetched. REQUIRES a server with Range support, so run
-// `python3 serve.py` (included) instead of `python3 -m http.server`.
-const DISK_ASYNC = true;
+// false = download the entire ISO into memory before booting.
+const CD_ASYNC = true;
 
-// Optional: size of the disk image in bytes (only needed for some async setups).
+// Optional: size of the ISO in bytes (only needed for some async setups).
 // Leave null to let v86 detect it.
-const DISK_SIZE = null;
+const CD_SIZE = null;
+
+// Networking. v86 can't open real sockets from a browser, so it talks to a
+// WebSocket relay that bridges the emulated NIC to the internet.
+// Set to null to disable networking.
+//   - "wss://relay.widgetry.org/" is the public relay used by v86's demos
+//     (shared, best-effort). Run your own for anything serious.
+const NETWORK_RELAY_URL = "wss://relay.widgetry.org/";
+// "ne2k" works with practically every Linux kernel; "virtio" is faster.
+const NETWORK_DEVICE_TYPE = "ne2k";
 
 // Emulator assets
 const WASM_URL      = "https://cdn.jsdelivr.net/npm/v86@latest/build/v86.wasm";
@@ -146,29 +152,38 @@ const WASM_URL      = "https://cdn.jsdelivr.net/npm/v86@latest/build/v86.wasm";
 const SEABIOS_URL   = "https://cdn.jsdelivr.net/gh/copy/v86@master/bios/seabios.bin";
 const VGABIOS_URL   = "https://cdn.jsdelivr.net/gh/copy/v86@master/bios/vgabios.bin";
 
-const MEMORY_SIZE      = 1024 * 1024 * 1024; // 1 GB RAM
-const VGA_MEMORY_SIZE  = 16 * 1024 * 1024;   // 16 MB video memory
+// Keep RAM modest: the emulator runs on the page's main thread, and a large
+// allocation makes the tab lock up when the kernel starts. 512 MB is enough
+// for Debian live (standard). Try 256 MB if it still locks up.
+const MEMORY_SIZE      = 512 * 1024 * 1024;  // 512 MB RAM
+const VGA_MEMORY_SIZE  = 8 * 1024 * 1024;    // 8 MB video memory
 
 /* ------------------------------------------------------------------ */
 /* Emulator setup                                                      */
 /* ------------------------------------------------------------------ */
 
-const hda = { url: DISK_IMAGE_URL, async: DISK_ASYNC };
-if (DISK_SIZE) hda.size = DISK_SIZE;
+const cdrom = { url: CD_IMAGE_URL, async: CD_ASYNC };
+if (CD_SIZE) cdrom.size = CD_SIZE;
+
+const options = {
+  wasm_path: WASM_URL,
+  memory_size: MEMORY_SIZE,
+  vga_memory_size: VGA_MEMORY_SIZE,
+  screen_container: document.getElementById("screen_container"),
+  bios: { url: SEABIOS_URL },
+  vga_bios: { url: VGABIOS_URL },
+  cdrom: cdrom,
+  boot_order: 0x123,   // CD first (digits read right to left: 3=CD, 2=HDD, 1=floppy)
+  autostart: true,
+};
+
+if (NETWORK_RELAY_URL) {
+  options.net_device = { type: NETWORK_DEVICE_TYPE, relay_url: NETWORK_RELAY_URL };
+}
 
 let emulator;
 try {
-  emulator = new V86({
-    wasm_path: WASM_URL,
-    memory_size: MEMORY_SIZE,
-    vga_memory_size: VGA_MEMORY_SIZE,
-    screen_container: document.getElementById("screen_container"),
-    bios: { url: SEABIOS_URL },
-    vga_bios: { url: VGABIOS_URL },
-    hda: hda,
-    boot_order: 0x312,   // hard disk first
-    autostart: true,
-  });
+  emulator = new V86(options);
 } catch (e) {
   showError("Failed to start the emulator: " + e.message);
 }
@@ -177,28 +192,49 @@ try {
 /* Stretch the screen to fill the viewport                             */
 /* ------------------------------------------------------------------ */
 
-let guestW = 720, guestH = 400;
+// The old code trusted the "screen-set-size" event, which in text mode can
+// report character columns/rows (e.g. 80x25) instead of pixels. Scaling a
+// "screen" of 80x25 up to the viewport made consoles hugely zoomed in.
+// Instead, derive the natural pixel size from the canvas itself, and fall
+// back to the standard VGA text-mode size (720x400).
+
+const container = document.getElementById("screen_container");
+const canvas = container.querySelector("canvas");
+const TEXT_W = 720, TEXT_H = 400;
+
+function naturalSize() {
+  if (canvas && canvas.width >= 200 && canvas.height >= 100 &&
+      getComputedStyle(canvas).display !== "none") {
+    return [canvas.width, canvas.height];
+  }
+  return [TEXT_W, TEXT_H];
+}
+
+let lastKey = "";
 
 function stretchToViewport() {
   if (!emulator) return;
-  const sx = window.innerWidth  / guestW;
-  const sy = window.innerHeight / guestH;
+  const size = naturalSize();
+  const sx = window.innerWidth  / size[0];
+  const sy = window.innerHeight / size[1];
+  const key = sx.toFixed(4) + "x" + sy.toFixed(4);
+  if (key === lastKey) return;
+  lastKey = key;
   emulator.screen_set_scale(sx, sy);
 }
 
 if (emulator) {
-  emulator.add_listener("screen-set-size", function (size) {
-    // size = [width, height, bpp]
-    if (size && size[0] > 0 && size[1] > 0) {
-      guestW = size[0];
-      guestH = size[1];
-      stretchToViewport();
-    }
+  emulator.add_listener("screen-set-size", function () {
+    // Don't trust the payload (see above); just re-measure.
+    lastKey = "";
+    stretchToViewport();
   });
-  emulator.add_listener("emulator-ready", stretchToViewport);
-  emulator.add_listener("emulator-started", stretchToViewport);
+  emulator.add_listener("emulator-ready", function () { lastKey = ""; stretchToViewport(); });
+  emulator.add_listener("emulator-started", function () { lastKey = ""; stretchToViewport(); });
 }
-window.addEventListener("resize", stretchToViewport);
+window.addEventListener("resize", function () { lastKey = ""; stretchToViewport(); });
+// Cheap safety net for text<->graphics mode switches (e.g. boot menu -> console).
+setInterval(stretchToViewport, 500);
 stretchToViewport();
 
 /* ------------------------------------------------------------------ */
@@ -217,7 +253,7 @@ setInterval(function () {
   timerEl.textContent = "(" + fmt(Date.now() - startedAt) + " elapsed)";
 }, 1000);
 
-// Show download progress (BIOS, disk image) so a long load isn't mistaken for a freeze.
+// Show download progress (BIOS, CD image) so a long load isn't mistaken for a freeze.
 const progressEl = document.createElement("span");
 progressEl.style.cssText = "display:block;margin-top:4px;color:#9ab;font-size:13px";
 notice.querySelector(".text").appendChild(progressEl);
@@ -236,7 +272,8 @@ if (emulator) {
     showError("Failed to download " + (e.file_name || "a file") + ". See the console for details.");
   });
   emulator.add_listener("emulator-started", function () {
-    progressEl.textContent = "Emulator running \u2014 waiting for the guest to boot.";
+    progressEl.textContent = "Emulator running \u2014 waiting for the guest to boot." +
+      (NETWORK_RELAY_URL ? " Networking: relay enabled." : " Networking: disabled.");
   });
 }
 
