@@ -100,6 +100,7 @@
                 }
             }
         }
+
         let preloadedFiles = {};
         const OrigXHR = window.XMLHttpRequest;
         window.XMLHttpRequest = class CustomXHR {
@@ -208,55 +209,165 @@
             get withCredentials() { return this.isMocked ? false : this.xhr.withCredentials; }
             set withCredentials(v) { if (!this.isMocked) this.xhr.withCredentials = v; }
         };
-        const baseUrl = "https://jsdelivr.b-cdn.net/gh/NaoTomori1/AngryBirds2@main/";
+
+        // Full expanded mirror list including provider endpoints, direct origin, and Statically fallback
+        const mirrors = [
+            "https://jsdelivr.b-cdn.net/gh/NaoTomori1/AngryBirds2@main/",
+            "https://cdn.jsdelivr.net/gh/NaoTomori1/AngryBirds2@main/",
+            "https://fastly.jsdelivr.net/gh/NaoTomori1/AngryBirds2@main/",
+            "https://gcore.jsdelivr.net/gh/NaoTomori1/AngryBirds2@main/",
+            "https://testingcf.jsdelivr.net/gh/NaoTomori1/AngryBirds2@main/",
+            "https://origin.jsdelivr.net/gh/NaoTomori1/AngryBirds2@main/",
+            "https://cdn.statically.io/gh/NaoTomori1/AngryBirds2@main/",
+            "https://img.jsdelivr.com/gh/NaoTomori1/AngryBirds2@main/",
+            "https://raw.githubusercontent.com/NaoTomori1/AngryBirds2/main/",
+        ];
+
+        // Shuffle mirrors array randomly using Fisher-Yates algorithm
+        function shuffleArray(array) {
+            for (let i = array.length - 1; i > 0; i--) {
+                let j = Math.floor(Math.random() * (i + 1));
+                [array[i], array[j]] = [array[j], array[i]];
+            }
+        }
+        shuffleArray(mirrors);
+
         const filesConfig = [
             { name: "angry.data.unityweb", parts: 6 },
             { name: "angry.wasm.code.unityweb", parts: 2 },
             { name: "angry.wasm.framework.unityweb", parts: 1 },
             { name: "angry.json", parts: 1 }
         ];
-        let totalFiles = 0;
-        let loadedFiles = 0;
-        let fetchPromises = filesConfig.map(config => {
-            let partPromises = [];
-            for (let i = 0; i < config.parts; i++) {
-                let partName = config.parts > 1 ? config.name + i.toString().padStart(2, '0') : config.name;
-                totalFiles++;
-                partPromises.push(
-                    fetch(baseUrl + "Build/" + partName)
-                        .then(res => res.arrayBuffer())
-                        .then(buf => {
-                            loadedFiles++;
-                            let p = Math.floor((loadedFiles / totalFiles) * 100);
-                            document.getElementById('loadingText').innerText = "Loading... " + p + "%";
-                            return new Uint8Array(buf);
-                        })
-                );
+
+        let currentMirrorIndex = 0;
+        let watchInterval = null;
+        let stuckAt10Start = null;
+
+        function loadGameWithMirror() {
+            if (watchInterval) {
+                clearInterval(watchInterval);
+                watchInterval = null;
             }
-            return Promise.all(partPromises).then(arrays => {
-                if (arrays.length === 1) {
-                    preloadedFiles[config.name] = arrays[0];
-                } else {
-                    let totalLength = arrays.reduce((acc, arr) => acc + arr.length, 0);
-                    let merged = new Uint8Array(totalLength);
-                    let offset = 0;
-                    for (let arr of arrays) {
-                        merged.set(arr, offset);
-                        offset += arr.length;
-                    }
-                    preloadedFiles[config.name] = merged;
+            stuckAt10Start = null;
+
+            let baseUrl = mirrors[currentMirrorIndex];
+            let totalFiles = 0;
+            let loadedFiles = 0;
+            preloadedFiles = {}; // Reset cache
+
+            document.getElementById('loadingText').innerText = `Connecting to mirror... (${currentMirrorIndex + 1}/${mirrors.length})`;
+
+            // Watchdog timer: checks if loading is stuck at 10% for 8 seconds or longer
+            watchInterval = setInterval(() => {
+                if (stuckAt10Start && (Date.now() - stuckAt10Start >= 8000)) {
+                    clearInterval(watchInterval);
+                    watchInterval = null;
+                    console.warn("Loading stuck at 10% for 8+ seconds. Switching mirror...");
+                    handleMirrorFailure();
                 }
+            }, 500);
+
+            let fetchPromises = filesConfig.map(config => {
+                let partPromises = [];
+                for (let i = 0; i < config.parts; i++) {
+                    let partName = config.parts > 1 ? config.name + i.toString().padStart(2, '0') : config.name;
+                    totalFiles++;
+                    partPromises.push(
+                        fetch(baseUrl + "Build/" + partName)
+                            .then(res => {
+                                if (!res.ok) throw new Error(`HTTP error! status: ${res.status}`);
+                                return res.arrayBuffer();
+                            })
+                            .then(buf => {
+                                loadedFiles++;
+                                let p = Math.floor((loadedFiles / totalFiles) * 100);
+                                document.getElementById('loadingText').innerText = "Loading... " + p + "%";
+
+                                // Track if we are stuck at 10%
+                                if (p === 10) {
+                                    if (!stuckAt10Start) {
+                                        stuckAt10Start = Date.now();
+                                    }
+                                } else {
+                                    stuckAt10Start = null;
+                                }
+
+                                return new Uint8Array(buf);
+                            })
+                    );
+                }
+                return Promise.all(partPromises).then(arrays => {
+                    if (arrays.length === 1) {
+                        preloadedFiles[config.name] = arrays[0];
+                    } else {
+                        let totalLength = arrays.reduce((acc, arr) => acc + arr.length, 0);
+                        let merged = new Uint8Array(totalLength);
+                        let offset = 0;
+                        for (let arr of arrays) {
+                            merged.set(arr, offset);
+                            offset += arr.length;
+                        }
+                        preloadedFiles[config.name] = merged;
+                    }
+                });
             });
-        });
-        Promise.all(fetchPromises).then(() => {
-            document.getElementById('loadingContainer').style.display = 'none';
-            let script = document.createElement('script');
-            script.src = baseUrl + "Build/UnityLoader.js";
-            script.onload = () => {
-                window.unityInstance = UnityLoader.instantiate("unityContainer", baseUrl + "Build/angry.json");
-            };
-            document.body.appendChild(script);
-        });
+
+            Promise.all(fetchPromises).then(() => {
+                if (watchInterval) {
+                    clearInterval(watchInterval);
+                    watchInterval = null;
+                }
+                stuckAt10Start = null;
+
+                document.getElementById('loadingText').innerText = "Initializing Unity...";
+                
+                let script = document.createElement('script');
+                script.src = baseUrl + "Build/UnityLoader.js";
+                
+                script.onload = () => {
+                    try {
+                        window.unityInstance = UnityLoader.instantiate("unityContainer", baseUrl + "Build/angry.json");
+                        setTimeout(() => {
+                            document.getElementById('loadingContainer').style.display = 'none';
+                        }, 500);
+                    } catch (e) {
+                        console.error("Unity failed to instantiate on mirror:", baseUrl, e);
+                        handleMirrorFailure();
+                    }
+                };
+
+                script.onerror = () => {
+                    console.error("Failed to load UnityLoader.js from mirror:", baseUrl);
+                    handleMirrorFailure();
+                };
+
+                document.body.appendChild(script);
+            }).catch(err => {
+                console.error("File download failed on mirror:", baseUrl, err);
+                handleMirrorFailure();
+            });
+        }
+
+        function handleMirrorFailure() {
+            if (watchInterval) {
+                clearInterval(watchInterval);
+                watchInterval = null;
+            }
+            stuckAt10Start = null;
+
+            currentMirrorIndex++;
+            if (currentMirrorIndex < mirrors.length) {
+                console.warn(`Switching to backup mirror #${currentMirrorIndex + 1}...`);
+                document.querySelectorAll('script[src*="UnityLoader.js"]').forEach(s => s.remove());
+                loadGameWithMirror();
+            } else {
+                document.getElementById('loadingText').innerText = "Fatal Error: All CDNs failed to load.";
+                document.querySelector('.spinner').style.display = 'none';
+            }
+        }
+
+        // Kick off the loading sequence
+        loadGameWithMirror();
     </script>
 </body>
 
