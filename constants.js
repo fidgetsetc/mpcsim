@@ -792,6 +792,15 @@ const DEFAULT_APPS = [
     iconUrl: '',
     resolution: 100
   },
+  {
+    id: 'app-linux',
+    name: 'Linux Terminal (Devuan)',
+    url: './linux/index.html',
+    icon: 'gamepad',
+    cat: 'Games',
+    iconUrl: './linux/index.jpg',
+    resolution: 100
+  },
 ];
 const DEFAULT_TILES = [
   {id:'tl0',appId:'app-suggest', size:'small',   group:'Apps',        color:'#2d7d9a'},

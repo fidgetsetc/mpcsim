@@ -1,0 +1,272 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Linux VM (v86)</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<style>
+  html, body {
+    margin: 0;
+    padding: 0;
+    width: 100%;
+    height: 100%;
+    background: #000;
+    overflow: hidden;
+    font-family: system-ui, -apple-system, "Segoe UI", sans-serif;
+  }
+
+  /* The VM screen fills the whole viewport. */
+  #screen_container {
+    position: fixed;
+    inset: 0;
+    width: 100vw;
+    height: 100vh;
+    overflow: hidden;
+    background: #000;
+  }
+  #screen_container canvas {
+    display: block;
+    transform-origin: 0 0;
+  }
+  #screen_container > div {
+    /* text-mode layer */
+    transform-origin: 0 0;
+    white-space: pre;
+    font: 14px monospace;
+    line-height: 16px;
+    color: #aaa;
+  }
+
+  /* Boot notice */
+  #notice {
+    position: fixed;
+    top: 0; left: 0; right: 0;
+    z-index: 10;
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    padding: 14px 20px;
+    background: rgba(20, 20, 24, 0.92);
+    color: #f2f2f2;
+    border-bottom: 1px solid #444;
+    font-size: 15px;
+    line-height: 1.4;
+  }
+  #notice.hidden { display: none; }
+  #notice .spinner {
+    flex: none;
+    width: 18px; height: 18px;
+    border: 3px solid #555;
+    border-top-color: #6cf;
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
+  #notice .text { flex: 1; }
+  #notice strong { color: #fff; }
+  #notice .timer { color: #9ab; font-variant-numeric: tabular-nums; }
+  #notice button {
+    flex: none;
+    background: #333;
+    color: #eee;
+    border: 1px solid #555;
+    border-radius: 6px;
+    padding: 6px 12px;
+    cursor: pointer;
+    font-size: 13px;
+  }
+  #notice button:hover { background: #444; }
+
+  #error {
+    position: fixed;
+    inset: 0;
+    z-index: 20;
+    display: none;
+    align-items: center;
+    justify-content: center;
+    background: rgba(0,0,0,0.9);
+    color: #f88;
+    padding: 24px;
+    text-align: center;
+    font-size: 16px;
+  }
+</style>
+</head>
+<body>
+
+<div id="screen_container">
+  <div></div>   <!-- text-mode layer -->
+  <canvas></canvas>
+</div>
+
+<div id="notice">
+  <div class="spinner"></div>
+  <div class="text">
+    <strong>Booting Linux&hellip;</strong>
+    This may take about 5 minutes, and can take even longer.
+    Please be patient; the screen may stay blank or unchanged for a while.
+    If it does not work, the file either hasn't been uploaded, or isn't accessible.
+    <span class="timer" id="timer">(0:00)</span>
+  </div>
+  <button id="dismiss" type="button">Hide</button>
+</div>
+
+<div id="error"></div>
+
+<!-- v86 emulator library -->
+<script src="https://cdn.jsdelivr.net/npm/v86@latest/build/libv86.js"></script>
+<script>
+"use strict";
+
+/* ------------------------------------------------------------------ */
+/* Configuration                                                       */
+/* ------------------------------------------------------------------ */
+
+// Path/URL to your raw disk image (e.g. a .img file with a bootable Linux install).
+const DISK_IMAGE_URL = "https://archive.org/download/linux_20261117/linux.img";
+
+// true  = fetch disk sectors on demand via HTTP Range requests (server must
+//         support Range; best for large images).
+// false = download the entire image into memory before booting.
+// Keep this true for large images (e.g. 10 GB): only the sectors the guest
+// actually reads are fetched. REQUIRES a server with Range support, so run
+// `python3 serve.py` (included) instead of `python3 -m http.server`.
+const DISK_ASYNC = true;
+
+// Optional: size of the disk image in bytes (only needed for some async setups).
+// Leave null to let v86 detect it.
+const DISK_SIZE = null;
+
+// Emulator assets
+const WASM_URL      = "https://cdn.jsdelivr.net/npm/v86@latest/build/v86.wasm";
+// BIOS files come from the v86 GitHub repo via jsDelivr (sends CORS headers).
+// copy.sh does NOT allow cross-origin requests, so don't use it here.
+// For fully offline use, copy bios/seabios.bin and bios/vgabios.bin from the
+// v86 repo next to this file and use "seabios.bin" / "vgabios.bin" instead.
+const SEABIOS_URL   = "https://cdn.jsdelivr.net/gh/copy/v86@master/bios/seabios.bin";
+const VGABIOS_URL   = "https://cdn.jsdelivr.net/gh/copy/v86@master/bios/vgabios.bin";
+
+const MEMORY_SIZE      = 1024 * 1024 * 1024; // 1 GB RAM
+const VGA_MEMORY_SIZE  = 16 * 1024 * 1024;   // 16 MB video memory
+
+/* ------------------------------------------------------------------ */
+/* Emulator setup                                                      */
+/* ------------------------------------------------------------------ */
+
+const hda = { url: DISK_IMAGE_URL, async: DISK_ASYNC };
+if (DISK_SIZE) hda.size = DISK_SIZE;
+
+let emulator;
+try {
+  emulator = new V86({
+    wasm_path: WASM_URL,
+    memory_size: MEMORY_SIZE,
+    vga_memory_size: VGA_MEMORY_SIZE,
+    screen_container: document.getElementById("screen_container"),
+    bios: { url: SEABIOS_URL },
+    vga_bios: { url: VGABIOS_URL },
+    hda: hda,
+    boot_order: 0x312,   // hard disk first
+    autostart: true,
+  });
+} catch (e) {
+  showError("Failed to start the emulator: " + e.message);
+}
+
+/* ------------------------------------------------------------------ */
+/* Stretch the screen to fill the viewport                             */
+/* ------------------------------------------------------------------ */
+
+let guestW = 720, guestH = 400;
+
+function stretchToViewport() {
+  if (!emulator) return;
+  const sx = window.innerWidth  / guestW;
+  const sy = window.innerHeight / guestH;
+  emulator.screen_set_scale(sx, sy);
+}
+
+if (emulator) {
+  emulator.add_listener("screen-set-size", function (size) {
+    // size = [width, height, bpp]
+    if (size && size[0] > 0 && size[1] > 0) {
+      guestW = size[0];
+      guestH = size[1];
+      stretchToViewport();
+    }
+  });
+  emulator.add_listener("emulator-ready", stretchToViewport);
+  emulator.add_listener("emulator-started", stretchToViewport);
+}
+window.addEventListener("resize", stretchToViewport);
+stretchToViewport();
+
+/* ------------------------------------------------------------------ */
+/* Boot notice + timer                                                 */
+/* ------------------------------------------------------------------ */
+
+const notice  = document.getElementById("notice");
+const timerEl = document.getElementById("timer");
+const startedAt = Date.now();
+
+function fmt(ms) {
+  const s = Math.floor(ms / 1000);
+  return Math.floor(s / 60) + ":" + String(s % 60).padStart(2, "0");
+}
+setInterval(function () {
+  timerEl.textContent = "(" + fmt(Date.now() - startedAt) + " elapsed)";
+}, 1000);
+
+// Show download progress (BIOS, disk image) so a long load isn't mistaken for a freeze.
+const progressEl = document.createElement("span");
+progressEl.style.cssText = "display:block;margin-top:4px;color:#9ab;font-size:13px";
+notice.querySelector(".text").appendChild(progressEl);
+if (emulator) {
+  emulator.add_listener("download-progress", function (e) {
+    const name = (e.file_name || "").split("/").pop();
+    if (e.lengthComputable && e.total) {
+      progressEl.textContent = "Downloading " + name + ": " +
+        (e.loaded / 1048576).toFixed(0) + " / " + (e.total / 1048576).toFixed(0) + " MB";
+    } else {
+      progressEl.textContent = "Downloading " + name + ": " +
+        (e.loaded / 1048576).toFixed(0) + " MB";
+    }
+  });
+  emulator.add_listener("download-error", function (e) {
+    showError("Failed to download " + (e.file_name || "a file") + ". See the console for details.");
+  });
+  emulator.add_listener("emulator-started", function () {
+    progressEl.textContent = "Emulator running \u2014 waiting for the guest to boot.";
+  });
+}
+
+document.getElementById("dismiss").addEventListener("click", function () {
+  notice.classList.add("hidden");
+});
+
+/* ------------------------------------------------------------------ */
+/* Errors                                                              */
+/* ------------------------------------------------------------------ */
+
+function showError(msg) {
+  const el = document.getElementById("error");
+  el.textContent = msg;
+  el.style.display = "flex";
+}
+
+window.addEventListener("error", function (e) {
+  if (e && e.message && /V86|v86|wasm/i.test(e.message)) {
+    showError("Emulator error: " + e.message);
+  }
+});
+if (typeof V86 === "undefined") {
+  showError("Could not load the v86 library. Check your network connection.");
+}
+
+/* Click anywhere to give the VM keyboard focus. */
+document.getElementById("screen_container").addEventListener("click", function () {
+  if (emulator && emulator.lock_mouse) { /* mouse capture is optional */ }
+});
+</script>
+</body>
+</html>
