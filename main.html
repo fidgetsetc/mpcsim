@@ -111,6 +111,14 @@ html,body{width:100%;height:100%;overflow:hidden;font-family:'Segoe UI',sans-ser
 #tray-crash{display:none;align-items:center;justify-content:center;width:30px;height:30px;cursor:pointer;color:#ffb400;font-size:15px;animation:tray-crash-pulse 1s ease-in-out infinite}
 #tray-crash:hover{background:rgba(255,255,255,.16)}
 @keyframes tray-crash-pulse{0%,100%{opacity:1}50%{opacity:.45}}
+#tray-fs{display:none;align-items:center;gap:8px;height:30px;padding:0 12px;cursor:pointer;color:#fff;background:var(--accent,#0078d4);font-size:13px;font-weight:600;white-space:nowrap;flex-shrink:0;border-radius:var(--tile-r,0px)}
+#tray-fs i{font-size:20px;pointer-events:none}
+#tray-fs span{pointer-events:none}
+#tray-fs:hover{filter:brightness(1.15)}
+#tray-fs:active{filter:brightness(.85)}
+body[data-theme="gnome"] #tray-fs{height:20px;padding:0 10px;font-size:12px;border-radius:10px}
+body[data-theme="gnome"] #tray-fs i{font-size:14px}
+body[data-theme="mac"] #tb-right{padding:0 4px}
 .modal.modal-error{border-top-color:#e81123}
 .modal-error .modal-head{display:flex;align-items:center;gap:10px}
 .modal-error .modal-head i{color:#e81123;font-size:20px}
@@ -1275,7 +1283,7 @@ body.lite .pv img.pv-b{animation-duration:6s!important;animation-timing-function
   <div id="taskbar">
     <div id="start-orb" onclick="toggleStart()" title="Menu"><i class="fa-solid fa-grip"></i></div>
     <div id="tb-apps"></div>
-    <div id="tb-right"><div id="tray-crash" title="Stop Window Avalanche" onclick="stopWindowCrash()"><i class="fa-solid fa-bolt"></i></div><div id="tb-clock"></div></div>
+    <div id="tb-right"><div id="tray-fs" title="Back to Fullscreen" onclick="goFullscreen()"><i class="fa-solid fa-expand"></i><span>Back to Fullscreen</span></div><div id="tray-crash" title="Stop Window Avalanche" onclick="stopWindowCrash()"><i class="fa-solid fa-bolt"></i></div><div id="tb-clock"></div></div>
   </div>
 </div>
 
@@ -3983,6 +3991,19 @@ document.addEventListener('keydown',e=>{if(e.key==='Escape'){
   }if(e.key==='F1'&&!BOOT.oneApp){e.preventDefault();openModal('m-settings');}});
 document.getElementById('lockscreen').onclick=unlock;
 window.addEventListener('resize',()=>{applyViewport();});
+/* Back to Fullscreen tray button: shown when the window isn't the same size as the screen (5px tolerance) */
+function goFullscreen(){
+  try{const de=document.documentElement;const r=de.requestFullscreen||de.webkitRequestFullscreen;if(r){const p=r.call(de);if(p&&p.catch)p.catch(()=>{});}}catch(e){}
+}
+function checkFullscreenTray(){
+  const b=document.getElementById('tray-fs');if(!b)return;
+  const off=Math.abs(window.innerWidth-screen.width)>5||Math.abs(window.innerHeight-screen.height)>5;
+  b.style.display=off?'flex':'none';
+}
+['resize','fullscreenchange','webkitfullscreenchange','focus'].forEach(ev=>window.addEventListener(ev,checkFullscreenTray));
+document.addEventListener('fullscreenchange',()=>setTimeout(checkFullscreenTray,100));
+setInterval(checkFullscreenTray,1000);
+checkFullscreenTray();
 
 /* ══════════════════════════════════
    RENDER ALL + BOOT
