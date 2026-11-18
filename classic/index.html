@@ -4,8 +4,8 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>MLPCSim</title>
-<base href=".." target="_blank">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+<base href=".." target="_blank">
 <style>
 *{margin:0;padding:0;box-sizing:border-box}
 html,body{width:100%;height:100%;overflow:hidden;background:#000;user-select:none;font-family:Arial,'Helvetica Neue',Helvetica,'Liberation Sans',sans-serif}
@@ -339,13 +339,14 @@ function syncMenuHeight(){
 }
 window.addEventListener('resize',syncMenuHeight);
 function setMenu(open){
+  if(!open&&body.classList.contains('dn-closing')&&_closeT)return;   // already closing: keep its timer
   clearTimeout(_closeT);_closeT=null;
   if(open){body.classList.remove('dn-closing');body.classList.add('dn-open');syncMenuHeight();return;}
-  if(!body.classList.contains('dn-open')||body.classList.contains('dn-closing'))return;
+  if(!body.classList.contains('dn-open'))return;
   body.classList.add('dn-closing');
   _closeT=setTimeout(()=>{_closeT=null;body.classList.remove('dn-open','dn-all','dn-closing','dn-all-closing');},160);
 }
-function toggleMenu(){setMenu(!body.classList.contains('dn-open'));}
+function toggleMenu(){setMenu(!(body.classList.contains('dn-open')&&!body.classList.contains('dn-closing')));}
 function dnToggleAll(){
   clearTimeout(_allT);_allT=null;
   if(body.classList.contains('dn-all')&&!body.classList.contains('dn-all-closing')){
