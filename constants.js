@@ -836,7 +836,7 @@ const DEFAULT_TILES = [
 ];
 const DEFAULT_DICONS = [
   {id:'di1',appId:'app-ie'},
-  {id:'di2',appId:'app-isweartogodifyoufindthenotebookhotiwilldisinegrateyou'}
+  {id:'di2',appId:'app-isweartogodifyoufindthenotebookhotiwilldisinegrateyou'},
   {id:'di3',appId:'app-set'},
   {id:'di4',appId:'app-term'},
   {id:'di5',appId:'app-xwp'},
