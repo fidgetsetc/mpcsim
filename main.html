@@ -637,7 +637,7 @@ body[data-theme="chromeos"] .win-ctrl.wc-close:hover{background:#d93025;color:#f
 body[data-theme="defaultnew"]{
   --font:Arial,'Helvetica Neue',Helvetica,'Liberation Sans',sans-serif;
   --off-top:0px;--off-bot:46px;--fs-top:9px;--fs-bot:57px;
-  --dn-bar:#0d0d0d;--dn-panel:#4a4a4a;--dn-edge:#6fa8dc;--dn-win:#404040;--dn-tab:#262626;
+  --dn-bar:#0d0d0d;--dn-panel:#4a4a4a;--dn-edge:var(--accent,#6fa8dc);--dn-win:#404040;--dn-tab:#262626;
   --dn-menu-fg:#fff;          /* label colour inside the Menu / All apps panels */
   --dn-tb-h:46px;--dn-left:calc(1% + 12px);
   --ui-bg:#404040;--ui-head:#000;--ui-hbd:#000;--ui-fg:#fff;--ui-sub:#c8c8c8;--ui-inp:#2b2b2b;--ui-bd:#6a6a6a;--ui-hov:#555;
@@ -708,7 +708,12 @@ body[data-theme="defaultnew"].dn-open.dn-all #dn-all{display:flex}
 .dn-all-head{flex-shrink:0;padding-left:158px;font-size:24px;line-height:28px;color:#fff}
 #dn-grid{flex:1;min-height:0;overflow-y:auto;overflow-x:hidden;padding:5px 7px 12px 150px;display:grid;grid-template-columns:repeat(auto-fill,80px);grid-auto-rows:min-content;row-gap:15px;justify-content:start;align-content:start;scrollbar-width:thin;scrollbar-color:#808080 transparent}
 .dn-cell{width:80px;display:flex;flex-direction:column;align-items:center;gap:3px;padding:0 0 2px;border-radius:10px;cursor:pointer}
-.dn-cell .dn-name{flex:none;width:80px;text-align:center}
+.dn-cell .dn-name{flex:none;width:80px;text-align:center;font-size:15px;line-height:17px;min-height:34px;white-space:normal;overflow:hidden;display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:2;line-clamp:2;overflow-wrap:anywhere}
+.dn-cell .dn-name .dn-mq{display:inline;white-space:normal}
+.dn-cell .dn-name.dn-scrolling{display:block;height:34px;text-align:center;-webkit-line-clamp:unset;line-clamp:unset}
+.dn-cell .dn-name.dn-scrolling .dn-mq{display:block;white-space:normal}
+body.dn-open.dn-all:not(.dn-closing):not(.dn-all-closing) #dn-all .dn-cell .dn-name.dn-scrolling .dn-mq{animation:dn-marquee-y var(--dn-dur,4s) ease-in-out infinite alternate}
+@keyframes dn-marquee-y{0%,18%{transform:translateY(0)}82%,100%{transform:translateY(var(--dn-shift-y,0px))}}
 /* Scrolling (marquee) text for names too long for the Menu / All apps panels: always scrolls while the panel is shown */
 .dn-mq{display:inline-block;white-space:nowrap;will-change:transform}
 .dn-name.dn-scrolling{text-overflow:clip;text-align:left}
@@ -741,7 +746,8 @@ body[data-theme="defaultnew"] .tb-btn:hover{transform:translateY(-2px)}
   .dn-all-head{font-size:18px;line-height:22px}
   .dn-cell,.dn-cell .dn-name{width:64px}
   .dn-cell .dn-ico{width:52px;height:52px;border-radius:11px}
-  .dn-cell .dn-name{font-size:12px;line-height:14px}
+  .dn-cell .dn-name{font-size:12px;line-height:14px;min-height:28px}
+  .dn-cell .dn-name.dn-scrolling{height:28px}
   #dn-grid{grid-template-columns:repeat(auto-fill,64px);row-gap:10px}
   .dn-all-head{padding-left:150px}
 }
@@ -2480,6 +2486,19 @@ function dnMeasureLabels(root){
   root.querySelectorAll('.dn-name').forEach(n=>{
     const t=n.firstChild;if(!t)return;
     n.classList.remove('dn-scrolling');
+    if(n.closest('.dn-cell')){
+      /* All apps: names wrap onto two lines; if they need more, they scroll vertically through the lines */
+      n.classList.add('dn-scrolling');
+      const overY=t.offsetHeight-n.clientHeight;
+      if(overY>1){
+        n.style.setProperty('--dn-shift-y',(-overY)+'px');
+        n.style.setProperty('--dn-dur',Math.max(2.5,overY/10+1.5).toFixed(1)+'s');
+        const stops=Math.max(2,Math.ceil(overY/(n.clientHeight*.75))+1);
+        n.style.setProperty('--dn-stops',stops);
+        n.style.setProperty('--dn-lite-dur',Math.max(3,(stops-1)*1.1/.64).toFixed(1)+'s');
+      }else n.classList.remove('dn-scrolling');
+      return;
+    }
     const over=t.offsetWidth-n.clientWidth;
     if(over>1){
       n.style.setProperty('--dn-shift',(-over)+'px');
