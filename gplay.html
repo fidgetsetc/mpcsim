@@ -611,8 +611,8 @@
 
     <footer class="border-t border-[var(--md-border)] site-footer-bg py-6 text-center text-xs text-[var(--md-text-faint)] transition-colors duration-300">
         <div class="max-w-7xl mx-auto px-4">
-            <p>gplay &bull; The school appropriate playing site.</p>
-            <p class="mt-1">We may not add some games nor features. Giving too much options would make schools block us. We want to be a good site that schools like.</p>
+            <p>MGPSim</p>
+            <p class="mt-1">The revival of gplay, with everything gplay had, with the gplay UI, and includes MPCSim apps/games. This is meant as a transitional site, where you use this part, start to get used to the apps and games, and then you can try MPCSim.</p>
             <p class="mt-2">
                 <button id="adminOpenBtn" onclick="openBlockManager()" class="underline hover:text-[var(--md-text)] cursor-pointer">
                     Blocking
@@ -935,6 +935,69 @@
     <script src="./constants.js"></script>
 
     <script>
+        // Add app IDs here to permanently hide them from this page.
+        // These IDs are filtered in code, so they cannot be restored through the
+        // in-page Blocking manager or URL parameters. Use the exact app.id value
+        // from constants.js. Leave the array empty to show every app.
+        const HARDCODED_FILTERED_APP_IDS = [
+            'app-xwp',
+            'app-plug',
+            'app-desk',
+            'app-term',
+            'app-crash',
+            'app-mo',
+        ];
+        const HARDCODED_FILTERED_APP_ID_SET = new Set(
+            HARDCODED_FILTERED_APP_IDS.map(id => String(id).trim()).filter(Boolean)
+        );
+
+        // Put app IDs here to pin those apps to the top of the catalog.
+        // The order in this array is the display order. All other apps keep
+        // their original order after the prioritized apps.
+        const HARDCODED_PRIORITIZED_APP_IDS = [
+    // ── Old games, preserving the original main.html order ──
+    'app-suggest',   
+    'app-br',             // Brick
+    'app-brp',            // Brick Plus
+    'app-bp',             // Bad Piggies
+    'app-ctr',            // Cut the Rope
+    'app-sm',             // Slice Master
+    'app-fb',             // Flappy Bird
+    'app-block-blast',    // Block Blast
+    'app-dd4',            // Droistroy 4
+    'app-ab',             // Angry Birds
+    'app-cc1',            // Cookie Clicker
+    'app-gdo',            // Geometry Dash
+    'app-gdr',            // Geometry Dash remake
+    'app-db',             // Drift Boss
+    'app-r1',             // Run 1
+    'app-r2',             // Run 2
+    'app-r3',             // Run 3
+    'app-slope',          // Slope
+    'app-basket-bros',    // Basket Bros
+    'app-fob',            // Football Bros
+    'app-baseb',          // Baseball Bros
+    'app-tif',            // Tiny Fishing
+    'app-chess-ai',       // Chess AI
+    'app-bloxorz',        // Bloxorz
+    'app-gs',             // Google Snake
+    'app-smb',            // Mario Bros
+    'app-smb3',           // Mario Bros 3
+    'app-mm',             // Megaman
+    'app-uno',            // UNO!
+    'app-jj',             // Jetpack Joyride
+    'app-cricket',        // Google Cricket
+    'app-gso',            // Google Solitaire
+    'app-gb',             // Google Baseball
+    'app-pvz',            // Plants vs Zombies
+];
+        const HARDCODED_PRIORITIZED_APP_ID_ORDER = new Map(
+            HARDCODED_PRIORITIZED_APP_IDS
+                .map(id => String(id).trim())
+                .filter(Boolean)
+                .map((id, index) => [id, index])
+        );
+
         // Load only DEFAULT_APPS from constants.js. Other exported constants (themes,
         // tiles, desktop icons, wallpapers, etc.) are intentionally not used here.
         const APP_CATALOG = (typeof DEFAULT_APPS !== 'undefined' && Array.isArray(DEFAULT_APPS)
@@ -957,8 +1020,16 @@
                     // not assume what a particular resolution value is intended to mean.
                     resolution: app.resolution
                 };
+            })
+            .filter(app => !HARDCODED_FILTERED_APP_ID_SET.has(app.id))
+            .sort((a, b) => {
+                const aPriority = HARDCODED_PRIORITIZED_APP_ID_ORDER.get(a.id);
+                const bPriority = HARDCODED_PRIORITIZED_APP_ID_ORDER.get(b.id);
+                if (aPriority === undefined && bPriority === undefined) return 0;
+                if (aPriority === undefined) return 1;
+                if (bPriority === undefined) return -1;
+                return aPriority - bPriority;
             });
-        
 
         const LOCAL_STORAGE_FAVS_KEY = 'gplay_favorites_v1';
         const LOCAL_STORAGE_RECENTS_KEY = 'gplay_recents_v1';
@@ -1765,7 +1836,7 @@
                 body.textContent = 'This is a classwork quiz. You answer questions, and then you get to play games with the time you have. Have fun! Please know not all games will be available as your teacher can block games from this classwork session. ';
             } else {
                 title.textContent = 'Please note';
-                body.textContent = 'PLEASE make sure you have permission to play. Your school can likely see everything you do. Completing school work does not automatically mean you can play, you likely need permission from a teacher or staff member. School rules are different between schools, please make sure you can play. If you are using this as a teacher, this message will not pop up for schoolwork links. If you are attempting to access schoolwork as a student, please check your teacher\'s page, likely on a service such as Clever or even an email.';
+                body.textContent = 'This is the revival of gplay, with everything gplay had, with the gplay UI, and includes MPCSim apps/games. This is meant as a transitional site, where you use this part, start to get used to the apps and games, and then you can try MPCSim. It isn\'t recommended to use MGPSim as your MAIN site, but use it for a few days and get used to the apps.';
             }
 
             popup.classList.remove('hidden');
