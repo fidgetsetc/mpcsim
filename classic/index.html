@@ -2,743 +2,203 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<title>mpcsim: my pc simulator</title>
-<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>MLPCSim</title>
 <base href=".." target="_blank">
-<script src="./constants.js"></script>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
 <style>
 *{margin:0;padding:0;box-sizing:border-box}
-html,body{width:100%;height:100%;overflow:hidden;font-family:'Segoe UI',sans-serif;background:#000;user-select:none}
+html,body{width:100%;height:100%;overflow:hidden;background:#000;user-select:none;font-family:Arial,'Helvetica Neue',Helvetica,'Liberation Sans',sans-serif}
+body{
+  --accent:#0078d4;--font:Arial,'Helvetica Neue',Helvetica,'Liberation Sans',sans-serif;
+  --dn-bar:#0d0d0d;--dn-panel:#4a4a4a;--dn-edge:var(--accent);--dn-win:#404040;--dn-tab:#262626;
+  --dn-tb-h:46px;--dn-left:calc(1% + 12px);--fs-top:9px;--fs-bot:57px;
+}
 
-/* ── Lock Screen ── */
-#lockscreen{position:fixed;inset:0;z-index:9999;background:#1a3a5c center/cover no-repeat;display:flex;flex-direction:column;align-items:center;justify-content:center;cursor:pointer;transition:opacity .5s}
-#lock-time{color:#fff;font-size:96px;font-weight:100;line-height:1}
-#lock-date{color:#fff;font-size:24px;font-weight:300;margin-top:8px}
-#lock-hint{color:rgba(255,255,255,.6);font-size:13px;margin-top:48px;letter-spacing:3px;text-transform:uppercase}
-
-/* ── Start Screen ── */
-#start{position:fixed;inset:0;z-index:100;display:none;flex-direction:column}
-#start-bg-layer{position:absolute;inset:0;transition:background .3s}
-#start-pattern-canvas{position:absolute;inset:0;pointer-events:none;opacity:.16}
-#start-topbar{position:relative;z-index:5;height:46px;display:flex;align-items:center;gap:12px;padding:0 18px;background:rgba(0,0,0,.28)}
-#start-logo{color:#fff;font-size:22px;cursor:pointer;width:28px;text-align:center}
-#start-username{color:#fff;font-size:13px;font-weight:300}
-#start-search{flex:1;max-width:280px;margin-left:auto;background:rgba(255,255,255,.15);border:none;border-bottom:2px solid rgba(255,255,255,.45);color:#fff;padding:7px 12px;font-size:13px;font-family:'Segoe UI',sans-serif;outline:none}
-#start-search:focus{border-bottom-color:#fff;background:rgba(255,255,255,.22)}
-#start-search::placeholder{color:rgba(255,255,255,.5)}
-#apps-btn{background:rgba(255,255,255,.15);border:none;border-bottom:2px solid rgba(255,255,255,.3);color:#fff;padding:7px 14px;cursor:pointer;font-size:12px;font-family:'Segoe UI',sans-serif;letter-spacing:.5px;transition:border-color .2s}
-#apps-btn:hover{border-bottom-color:#fff;background:rgba(255,255,255,.22)}
-#start-accent-bar{position:relative;z-index:5;height:3px;flex-shrink:0}
-#start-tiles-scroll{position:relative;z-index:4;flex:1;overflow-x:auto;overflow-y:hidden;padding:20px 30px;display:flex;gap:28px;align-items:flex-start}
-#start-tiles-scroll::-webkit-scrollbar{height:4px}
-#start-tiles-scroll::-webkit-scrollbar-thumb{background:rgba(255,255,255,.3)}
-.tile-group{display:flex;flex-direction:column;flex-shrink:0}
-.tile-group-name{color:rgba(255,255,255,.78);font-size:11px;font-weight:300;letter-spacing:1.8px;text-transform:uppercase;margin-bottom:10px;cursor:text;outline:none;min-width:30px}
-.tile-group-name:focus{border-bottom:1px solid rgba(255,255,255,.5)}
-.tiles-grid{display:grid;grid-template-columns:repeat(4,76px);grid-auto-rows:76px;gap:4px;position:relative}
-.tile{position:relative;display:flex;flex-direction:column;align-items:center;justify-content:center;cursor:pointer;overflow:hidden;transition:filter .12s;color:#fff}
-.tile:hover{filter:brightness(1.14)}
-.tile:active{filter:brightness(.82)}
-.tile[data-size="small"]{grid-column:span 1;grid-row:span 1}
-.tile[data-size="medium"]{grid-column:span 2;grid-row:span 2}
-.tile[data-size="wide"]{grid-column:span 4;grid-row:span 2}
-.tile[data-size="large"]{grid-column:span 4;grid-row:span 4}
-.tile-icon-img{width:36px;height:36px;object-fit:contain;pointer-events:none}
-.tile[data-size="small"] .tile-icon-img{width:24px;height:24px}
-.tile[data-size="large"] .tile-icon-img{width:58px;height:58px}
-.tile-fa{font-size:32px;pointer-events:none;color:#fff}
-.tile[data-size="small"] .tile-fa{font-size:22px}
-.tile[data-size="large"] .tile-fa{font-size:54px}
-.tile-name{position:absolute;bottom:5px;left:6px;right:6px;font-size:11px;font-weight:400;text-overflow:ellipsis;overflow:hidden;white-space:nowrap;pointer-events:none;color:#fff}
-.tile[data-size="small"] .tile-name{display:none}
-.tile-drag-over{outline:3px dashed rgba(255,255,255,.7)}
-.tile-resize-handle{position:absolute;bottom:0;right:0;width:14px;height:14px;cursor:se-resize;z-index:10;opacity:0;transition:opacity .15s}
-.tile-resize-handle::after{content:'';position:absolute;bottom:1px;right:1px;width:0;height:0;border-left:11px solid transparent;border-bottom:11px solid rgba(255,255,255,.55)}
-.tile:hover .tile-resize-handle{opacity:1}
-.tile-desktop-bg{position:absolute;inset:0;background-size:cover;background-position:center;opacity:.45}
-
-/* ── Apps Screen ── */
-#apps-screen{position:fixed;inset:0;z-index:150;display:none;flex-direction:column;background:rgba(5,5,5,.93)}
-#apps-topbar{height:46px;display:flex;align-items:center;padding:0 18px;gap:14px;background:rgba(0,0,0,.45);flex-shrink:0}
-#apps-topbar h2{color:#fff;font-size:16px;font-weight:300;flex:1}
-#apps-search-inp{background:rgba(255,255,255,.12);border:none;border-bottom:2px solid rgba(255,255,255,.35);color:#fff;padding:6px 12px;font-size:12px;font-family:'Segoe UI',sans-serif;outline:none;width:180px}
-#apps-search-inp::placeholder{color:rgba(255,255,255,.45)}
-#apps-search-inp:focus{border-bottom-color:#fff;background:rgba(255,255,255,.18)}
-#apps-close-btn{background:none;border:none;color:#fff;font-size:18px;cursor:pointer;padding:4px 10px;opacity:.7}
-#apps-close-btn:hover{background:rgba(255,255,255,.14);opacity:1}
-#apps-grid{flex:1;overflow-y:auto;padding:20px 30px;display:grid;grid-template-columns:repeat(auto-fill,110px);gap:10px;align-content:start}
-#apps-grid::-webkit-scrollbar{width:4px}
-#apps-grid::-webkit-scrollbar-thumb{background:rgba(255,255,255,.2)}
-.app-entry{display:flex;flex-direction:column;align-items:center;gap:7px;padding:14px 8px 10px;cursor:pointer;border:1px solid transparent;transition:background .14s}
-.app-entry:hover{background:rgba(255,255,255,.1);border-color:rgba(255,255,255,.18)}
-.app-entry .ae-icon-wrap{width:42px;height:42px;display:flex;align-items:center;justify-content:center;background:var(--accent,#0078d4);border-radius:0}
-.app-entry .ae-icon-wrap i{font-size:22px;color:#fff}
-.app-entry .ae-icon-wrap{overflow:hidden}
-.app-entry .ae-icon-wrap img{width:100%;height:100%;object-fit:cover;display:block}
-.app-entry .ae-name{color:#fff;font-size:11px;text-align:center;font-weight:300;line-height:1.3}
-.app-entry .ae-cat{color:rgba(255,255,255,.42);font-size:10px}
-
-/* ── Desktop ── */
-#desktop{position:fixed;inset:0;z-index:10;display:none;flex-direction:column}
-#desktop-bg{position:absolute;inset:0;z-index:0}
-#desktop-icons-area{position:relative;z-index:1;flex:1;padding:8px;overflow:auto}
-#desktop-credit{position:absolute;z-index:2;bottom:10px;left:50%;transform:translateX(-50%);color:#fff;font-size:12px;font-weight:300;text-align:center;text-shadow:0 1px 4px rgba(0,0,0,.8);pointer-events:none;display:none;max-width:90%}
-#desktop-credit.credit-dark{color:#000;text-shadow:0 1px 4px rgba(255,255,255,.8)}
-.desktop-icon{position:absolute;width:82px;height:92px;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:6px 4px;cursor:pointer;border:1px solid transparent;touch-action:none}
-.desktop-icon:hover{background:rgba(255,255,255,.14);border-color:rgba(255,255,255,.28)}
-.desktop-icon.selected{background:rgba(255,255,255,.22);border-color:rgba(255,255,255,.5)}
-.desktop-icon.icon-dragging{background:rgba(255,255,255,.26);border-color:rgba(255,255,255,.6);z-index:5;opacity:.9}
-.desktop-icon .di-icon-wrap{width:44px;height:44px;display:flex;align-items:center;justify-content:center;background:var(--accent,#0078d4)}
-.desktop-icon .di-icon-wrap i{font-size:24px;color:#fff}
-.desktop-icon .di-icon-wrap img{width:28px;height:28px;object-fit:contain}
-.desktop-icon .di-label{color:#fff;font-size:11px;text-align:center;margin-top:5px;text-shadow:1px 1px 3px rgba(0,0,0,.9);word-break:break-word;line-height:1.2;pointer-events:none}
-.dragging{opacity:.35}
+/* ── Desktop (wallpaper is plain black) ── */
+#desktop{position:fixed;inset:0;display:flex;flex-direction:column;background:#000}
+#desktop-icons-area{position:relative;flex:1;padding:8px;overflow:hidden}
+.desktop-icon{position:absolute;width:82px;height:107px;display:flex;flex-direction:column;align-items:center;justify-content:flex-start;gap:5px;cursor:pointer;border-radius:10px;touch-action:none;animation:icon-in .2s ease both}
+.desktop-icon:hover{background:rgba(255,255,255,.18)}
+.desktop-icon.selected{background:rgba(255,255,255,.28)}
+.desktop-icon.icon-dragging{z-index:5;opacity:.9}
+.di-icon-wrap{width:68px;height:68px;border-radius:14px;background:#000;border:1px solid var(--dn-edge);overflow:hidden;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.di-icon-wrap img{width:100%;height:100%;object-fit:cover;pointer-events:none}
+.di-icon-wrap i{font-size:30px;color:#fff;pointer-events:none}
+.di-label{width:82px;padding:1px 3px;color:#fff;font-size:16px;line-height:17px;max-height:36px;overflow:hidden;text-align:center;background:rgba(0,0,0,.62);border-radius:6px;text-shadow:0 1px 2px rgba(0,0,0,.9);pointer-events:none;word-break:break-word}
+@keyframes icon-in{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:none}}
 
 /* ── Taskbar ── */
-#taskbar{position:relative;z-index:100000;height:40px;background:rgba(0,0,0,.82);display:flex;align-items:center;padding:0 4px;gap:2px;flex-shrink:0}
-#start-orb{width:36px;height:36px;display:flex;align-items:center;justify-content:center;cursor:pointer;color:#fff;font-size:20px;transition:background .14s}
-#start-orb:hover{background:rgba(255,255,255,.18)}
-#tb-apps{display:flex;gap:2px;flex:1;overflow:hidden;padding:0 4px}
-.tb-btn{height:34px;min-width:36px;max-width:155px;padding:0 8px;background:rgba(255,255,255,.07);border-bottom:2px solid transparent;display:flex;align-items:center;gap:6px;cursor:pointer;font-size:12px;color:#ddd;white-space:nowrap;overflow:hidden;transition:background .14s}
-.tb-btn.active{background:rgba(255,255,255,.2)}
-.tb-btn:hover{background:rgba(255,255,255,.16)}
-.tb-btn .tbi{font-size:15px;flex-shrink:0;color:#fff}
-.tb-btn .tbi img{width:15px;height:15px;object-fit:contain}
-.tb-btn .tbt{overflow:hidden;text-overflow:ellipsis}
-#tb-right{display:flex;align-items:center;gap:10px;padding:0 8px;flex-shrink:0}
-#tb-clock{color:#ddd;font-size:11px;text-align:right;line-height:1.4;cursor:default}
-#tray-crash{display:none;align-items:center;justify-content:center;width:30px;height:30px;cursor:pointer;color:#ffb400;font-size:15px;animation:tray-crash-pulse 1s ease-in-out infinite}
-#tray-crash:hover{background:rgba(255,255,255,.16)}
-@keyframes tray-crash-pulse{0%,100%{opacity:1}50%{opacity:.45}}
-.modal.modal-error{border-top-color:#e81123}
-.modal-error .modal-head{display:flex;align-items:center;gap:10px}
-.modal-error .modal-head i{color:#e81123;font-size:20px}
+#taskbar{position:relative;z-index:100000;align-self:flex-start;width:97%;margin-left:1%;height:var(--dn-tb-h);padding:0 10px 7px 12px;background:var(--dn-bar);border-radius:12px 12px 0 0;display:flex;align-items:center;flex-shrink:0}
+#start-orb{position:relative;width:142px;height:22px;flex-shrink:0;display:flex;align-items:center;justify-content:flex-start;gap:7px;padding-left:13px;border-radius:5px;background:var(--dn-panel);color:#fff;font-size:19px;line-height:1;white-space:nowrap;cursor:pointer;transition:background .15s,border-radius .15s}
+#start-orb:hover{background:#6a6a6a}
+#start-orb i{font-size:17px;color:#fff}
+#start-orb::after{content:'Menu';font-size:19px}
+body.dn-open #start-orb{background:var(--dn-panel);border-radius:0 0 5px 5px}
+body.dn-open #start-orb::before{content:'';position:absolute;left:0;right:0;top:-12px;height:12px;background:var(--dn-panel)}
+#tb-apps{flex:1;display:flex;gap:15px;padding:0 0 0 13px;align-items:center}
+.tb-btn{width:30px;height:30px;background:#fff;border:1px solid var(--dn-edge);border-radius:6px;overflow:hidden;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:background .15s,transform .12s;animation:tb-in .15s ease both}
+.tb-btn:hover{background:#e6f0fa;transform:translateY(-2px)}
+.tb-btn.active{box-shadow:inset 0 -3px 0 var(--accent)}
+.tb-btn img.tbi{width:100%;height:100%;padding:3px;object-fit:contain}
+.tb-btn i.tbi{font-size:16px;color:#111}
+@keyframes tb-in{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+#tb-right{display:flex;align-items:center;gap:12px;flex-shrink:0}
+#tb-clock{color:#fff;font-size:24px;line-height:1;white-space:nowrap;cursor:default}
+#tray-fs{display:none;align-items:center;gap:8px;height:30px;padding:0 12px;cursor:pointer;color:#fff;background:var(--accent);font-size:13px;font-weight:600;white-space:nowrap;border-radius:6px}
+#tray-fs:hover{filter:brightness(1.15)}
+
+/* ── Menu + All apps panels ── */
+#dn-menu,#dn-all{display:none;position:fixed;color:#fff;font-family:var(--font)}
+body.dn-open #dn-menu{display:flex}
+body.dn-open.dn-all #dn-all{display:flex}
+#dn-menu{z-index:100;left:var(--dn-left);bottom:0;width:142px;max-height:calc(100vh - 12px);flex-direction:column;padding:14px 0 calc(var(--dn-tb-h) + 12px);background:var(--dn-panel);border-radius:14px 14px 0 0;box-shadow:0 0 0 1px rgba(255,255,255,.22),0 6px 24px rgba(0,0,0,.45);transform-origin:bottom left;animation:dn-menu-in .22s cubic-bezier(.2,.8,.3,1) both}
+#dn-list{flex:1;min-height:0;overflow-y:auto;overflow-x:hidden;padding:0 8px 0 11px;scrollbar-width:thin;scrollbar-color:#808080 transparent}
+.dn-row{display:flex;align-items:center;gap:5px;height:38px;margin:0 -4px 7px;padding:0 4px;border-radius:10px;cursor:pointer;transition:background .15s}
+.dn-row:hover,.dn-cell:hover{background:rgba(255,255,255,.12)}
+.dn-ico{width:68px;height:68px;border-radius:14px;background:#000;border:1px solid var(--dn-edge);overflow:hidden;display:flex;align-items:center;justify-content:center;flex-shrink:0;transition:transform .15s}
+.dn-ico img{width:100%;height:100%;object-fit:cover}
+.dn-ico i{font-size:30px;color:#fff}
+.dn-row .dn-ico{width:38px;height:38px;border-radius:9px}
+.dn-row .dn-ico i{font-size:18px}
+.dn-row:hover .dn-ico,.dn-cell:hover .dn-ico{transform:scale(1.08)}
+.dn-name{flex:1;min-width:0;font-size:16px;line-height:18px;color:#fff;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.dn-btns{display:flex;flex-direction:column;gap:8px;flex-shrink:0;padding-top:6px;padding-bottom:2px}
+.dn-btn{width:119px;height:28px;margin-left:14px;display:flex;align-items:center;justify-content:center;background:#000;color:#fff;border:1px solid var(--dn-edge);border-radius:4px;font:19px var(--font);cursor:pointer;transition:background .15s,transform .1s}
+.dn-btn:hover{background:#222}
+.dn-btn:active{transform:scale(.96)}
+.dn-btn.dn-off{background:#c40000;border-color:#ff6b6b}
+.dn-btn.dn-off:hover{background:#e00000}
+#dn-all{z-index:99;left:var(--dn-left);bottom:calc(var(--dn-tb-h) + 35px);width:797px;max-width:calc(100vw - var(--dn-left) - 12px);height:max(160px,calc(var(--dn-mh,413px) - 93px));max-height:calc(100vh - 93px);flex-direction:column;padding-top:15px;background:var(--dn-panel);border-radius:14px;box-shadow:0 0 0 1px rgba(255,255,255,.22),0 6px 24px rgba(0,0,0,.45);transform-origin:left bottom;animation:dn-all-in .24s cubic-bezier(.2,.8,.3,1) both}
+.dn-all-head{flex-shrink:0;padding-left:158px;font-size:24px;line-height:28px;color:#fff}
+#dn-grid{flex:1;min-height:0;overflow-y:auto;overflow-x:hidden;padding:5px 7px 12px 150px;display:grid;grid-template-columns:repeat(auto-fill,80px);grid-auto-rows:min-content;row-gap:15px;justify-content:start;align-content:start;scrollbar-width:thin;scrollbar-color:#808080 transparent}
+.dn-cell{width:80px;display:flex;flex-direction:column;align-items:center;gap:3px;padding:0 0 2px;border-radius:10px;cursor:pointer;transition:background .15s}
+.dn-cell .dn-name{flex:none;width:80px;text-align:center;font-size:15px;line-height:17px;min-height:34px;white-space:normal;display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:2;line-clamp:2;overflow-wrap:anywhere}
+body.dn-closing #dn-menu{animation:dn-menu-out .15s ease-in both;pointer-events:none}
+body.dn-closing #dn-all,body.dn-all-closing #dn-all{animation:dn-all-out .15s ease-in both;pointer-events:none}
+@keyframes dn-menu-in{from{opacity:0;transform:translateY(36px)}to{opacity:1;transform:none}}
+@keyframes dn-menu-out{from{opacity:1;transform:none}to{opacity:0;transform:translateY(36px)}}
+@keyframes dn-all-in{from{opacity:0;transform:translateX(-28px) scale(.95)}to{opacity:1;transform:none}}
+@keyframes dn-all-out{from{opacity:1;transform:none}to{opacity:0;transform:translateX(-28px) scale(.95)}}
+@media (max-width:900px),(max-height:600px){
+  .dn-all-head{font-size:18px;line-height:22px;padding-left:150px}
+  .dn-cell,.dn-cell .dn-name{width:64px}
+  .dn-cell .dn-ico{width:52px;height:52px;border-radius:11px}
+  .dn-cell .dn-name{font-size:12px;line-height:14px;min-height:28px}
+  #dn-grid{grid-template-columns:repeat(auto-fill,64px);row-gap:10px}
+}
+@media (prefers-reduced-motion:reduce){#dn-menu,#dn-all{animation:none!important}}
 
 /* ── Windows ── */
 #wins-layer{position:fixed;z-index:5;inset:0;pointer-events:none}
-.app-win{position:absolute;display:flex;flex-direction:column;box-shadow:0 8px 36px rgba(0,0,0,.6);pointer-events:all;min-width:360px;min-height:260px;border-top:3px solid var(--accent,#0078d4);animation:win-open .18s cubic-bezier(.2,.8,.4,1) both}
-.app-win.win-fs{top:var(--fs-top,0px)!important;left:0!important;width:100%!important;height:calc(100vh - var(--fs-top,0px) - var(--fs-bot,40px))!important;box-shadow:none;transition:top .18s ease,left .18s ease,width .18s ease,height .18s ease}
+.app-win{position:absolute;display:flex;flex-direction:column;pointer-events:all;min-width:360px;min-height:260px;border-radius:28px;overflow:hidden;background:var(--dn-win);animation:win-open .18s cubic-bezier(.2,.8,.4,1) both}
+.app-win.win-fs{top:var(--fs-top)!important;left:1%!important;width:97%!important;height:calc(100vh - var(--fs-top) - var(--fs-bot))!important;border-radius:15px}
 .app-win.win-min{display:none}
 .app-win.win-closing{animation:win-close .15s ease forwards;pointer-events:none}
 .app-win.win-minimizing{animation:win-minimize .16s cubic-bezier(.4,0,1,.6) forwards;pointer-events:none}
-.app-win.win-restoring{animation:win-open .18s cubic-bezier(.2,.8,.4,1) both}
-.app-win.win-settled{animation:none}
-.app-win.wobbling{animation:win-wobble .32s ease-in-out infinite}
-@keyframes win-wobble{
-  0%,100%{transform:rotate(calc(var(--wobble-deg,0) * -1deg)) translateX(calc(var(--wobble-deg,0) * -1px))}
-  50%{transform:rotate(calc(var(--wobble-deg,0) * 1deg)) translateX(calc(var(--wobble-deg,0) * 1px))}
-}
-/* Disable iframes during drag/resize to prevent event capture */
 body.win-interacting .win-frame{pointer-events:none}
 @keyframes win-open{from{opacity:0;transform:scale(.93) translateY(8px)}to{opacity:1;transform:none}}
 @keyframes win-close{from{opacity:1;transform:none}to{opacity:0;transform:scale(.93) translateY(8px)}}
 @keyframes win-minimize{from{opacity:1;transform:none}to{opacity:0;transform:scaleY(.05) translateY(60px)}}
-.win-tb{height:30px;background:#1a1a1a;display:flex;align-items:center;padding:0 6px 0 8px;cursor:move;flex-shrink:0;gap:7px}
-.win-ico-wrap{width:16px;height:16px;display:flex;align-items:center;justify-content:center;flex-shrink:0}
-.win-ico-wrap i{font-size:14px;color:#aaa}
-.win-ico-wrap img{width:14px;height:14px;object-fit:contain}
-.win-title{color:#bbb;font-size:12px;flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-.win-ctrl{width:42px;height:30px;display:flex;align-items:center;justify-content:center;cursor:pointer;color:#999;font-size:12px;background:transparent;border:none;transition:background .1s}
-.win-ctrl:hover{background:rgba(255,255,255,.12);color:#fff}
-.win-ctrl.wc-close:hover{background:#e81123;color:#fff}
+.win-tb{height:34px;padding:0 36px 0 18px;background:#000;display:flex;align-items:flex-start;cursor:move;flex-shrink:0}
+.app-win.win-fs .win-tb{padding:0 21px 0 16px;cursor:default}
+.win-title{flex:1;min-width:0;color:#fff;font-size:19px;font-weight:400;line-height:34px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.win-res{font-size:10px;color:rgba(255,255,255,.45);margin-right:4px;line-height:34px}
+.win-ctrl{position:relative;width:75px;height:28px;margin:0 0 0 11px;padding:0;border:0;flex-shrink:0;background:var(--dn-tab);color:transparent;font-size:0;cursor:pointer;clip-path:polygon(0 0,100% 0,calc(100% - 14px) 100%,14px 100%)}
+.win-ctrl[title="Maximize"]{width:62px}
+.win-ctrl.wc-close{width:85px;background:#c40000}
+.win-ctrl:hover{background:#4d4d4d}
+.win-ctrl.wc-close:hover{background:#e00000}
+.win-ctrl::after{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:600;color:#fff}
+.win-ctrl[title="Minimize"]::after{content:'hide'}
+.win-ctrl[title="Maximize"]::after{content:'full'}
+.win-ctrl[title="Close"]::after{content:'close'}
 .win-frame{border:none;background:#fff}
-.rh{position:absolute;bottom:0;right:0;width:16px;height:16px;cursor:se-resize;z-index:10}
-.rh::after{content:'';position:absolute;bottom:2px;right:2px;width:0;height:0;border-left:11px solid transparent;border-bottom:11px solid rgba(255,255,255,.22)}
+.rh{position:absolute;bottom:6px;right:6px;width:20px;height:20px;cursor:se-resize;z-index:10}
+.app-win.win-fs .rh{display:none}
 
-
-/* ── Context Menu ── */
-#ctx{position:fixed;z-index:5000;background:#181818;min-width:178px;display:none;border-top:2px solid var(--accent,#0078d4)}
-#ctx div{color:#e0e0e0;font-size:13px;padding:9px 15px;cursor:pointer;display:flex;align-items:center;gap:9px}
-#ctx div:hover{background:#2a2a2a}
-#ctx .sep{height:1px;background:#303030;padding:0;margin:3px 0;cursor:default}
-#ctx .sep:hover{background:#303030}
-
-/* ── Modal Overlay ── */
-#overlay{position:fixed;inset:0;z-index:2000;background:rgba(0,0,0,.6);display:none;align-items:center;justify-content:center}
-#overlay.on{display:flex}
-.modal{background:#2a2a2a;min-width:420px;max-width:640px;max-height:90vh;display:flex;flex-direction:column;border-top:3px solid var(--accent,#0078d4)}
-.modal-head{background:#1e1e1e;padding:16px 22px 14px;border-bottom:1px solid #383838;flex-shrink:0}
-.modal-head h2{font-size:17px;font-weight:300;color:#eee}
-.modal-body{padding:18px 22px;overflow-y:auto;flex:1}
-.modal-body::-webkit-scrollbar{width:4px}
-.modal-body::-webkit-scrollbar-thumb{background:#555}
-.f-label{display:block;font-size:11px;color:#aaa;margin-bottom:4px;margin-top:14px;text-transform:uppercase;letter-spacing:.6px}
-.f-label:first-child{margin-top:0}
-.f-inp{width:100%;background:#1a1a1a;border:1px solid #444;border-bottom:2px solid var(--accent,#0078d4);color:#eee;padding:8px 10px;font-size:13px;font-family:'Segoe UI',sans-serif;outline:none}
-.f-inp:focus{border-color:var(--accent,#0078d4);background:#222}
-.f-inp::placeholder{color:#666}
-.f-sel{width:100%;background:#1a1a1a;border:1px solid #444;border-bottom:2px solid var(--accent,#0078d4);color:#eee;padding:8px 10px;font-size:13px;font-family:'Segoe UI',sans-serif;outline:none;cursor:pointer}
-.f-sel option{background:#1a1a1a;color:#eee}
-.modal-foot{padding:13px 22px;background:#1e1e1e;border-top:1px solid #383838;display:flex;justify-content:flex-end;gap:8px;flex-shrink:0}
-.btn-p{background:var(--accent,#0078d4);color:#fff;border:none;padding:8px 22px;font-size:13px;cursor:pointer;font-family:'Segoe UI',sans-serif}
-.btn-p:hover{filter:brightness(1.1)}
-.btn-s{background:#383838;color:#ddd;border:1px solid #555;padding:8px 18px;font-size:13px;cursor:pointer;font-family:'Segoe UI',sans-serif}
-.btn-s:hover{background:#444}
-.color-grid{display:flex;flex-wrap:wrap;gap:5px;margin-top:6px}
-.cswatch{width:28px;height:28px;cursor:pointer;border:3px solid transparent;transition:border-color .1s}
-.cswatch:hover,.cswatch.sel{border-color:#fff;box-shadow:0 0 0 1px #777}
-.pat-grid{display:grid;grid-template-columns:repeat(5,1fr);gap:6px;margin-top:6px}
-.popt{height:38px;cursor:pointer;border:2px solid #444;display:flex;align-items:center;justify-content:center;font-size:11px;color:#aaa;background:#1a1a1a;transition:border-color .1s}
-.popt.sel,.popt:hover{border-color:var(--accent,#0078d4);color:#eee}
-.wp-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:7px;margin-top:6px}
-.wp-swatch{position:relative;height:52px;background-size:cover;background-position:center;cursor:pointer;border:2px solid #444;transition:border-color .12s}
-.wp-swatch:hover{border-color:var(--accent,#0078d4)}
-.wp-swatch.sel{border-color:#fff;box-shadow:0 0 0 1px #777}
-.wp-swatch span{position:absolute;left:0;right:0;bottom:0;background:rgba(0,0,0,.6);color:#fff;font-size:9px;padding:2px 4px;text-align:center;letter-spacing:.3px;text-overflow:ellipsis;overflow:hidden;white-space:nowrap}
-.wp-none{display:flex;align-items:center;justify-content:center;color:#888;font-size:10px;background:#1a1a1a}
-.wp-hint{font-size:10px;color:#777;margin-top:5px;letter-spacing:.2px}
-/* ── Terminal app ── */
-.term-body{flex:1;background:#0c0c0c;color:#e8e8e8;font-family:'Cascadia Code','Consolas',monospace;font-size:13px;display:flex;flex-direction:column;overflow:hidden}
-.term-out{flex:1;overflow-y:auto;padding:10px 12px;white-space:pre-wrap;word-break:break-word;line-height:1.5}
-.term-out::-webkit-scrollbar{width:6px}
-.term-out::-webkit-scrollbar-thumb{background:#333}
-.term-line-in{color:#7fd962}
-.term-line-err{color:#ff6b6b}
-.term-line-ok{color:#58a6ff}
-.term-line-dim{color:#888}
-.term-inputrow{display:flex;align-items:center;padding:6px 12px 10px;flex-shrink:0;gap:6px}
-.term-prompt{color:#7fd962;flex-shrink:0}
-.term-input{flex:1;background:transparent;border:none;outline:none;color:#e8e8e8;font-family:inherit;font-size:13px}
-.icon-picker{display:grid;grid-template-columns:repeat(6,1fr);gap:4px;margin-top:6px;max-height:160px;overflow-y:auto;background:#111;padding:6px;border:1px solid #333}
-.icon-picker::-webkit-scrollbar{width:4px}
-.icon-picker::-webkit-scrollbar-thumb{background:#444}
-.ip-opt{width:100%;aspect-ratio:1;display:flex;align-items:center;justify-content:center;cursor:pointer;border:2px solid transparent;background:#1a1a1a;font-size:18px;color:#ccc}
-.ip-opt:hover,.ip-opt.sel{border-color:var(--accent,#0078d4);background:#222}
-.ip-opt i{font-size:18px}
+/* ── Context menu ── */
+#ctx{position:fixed;z-index:5000;display:none;min-width:178px;padding:6px;background:#2b2b2b;border:1px solid #6a6a6a;border-radius:12px;box-shadow:0 6px 20px rgba(0,0,0,.4);font-family:var(--font)}
+#ctx div{color:#fff;font-size:14px;padding:8px 14px;border-radius:8px;cursor:pointer;display:flex;align-items:center;gap:9px}
+#ctx div:hover{background:#595959}
+#ctx .sep{height:1px;background:#555;padding:0;margin:4px 0;border-radius:0;cursor:default}
+#ctx .sep:hover{background:#555}
 
 /* ── Notifications ── */
-#notifs{position:fixed;bottom:50px;right:8px;z-index:4000;display:flex;flex-direction:column;gap:6px;pointer-events:none}
-.notif{background:rgba(18,18,18,.97);border-left:3px solid var(--accent,#0078d4);color:#eee;padding:12px 16px;font-size:13px;min-width:270px;animation:nin .3s ease;pointer-events:all;cursor:pointer}
+#notifs{position:fixed;bottom:56px;right:8px;z-index:4000;display:flex;flex-direction:column;gap:6px;pointer-events:none}
+.notif{background:#000;border-left:3px solid var(--accent);color:#fff;border-radius:12px;padding:12px 16px;font-size:13px;min-width:270px;animation:nin .3s ease;pointer-events:all;cursor:pointer}
 @keyframes nin{from{transform:translateX(110%);opacity:0}to{transform:none;opacity:1}}
 
-/* ── Extra Animations ── */
-/* Lock screen slide-up unlock */
-#lockscreen{transition:transform .45s cubic-bezier(.4,0,.2,1),opacity .45s}
-#lockscreen.unlocking{transform:translateY(-100%);opacity:0}
-/* Start screen fade+scale in */
-#start{transition:opacity .22s ease,transform .22s ease;transform-origin:center top}
-#start.start-entering{animation:start-in .22s ease both}
-#start.start-leaving{animation:start-out .18s ease both}
-@keyframes start-in{from{opacity:0;transform:translateY(-18px)}to{opacity:1;transform:none}}
-@keyframes start-out{from{opacity:1;transform:none}to{opacity:0;transform:translateY(-12px)}}
-/* Desktop fade in */
-#desktop{transition:opacity .2s ease}
-#desktop.desk-entering{animation:fade-in .2s ease both}
-@keyframes fade-in{from{opacity:0}to{opacity:1}}
-/* Tile press ripple */
-.tile{transition:filter .12s,transform .1s}
-.tile:active{transform:scale(.96)}
-/* Tile flip-in on Start render */
-@keyframes tile-pop{from{opacity:0;transform:scale(.85)}to{opacity:1;transform:none}}
-/* Desktop icon bounce-in */
-@keyframes icon-in{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:none}}
-/* Taskbar button slide in */
-@keyframes tb-in{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
-.tb-btn{animation:tb-in .15s ease both}
-
-/* start bottom bar */
-#start-bottom{position:relative;z-index:5;display:flex;gap:8px;padding:6px 18px 8px;background:rgba(0,0,0,.22)}
-#start-bottom button{background:rgba(255,255,255,.12);border:none;border-bottom:2px solid rgba(255,255,255,.35);color:#fff;padding:5px 14px;cursor:pointer;font-size:12px;font-family:'Segoe UI',sans-serif;transition:background .14s}
-#start-bottom button:hover{background:rgba(255,255,255,.2)}
-
-/* ══════════════════════════════════
-   THEME ENGINE
-══════════════════════════════════ */
-body{
-  --off-top:0px;--off-bot:40px;--fs-top:0px;--fs-bot:40px;--font:'Segoe UI',sans-serif;--tc:4;--tile-r:0px;--st-r:0px;
-  --ui-bg:#2a2a2a;--ui-head:#1e1e1e;--ui-hbd:#383838;--ui-fg:#eee;--ui-sub:#aaa;--ui-inp:#1a1a1a;--ui-bd:#444;--ui-hov:#222;
-  --ui-sb:#383838;--ui-sbf:#ddd;--ui-sbb:#555;--ui-r:0px;--ui-ir:0px;--ui-br:0px;--ui-bt:3px;--ui-btc:var(--accent,#0078d4);--ui-border:none;--ui-sh:none;
-  --ctx-bg:#181818;--ctx-fg:#e0e0e0;--ctx-hov:#2a2a2a;--ctx-hfg:#e0e0e0;--ctx-r:0px;--ctx-pad:0px;--ctx-ip:9px 15px;--ctx-ir:0px;--ctx-fs:13px;--ctx-sep:#303030;--ctx-bd:none;--ctx-bt:2px;--ctx-btc:var(--accent,#0078d4);--ctx-sh:none;--ctx-bf:none;
-  --nt-bg:rgba(18,18,18,.97);--nt-fg:#eee;--nt-r:0px;--nt-bl:3px;
-}
-body{font-family:var(--font)}
-body[data-theme] :is(input,select,button){font-family:inherit}
-
-/* shared: dialogs */
-body[data-theme] .modal{background:var(--ui-bg);color:var(--ui-fg);border-radius:var(--ui-r);border:var(--ui-border);border-top:var(--ui-bt) solid var(--ui-btc);box-shadow:var(--ui-sh);overflow:hidden}
-body[data-theme] .modal.modal-error{border-top-color:#e81123}
-body[data-theme] .modal-head{background:var(--ui-head);border-bottom-color:var(--ui-hbd)}
-body[data-theme] .modal-head h2{color:var(--ui-fg)}
-body[data-theme] .modal-foot{background:var(--ui-head);border-top-color:var(--ui-hbd)}
-body[data-theme] .f-label{color:var(--ui-sub)}
-body[data-theme] .f-inp,body[data-theme] .f-sel{background:var(--ui-inp);color:var(--ui-fg);border-color:var(--ui-bd);border-bottom-color:var(--accent,#0078d4);border-radius:var(--ui-ir)}
-body[data-theme] .f-sel option{background:var(--ui-inp);color:var(--ui-fg)}
-body[data-theme] .btn-s{background:var(--ui-sb);color:var(--ui-sbf);border-color:var(--ui-sbb);border-radius:var(--ui-br)}
-body[data-theme] .btn-p{border-radius:var(--ui-br)}
-body[data-theme] .popt{background:var(--ui-inp);color:var(--ui-sub);border-radius:var(--ui-ir)}
-body[data-theme] .popt.sel,body[data-theme] .popt:hover{color:var(--ui-fg)}
-body[data-theme] .icon-picker{background:var(--ui-inp);border-color:var(--ui-bd)}
-body[data-theme] .ip-opt{background:var(--ui-inp);color:var(--ui-fg)}
-body[data-theme] .ip-opt:hover,body[data-theme] .ip-opt.sel{background:var(--ui-hov)}
-body[data-theme] .wp-none{background:var(--ui-inp)}
-/* shared: context menu / charms / notifications */
-body[data-theme] #ctx{background:var(--ctx-bg);border:var(--ctx-bd);border-top:var(--ctx-bt) solid var(--ctx-btc);border-top-color:var(--ctx-btc)!important;border-radius:var(--ctx-r);padding:var(--ctx-pad);box-shadow:var(--ctx-sh);backdrop-filter:var(--ctx-bf)}
-body[data-theme] #ctx div{color:var(--ctx-fg);font-size:var(--ctx-fs);padding:var(--ctx-ip);border-radius:var(--ctx-ir)}
-body[data-theme] #ctx div:hover{background:var(--ctx-hov);color:var(--ctx-hfg)}
-body[data-theme] #ctx .sep{background:var(--ctx-sep);padding:0;height:1px;margin:3px 0;border-radius:0}
-body[data-theme] #ctx .sep:hover{background:var(--ctx-sep)}
-body[data-theme] #notifs{bottom:calc(var(--off-bot) + 10px)}
-body[data-theme] .notif{background:var(--nt-bg);color:var(--nt-fg);border-radius:var(--nt-r);border-left-width:var(--nt-bl)}
-body[data-theme] .app-win.win-fs{border-radius:0}
-
-/* shared: every non-default theme */
-body:not([data-theme="default"]) #start-pattern-canvas,
-body:not([data-theme="default"]) #start-accent-bar{display:none}
-body:not([data-theme="default"]) #start-bg-layer{background:var(--st-bg)!important;background-image:none!important;backdrop-filter:blur(var(--st-blur,0px))}
-body:not([data-theme="default"]) #start-topbar,
-body:not([data-theme="default"]) #start-bottom{background:transparent}
-body:not([data-theme="default"]) #start-search{border:1px solid rgba(255,255,255,.28);border-radius:var(--st-r)}
-body:not([data-theme="default"]) #start-search:focus{border-color:rgba(255,255,255,.75)}
-body:not([data-theme="default"]) #apps-btn,
-body:not([data-theme="default"]) #start-bottom button{border:1px solid rgba(255,255,255,.22);border-radius:var(--st-r)}
-body:not([data-theme="default"]) .tile{border-radius:var(--tile-r)}
-body:not([data-theme="default"]) .tiles-grid{grid-template-columns:repeat(var(--tc),76px)}
-body:not([data-theme="default"]) #apps-screen{background:var(--ap-bg);backdrop-filter:blur(var(--st-blur,0px))}
-body:not([data-theme="default"]) .tb-btn{justify-content:center}
-body:not([data-theme="default"]) .tb-btn .tbt{display:none}
-
-/* shared: Start as a floating panel (Win 11/10/7, ChromeOS) */
-body.menu-panel #start,body.menu-panel #apps-screen{inset:auto;left:var(--mn-l);bottom:var(--mn-b);width:var(--mn-w);height:var(--mn-h);border-radius:var(--mn-r);overflow:hidden;box-shadow:var(--mn-sh);border:var(--mn-bd,none)}
-body.menu-panel #start-username{display:none}
-body.menu-panel #start-search{max-width:220px}
-body.menu-panel #start-tiles-scroll{flex-direction:column;overflow-x:hidden;overflow-y:auto;gap:20px;padding:16px 22px}
-body.menu-panel #apps-grid{grid-template-columns:repeat(auto-fill,96px);padding:16px 18px}
-
-/* shared: fullscreen launcher (macOS, GNOME) */
-body[data-theme="mac"] #start-topbar,body[data-theme="gnome"] #start-topbar{justify-content:center;height:64px;padding-top:12px}
-body[data-theme="mac"] #start-logo,body[data-theme="mac"] #start-username,
-body[data-theme="gnome"] #start-logo,body[data-theme="gnome"] #start-username{display:none}
-body[data-theme="mac"] #start-search,body[data-theme="gnome"] #start-search{margin:0;flex:none;width:min(420px,60vw);max-width:none;padding:9px 16px;background:rgba(255,255,255,.12)}
-body[data-theme="mac"] #start-tiles-scroll,body[data-theme="gnome"] #start-tiles-scroll{justify-content:safe center;align-items:center}
-body[data-theme="mac"] #start-bottom,body[data-theme="gnome"] #start-bottom{justify-content:center}
-
-/* ───────── Windows 11 ───────── */
-body[data-theme="win11"]{--font:'Segoe UI Variable Text','Segoe UI',sans-serif;--off-bot:48px;--fs-bot:48px;--tc:6;--tile-r:6px;--st-r:6px;
-  --ui-bg:#2b2b2b;--ui-head:#2b2b2b;--ui-hbd:#3b3b3b;--ui-fg:#fff;--ui-sub:#c5c5c5;--ui-inp:#1f1f1f;--ui-bd:#4a4a4a;--ui-hov:#3a3a3a;--ui-sb:#3a3a3a;--ui-sbf:#fff;--ui-sbb:#4a4a4a;--ui-r:8px;--ui-ir:4px;--ui-br:4px;--ui-bt:1px;--ui-btc:#454545;--ui-border:1px solid #454545;--ui-sh:0 12px 40px rgba(0,0,0,.5);
-  --ctx-bg:#2c2c2c;--ctx-fg:#fff;--ctx-hov:rgba(255,255,255,.09);--ctx-hfg:#fff;--ctx-r:8px;--ctx-pad:4px;--ctx-ip:8px 12px;--ctx-ir:4px;--ctx-sep:#444;--ctx-bd:1px solid #454545;--ctx-bt:1px;--ctx-btc:#454545;--ctx-sh:0 8px 28px rgba(0,0,0,.45);
-  --nt-bg:#2b2b2b;--nt-fg:#fff;--nt-r:8px;--nt-bl:0px;
-  --mn-l:max(8px,calc(50% - 300px));--mn-b:56px;--mn-w:min(600px,calc(100vw - 16px));--mn-h:min(620px,calc(100vh - 120px));--mn-r:8px;--mn-sh:0 8px 40px rgba(0,0,0,.5);--mn-bd:1px solid rgba(255,255,255,.1);
-  --st-bg:rgba(36,36,36,.9);--st-blur:30px;--ap-bg:rgba(32,32,32,.97)}
-body[data-theme="win11"] #taskbar{height:48px;background:rgba(32,32,32,.82);backdrop-filter:blur(30px);border-top:1px solid rgba(255,255,255,.08);padding:0 8px}
-body[data-theme="win11"] #taskbar::before{content:'';flex:1}
-body[data-theme="win11"] #tb-apps{flex:0 1 auto}
-body[data-theme="win11"] #tb-right{flex:1;justify-content:flex-end}
-body[data-theme="win11"] #start-orb{width:42px;height:40px;border-radius:6px}
-body[data-theme="win11"] #start-orb i{color:#60cdff;font-size:20px}
-body[data-theme="win11"] .tb-btn{height:40px;min-width:44px;padding:0;background:transparent;border-radius:6px;border-bottom:0}
-body[data-theme="win11"] .tb-btn:hover{background:rgba(255,255,255,.1)}
-body[data-theme="win11"] .tb-btn.active{background:linear-gradient(var(--accent),var(--accent)) center calc(100% - 2px)/16px 3px no-repeat,rgba(255,255,255,.1)}
-body[data-theme="win11"] .tb-btn .tbi{font-size:20px!important}
-body[data-theme="win11"] .tb-btn img.tbi{width:24px!important;height:24px!important}
-body[data-theme="win11"] .app-win{border:1px solid rgba(255,255,255,.14);border-top-width:0;border-radius:8px;overflow:hidden;box-shadow:0 8px 40px rgba(0,0,0,.55)}
-body[data-theme="win11"] .win-tb{background:#202020;height:32px}
-body[data-theme="win11"] .win-title{color:#fff}
-body[data-theme="win11"] .win-ctrl{width:46px;height:32px;color:#fff}
-
-/* ───────── Windows 10 ───────── */
-body[data-theme="win10"]{--off-bot:40px;--fs-bot:40px;--tc:6;
-  --ui-bg:#fff;--ui-head:#fff;--ui-hbd:#e5e5e5;--ui-fg:#000;--ui-sub:#555;--ui-inp:#fff;--ui-bd:#8a8a8a;--ui-hov:#e5e5e5;--ui-sb:#e1e1e1;--ui-sbf:#000;--ui-sbb:#adadad;--ui-bt:1px;--ui-border:1px solid var(--accent,#0078d4);--ui-sh:0 8px 32px rgba(0,0,0,.4);
-  --ctx-bg:#f2f2f2;--ctx-fg:#000;--ctx-hov:#dadada;--ctx-hfg:#000;--ctx-pad:2px;--ctx-ip:7px 14px;--ctx-sep:#ccc;--ctx-bd:1px solid #ccc;--ctx-bt:1px;--ctx-btc:#ccc;--ctx-sh:2px 2px 8px rgba(0,0,0,.35);
-  --nt-bg:#1f1f1f;--nt-fg:#fff;--nt-bl:4px;
-  --mn-l:0px;--mn-b:40px;--mn-w:min(560px,100vw);--mn-h:min(600px,calc(100vh - 80px));--mn-r:0px;--mn-sh:0 0 24px rgba(0,0,0,.5);
-  --st-bg:rgba(24,24,28,.95);--st-blur:20px;--ap-bg:rgba(20,20,24,.98)}
-body[data-theme="win10"] #taskbar{height:40px;background:rgba(16,16,16,.95)}
-body[data-theme="win10"] #start-orb{width:48px;height:40px}
-body[data-theme="win10"] .tb-btn{min-width:46px;height:40px;padding:0;background:transparent}
-body[data-theme="win10"] .tb-btn:hover{background:rgba(255,255,255,.14)}
-body[data-theme="win10"] .tb-btn.active{background:rgba(255,255,255,.2)}
-body[data-theme="win10"] .app-win{border:1px solid var(--accent);box-shadow:0 8px 30px rgba(0,0,0,.45)}
-body[data-theme="win10"] .win-tb{background:#fff;height:30px}
-body[data-theme="win10"] .win-title{color:#000}
-body[data-theme="win10"] .win-ctrl{width:46px;color:#000}
-body[data-theme="win10"] .win-ctrl:hover{background:#e5e5e5;color:#000}
-body[data-theme="win10"] .win-ctrl.wc-close:hover{background:#e81123;color:#fff}
-
-/* ───────── Windows 7 (Aero) ───────── */
-body[data-theme="win7"]{--off-bot:40px;--fs-bot:40px;--tc:4;--tile-r:3px;--st-r:3px;
-  --ui-bg:#f0f0f0;--ui-head:linear-gradient(#e6effa,#c9dbf0);--ui-hbd:#8fa8c8;--ui-fg:#000;--ui-sub:#333;--ui-inp:#fff;--ui-bd:#8e8f8f;--ui-hov:#dbe8f6;--ui-sb:linear-gradient(#f2f2f2 45%,#dcdcdc 50%,#cfcfcf);--ui-sbf:#000;--ui-sbb:#707070;--ui-r:7px;--ui-ir:2px;--ui-br:3px;--ui-bt:1px;--ui-btc:#4c6b94;--ui-border:1px solid #4c6b94;--ui-sh:0 8px 30px rgba(0,0,0,.5);
-  --ctx-bg:#f1f1f1;--ctx-fg:#000;--ctx-hov:linear-gradient(#e8f2fc,#c7ddf3);--ctx-hfg:#000;--ctx-pad:2px;--ctx-ip:6px 28px;--ctx-fs:12px;--ctx-sep:#d7d7d7;--ctx-bd:1px solid #979797;--ctx-bt:1px;--ctx-btc:#979797;--ctx-sh:2px 2px 4px rgba(0,0,0,.4);
-  --nt-bg:rgba(30,40,60,.95);--nt-fg:#fff;--nt-r:6px;--nt-bl:0px;
-  --mn-l:0px;--mn-b:40px;--mn-w:min(440px,100vw);--mn-h:min(560px,calc(100vh - 60px));--mn-r:8px 8px 0 0;--mn-sh:0 0 20px rgba(0,0,0,.6);--mn-bd:1px solid rgba(255,255,255,.55);
-  --st-bg:linear-gradient(rgba(130,175,225,.82),rgba(40,70,120,.93));--st-blur:8px;--ap-bg:linear-gradient(rgba(60,100,155,.97),rgba(25,45,85,.98))}
-body[data-theme="win7"] #taskbar{height:40px;background:linear-gradient(to bottom,rgba(200,225,245,.5),rgba(70,110,160,.72) 50%,rgba(40,75,125,.85));backdrop-filter:blur(8px);border-top:1px solid rgba(255,255,255,.5);padding-left:2px}
-body[data-theme="win7"] #start-orb{width:44px;height:44px;border-radius:50%;margin:-2px 6px 0 2px;background:radial-gradient(circle at 50% 30%,#8fd0ff,#1f6fd0 55%,#0b3d91);box-shadow:0 0 0 2px rgba(255,255,255,.55),0 0 10px rgba(80,170,255,.8)}
-body[data-theme="win7"] #start-orb:hover{filter:brightness(1.2)}
-body[data-theme="win7"] .tb-btn{min-width:54px;height:34px;padding:0;border-radius:3px;border:1px solid rgba(255,255,255,.45);border-bottom-color:rgba(255,255,255,.45)!important;background:linear-gradient(rgba(255,255,255,.25),rgba(255,255,255,.05))}
-body[data-theme="win7"] .tb-btn:hover{background:linear-gradient(rgba(255,255,255,.45),rgba(255,255,255,.15))}
-body[data-theme="win7"] .tb-btn.active{background:linear-gradient(rgba(255,255,255,.55),rgba(255,255,255,.2));box-shadow:0 0 8px rgba(160,210,255,.8)}
-body[data-theme="win7"] #tb-right{border-left:1px solid rgba(255,255,255,.3);padding-left:10px}
-body[data-theme="win7"] #tb-clock{text-align:center;color:#fff;text-shadow:0 0 4px rgba(0,0,0,.6)}
-body[data-theme="win7"] .app-win{border:1px solid rgba(0,0,0,.65);border-top-width:0;border-radius:8px 8px 0 0;overflow:hidden;background:linear-gradient(rgba(140,180,225,.92),rgba(95,140,195,.94));box-shadow:inset 0 0 0 1px rgba(255,255,255,.5),0 8px 30px rgba(0,0,0,.55)}
-body[data-theme="win7"] .win-tb{background:transparent;height:30px}
-body[data-theme="win7"] .win-title{color:#000;text-shadow:0 0 8px #fff,0 0 4px #fff}
-body[data-theme="win7"] .win-frame-wrap,body[data-theme="win7"] .term-body{margin:0 7px 7px}
-body[data-theme="win7"] .win-ctrl{height:20px;width:30px;align-self:flex-start;border:1px solid rgba(0,0,0,.5);border-top:none;border-radius:0 0 4px 4px;margin-left:-1px;color:#222;background:linear-gradient(rgba(255,255,255,.7),rgba(180,205,230,.6) 50%,rgba(120,160,205,.7))}
-body[data-theme="win7"] .win-ctrl:hover{filter:brightness(1.15);background:linear-gradient(rgba(255,255,255,.7),rgba(180,205,230,.6) 50%,rgba(120,160,205,.7));color:#000}
-body[data-theme="win7"] .win-ctrl.wc-close,body[data-theme="win7"] .win-ctrl.wc-close:hover{width:46px;color:#fff;background:linear-gradient(#e8a090,#c8402a 50%,#a82010)}
-
-/* ───────── macOS ───────── */
-body[data-theme="mac"]{--font:-apple-system,BlinkMacSystemFont,'SF Pro Text','Helvetica Neue',sans-serif;--off-top:24px;--off-bot:70px;--fs-top:24px;--fs-bot:0px;--tile-r:18px;--st-r:8px;
-  --ui-bg:rgba(246,246,246,.95);--ui-head:#ececec;--ui-hbd:#d4d4d4;--ui-fg:#1d1d1f;--ui-sub:#6e6e73;--ui-inp:#fff;--ui-bd:#c7c7cc;--ui-hov:#e8e8ed;--ui-sb:#fff;--ui-sbf:#1d1d1f;--ui-sbb:#c7c7cc;--ui-r:12px;--ui-ir:6px;--ui-br:6px;--ui-bt:0px;--ui-btc:transparent;--ui-border:1px solid rgba(0,0,0,.2);--ui-sh:0 22px 70px rgba(0,0,0,.4);
-  --ctx-bg:rgba(246,246,246,.9);--ctx-fg:#000;--ctx-hov:var(--accent,#0a64d8);--ctx-hfg:#fff;--ctx-r:8px;--ctx-pad:5px;--ctx-ip:4px 14px;--ctx-ir:4px;--ctx-sep:rgba(0,0,0,.12);--ctx-bd:1px solid rgba(0,0,0,.18);--ctx-bt:1px;--ctx-btc:rgba(0,0,0,.18);--ctx-sh:0 10px 30px rgba(0,0,0,.35);--ctx-bf:blur(20px);
-  --nt-bg:rgba(245,245,247,.94);--nt-fg:#1d1d1f;--nt-r:14px;--nt-bl:0px;
-  --st-bg:rgba(20,20,30,.5);--st-blur:40px;--ap-bg:rgba(20,20,28,.72)}
-body[data-theme="mac"] #notifs{bottom:auto;top:34px;right:10px}
-body[data-theme="mac"] #menubar{display:flex}
-body[data-theme="mac"] #desktop-icons-area{margin-top:24px}
-#menubar{display:none;position:absolute;top:0;left:0;right:0;height:24px;z-index:100001;align-items:center;gap:2px;padding:0 10px;background:rgba(20,20,24,.38);backdrop-filter:blur(24px) saturate(1.8);color:#fff;font-size:13px;text-shadow:0 1px 2px rgba(0,0,0,.4)}
-#menubar span{padding:1px 8px;border-radius:4px;cursor:default}
-#menubar span:hover{background:rgba(255,255,255,.22)}
-#menubar .mb-app{font-weight:700}
-#menubar .mb-apple{font-size:15px;cursor:pointer}
-#menubar #mb-clock{margin-left:auto}
-body[data-theme="mac"] #taskbar{position:absolute;left:50%;bottom:8px;transform:translateX(-50%);height:66px;width:auto;border-radius:20px;padding:0 10px;gap:6px;background:rgba(255,255,255,.22);backdrop-filter:blur(24px) saturate(1.6);border:1px solid rgba(255,255,255,.4);box-shadow:0 8px 30px rgba(0,0,0,.35)}
-body[data-theme="mac"] #start-orb{width:50px;height:50px;border-radius:12px;background:linear-gradient(#cfd4dc,#7f8794);font-size:24px}
-body[data-theme="mac"] #tb-apps{flex:0 1 auto;gap:6px;overflow:visible;padding:0}
-body[data-theme="mac"] #tb-right{padding:0;gap:0}
-body[data-theme="mac"] #tb-clock{display:none}
-body[data-theme="mac"] .tb-btn{position:relative;overflow:visible;width:50px;height:50px;min-width:50px;padding:0;border:0;border-radius:12px;background:rgba(255,255,255,.28);animation:none;transition:transform .15s}
-body[data-theme="mac"] .tb-btn:hover{transform:translateY(-10px) scale(1.2)}
-body[data-theme="mac"] .tb-btn.active::after{content:'';position:absolute;bottom:-8px;left:50%;width:4px;height:4px;border-radius:50%;background:#fff;transform:translateX(-50%)}
-body[data-theme="mac"] .tb-btn .tbi{font-size:26px!important}
-body[data-theme="mac"] .tb-btn img.tbi{width:34px!important;height:34px!important}
-body[data-theme="mac"] .app-win{border:1px solid rgba(0,0,0,.3);border-top-width:0;border-radius:10px;overflow:hidden;box-shadow:0 22px 60px rgba(0,0,0,.45)}
-body[data-theme="mac"] .win-tb{height:30px;background:linear-gradient(#ebebeb,#d5d5d5);border-bottom:1px solid #b8b8b8;padding:0 10px}
-body[data-theme="mac"] .win-tb::after{content:'';width:52px;flex-shrink:0}
-body[data-theme="mac"] .win-ico-wrap{display:none}
-body[data-theme="mac"] .win-title{color:#333;text-align:center;font-weight:600;font-size:13px}
-body[data-theme="mac"] .win-ctrl{width:12px;height:12px;min-width:0;padding:0;border-radius:50%;font-size:0;margin-right:8px;background:#ccc;color:transparent}
-body[data-theme="mac"] .win-ctrl.wc-close,body[data-theme="mac"] .win-ctrl.wc-close:hover{order:-3;background:#ff5f57}
-body[data-theme="mac"] .win-ctrl[title="Minimize"],body[data-theme="mac"] .win-ctrl[title="Minimize"]:hover{order:-2;background:#febc2e}
-body[data-theme="mac"] .win-ctrl[title="Maximize"],body[data-theme="mac"] .win-ctrl[title="Maximize"]:hover{order:-1;background:#28c840}
-
-/* ───────── GNOME ───────── */
-body[data-theme="gnome"]{--font:'Cantarell','Adwaita Sans','Ubuntu','Segoe UI',sans-serif;--off-top:30px;--off-bot:0px;--fs-top:30px;--fs-bot:0px;--tile-r:14px;--st-r:22px;
-  --ui-bg:#242424;--ui-head:#303030;--ui-hbd:#1b1b1b;--ui-fg:#fff;--ui-sub:#c0bfbc;--ui-inp:#303030;--ui-bd:#1b1b1b;--ui-hov:#3d3d3d;--ui-sb:#3d3d3d;--ui-sbf:#fff;--ui-sbb:#1b1b1b;--ui-r:12px;--ui-ir:8px;--ui-br:8px;--ui-bt:0px;--ui-btc:transparent;--ui-border:1px solid #1b1b1b;--ui-sh:0 10px 40px rgba(0,0,0,.6);
-  --ctx-bg:#303030;--ctx-fg:#fff;--ctx-hov:rgba(255,255,255,.1);--ctx-hfg:#fff;--ctx-r:12px;--ctx-pad:6px;--ctx-ip:8px 12px;--ctx-ir:8px;--ctx-fs:14px;--ctx-sep:rgba(255,255,255,.12);--ctx-bd:1px solid #1b1b1b;--ctx-bt:1px;--ctx-btc:#1b1b1b;--ctx-sh:0 6px 24px rgba(0,0,0,.5);
-  --nt-bg:#303030;--nt-fg:#fff;--nt-r:14px;--nt-bl:0px;
-  --st-bg:rgba(18,18,18,.82);--st-blur:8px;--ap-bg:rgba(18,18,18,.9)}
-body[data-theme="gnome"] #notifs{bottom:auto;top:38px;right:50%;transform:translateX(50%)}
-body[data-theme="gnome"] #taskbar{order:-1;height:30px;background:#000;padding:0 4px}
-body[data-theme="gnome"] #start-orb{width:auto;height:24px;padding:0 14px;border-radius:12px;font-size:13px;gap:6px;margin:0 6px}
-body[data-theme="gnome"] #start-orb i{display:none}
-body[data-theme="gnome"] #start-orb::after{content:'Activities';font-size:13px;font-weight:700}
-body[data-theme="gnome"] .tb-btn{min-width:28px;height:24px;padding:0 6px;border-radius:12px;border-bottom:0;background:transparent}
-body[data-theme="gnome"] .tb-btn:hover{background:rgba(255,255,255,.15)}
-body[data-theme="gnome"] .tb-btn.active{background:rgba(255,255,255,.22)}
-body[data-theme="gnome"] #tb-clock{position:absolute;left:50%;top:0;height:100%;transform:translateX(-50%);display:flex;align-items:center;gap:6px;font-size:13px;font-weight:700;color:#fff}
-body[data-theme="gnome"] #tb-clock br{display:none}
-body[data-theme="gnome"] #tb-clock span{font-size:13px!important;opacity:1!important}
-body[data-theme="gnome"] .app-win{border:1px solid rgba(0,0,0,.6);border-top-width:0;border-radius:12px;overflow:hidden;box-shadow:0 6px 30px rgba(0,0,0,.6)}
-body[data-theme="gnome"] .win-tb{height:36px;background:#303030;padding:0 8px}
-body[data-theme="gnome"] .win-tb::before{content:'';width:90px;flex-shrink:0}
-body[data-theme="gnome"] .win-ico-wrap{display:none}
-body[data-theme="gnome"] .win-title{color:#fff;text-align:center;font-weight:700;font-size:13px}
-body[data-theme="gnome"] .win-ctrl{width:26px;height:26px;border-radius:50%;margin-left:4px;font-size:11px;color:#fff;background:rgba(255,255,255,.1)}
-body[data-theme="gnome"] .win-ctrl:hover,body[data-theme="gnome"] .win-ctrl.wc-close:hover{background:rgba(255,255,255,.22);color:#fff}
-
-/* ───────── ChromeOS ───────── */
-body[data-theme="chromeos"]{--font:'Google Sans','Roboto','Segoe UI',sans-serif;--off-bot:48px;--fs-bot:48px;--tc:4;--tile-r:16px;--st-r:24px;
-  --ui-bg:#fff;--ui-head:#f8f9fa;--ui-hbd:#dadce0;--ui-fg:#202124;--ui-sub:#5f6368;--ui-inp:#f1f3f4;--ui-bd:#dadce0;--ui-hov:#e8eaed;--ui-sb:#e8eaed;--ui-sbf:#202124;--ui-sbb:#dadce0;--ui-r:16px;--ui-ir:8px;--ui-br:18px;--ui-bt:0px;--ui-btc:transparent;--ui-border:1px solid #dadce0;--ui-sh:0 8px 32px rgba(0,0,0,.35);
-  --ctx-bg:#fff;--ctx-fg:#202124;--ctx-hov:#e8eaed;--ctx-hfg:#202124;--ctx-r:12px;--ctx-pad:6px;--ctx-ip:8px 16px;--ctx-ir:6px;--ctx-sep:#dadce0;--ctx-bd:1px solid #dadce0;--ctx-bt:1px;--ctx-btc:#dadce0;--ctx-sh:0 4px 16px rgba(0,0,0,.3);
-  --nt-bg:#fff;--nt-fg:#202124;--nt-r:16px;--nt-bl:0px;
-  --mn-l:8px;--mn-b:56px;--mn-w:min(480px,calc(100vw - 16px));--mn-h:min(560px,calc(100vh - 100px));--mn-r:24px;--mn-sh:0 8px 32px rgba(0,0,0,.5);--mn-bd:1px solid rgba(255,255,255,.1);
-  --st-bg:rgba(41,42,46,.96);--st-blur:30px;--ap-bg:rgba(36,37,41,.98)}
-body[data-theme="chromeos"] #taskbar{height:48px;background:rgba(32,33,36,.86);backdrop-filter:blur(20px);padding:0 8px}
-body[data-theme="chromeos"] #start-orb{width:36px;height:36px;border-radius:50%;background:rgba(255,255,255,.14)}
-body[data-theme="chromeos"] #start-orb i{font-size:14px;color:#fff}
-body[data-theme="chromeos"] #tb-apps{justify-content:center}
-body[data-theme="chromeos"] .tb-btn{min-width:44px;height:40px;padding:0;border-radius:12px;border-bottom:0;background:transparent}
-body[data-theme="chromeos"] .tb-btn:hover{background:rgba(255,255,255,.12)}
-body[data-theme="chromeos"] .tb-btn.active{background:radial-gradient(circle,#8ab4f8 2.5px,transparent 3px) center calc(100% - 3px)/8px 8px no-repeat,rgba(255,255,255,.14)}
-body[data-theme="chromeos"] .tb-btn .tbi{font-size:20px!important}
-body[data-theme="chromeos"] .tb-btn img.tbi{width:24px!important;height:24px!important}
-body[data-theme="chromeos"] #tb-right{background:rgba(255,255,255,.12);border-radius:20px;height:36px;padding:0 14px}
-body[data-theme="chromeos"] .app-win{border:1px solid rgba(0,0,0,.25);border-top-width:0;border-radius:12px;overflow:hidden;box-shadow:0 8px 30px rgba(0,0,0,.4)}
-body[data-theme="chromeos"] .win-tb{height:34px;background:#f1f3f4}
-body[data-theme="chromeos"] .win-title{color:#202124;font-weight:500}
-body[data-theme="chromeos"] .win-ctrl{width:36px;height:26px;border-radius:50%;margin:0 2px;color:#3c4043}
-body[data-theme="chromeos"] .win-ctrl:hover{background:rgba(0,0,0,.1);color:#000}
-body[data-theme="chromeos"] .win-ctrl.wc-close:hover{background:#d93025;color:#fff}
-
-/* ── Boot sequence ── */
-#boot{position:fixed;inset:0;z-index:10000;background:#000;color:#fff;font-family:'Segoe UI',sans-serif;transition:opacity .5s}
-#boot.boot-out{opacity:0;pointer-events:none}
-#boot.playing{cursor:none}
-.boot-screen{position:absolute;inset:0;display:none;flex-direction:column;align-items:center;justify-content:center}
-.boot-screen.on{display:flex}
-#boot-start{cursor:pointer}
-.boot-title{font-size:34px;font-weight:200;letter-spacing:1px}
-.boot-hint{margin-top:18px;font-size:13px;color:rgba(255,255,255,.55);letter-spacing:.5px}
-#boot-spin{width:44px;height:44px;border:3px solid rgba(255,255,255,.18);border-top-color:#fff;border-radius:50%;animation:boot-spin 1s linear infinite;margin-bottom:22px}
-@keyframes boot-spin{to{transform:rotate(360deg)}}
-#boot-bar{width:min(360px,70vw);height:3px;background:rgba(255,255,255,.18);margin-top:24px}
-#boot-bar-fill{height:100%;width:0;background:var(--accent,#0078d4);transition:width .2s}
-#boot-video{position:absolute;inset:0;width:100%;height:100%;object-fit:fill;background:#000;pointer-events:none;display:none}
-
-
-/* ── Boot manager (GRUB-like) ── */
-#grub{position:fixed;inset:0;z-index:10002;background:#000;color:#ccc;font-family:'Cascadia Code','Consolas',monospace;font-size:14px;display:none;flex-direction:column;padding:32px 6vw}
-#grub.on{display:flex}
-#grub .g-title{color:#fff;text-align:center;margin-bottom:18px;letter-spacing:1px}
-#grub .g-box{border:1px solid #888;padding:6px 0;overflow-y:auto;flex:0 1 auto;max-height:60vh}
-#grub .g-row{padding:3px 14px;cursor:pointer;white-space:pre-wrap}
-#grub .g-row.sel{background:#ccc;color:#000}
-#grub .g-help{margin-top:18px;color:#999;white-space:pre-wrap;line-height:1.5}
-
-/* ── Shutdown ── */
-#start-bottom .btn-power{margin-left:auto}
-#shutdown{position:fixed;inset:0;z-index:10001;background:#000;color:#fff;display:none;flex-direction:column;align-items:center;justify-content:center}
-#shutdown.on{display:flex}
-#shutdown.playing{cursor:none}
-#shutdown-spin{width:44px;height:44px;border:3px solid rgba(255,255,255,.18);border-top-color:#fff;border-radius:50%;animation:boot-spin 1s linear infinite;margin-bottom:22px}
-#shutdown-text{font-size:24px;font-weight:200;letter-spacing:1px}
-#shutdown-video{position:absolute;inset:0;width:100%;height:100%;object-fit:fill;background:#000;pointer-events:none;display:none}
+/* ── Personalize dialog ── */
+#overlay{position:fixed;inset:0;z-index:2000;background:rgba(0,0,0,.6);display:none;align-items:center;justify-content:center}
+#overlay.on{display:flex}
+.modal{background:var(--dn-win);width:min(420px,calc(100vw - 24px));max-height:90vh;display:flex;flex-direction:column;border-radius:18px;overflow:hidden;color:#fff}
+.modal-head{background:#000;height:34px;padding:0 20px;display:flex;align-items:center}
+.modal-head h2{font-size:19px;font-weight:400}
+.modal-body{padding:18px 22px;overflow-y:auto;flex:1}
+.f-label{display:block;font-size:11px;color:#c8c8c8;margin:14px 0 6px;text-transform:uppercase;letter-spacing:.6px}
+.f-label:first-child{margin-top:0}
+.f-sel{width:100%;background:#2b2b2b;border:1px solid #6a6a6a;border-radius:6px;color:#fff;padding:8px 10px;font-size:13px;outline:none;cursor:pointer}
+.color-grid{display:flex;flex-wrap:wrap;gap:5px}
+.cswatch{width:28px;height:28px;cursor:pointer;border:3px solid transparent;border-radius:4px}
+.cswatch:hover,.cswatch.sel{border-color:#fff}
+.modal-foot{padding:13px 22px;background:#000;display:flex;gap:8px;justify-content:flex-end}
+.btn-p,.btn-s{border:none;border-radius:6px;padding:8px 20px;font-size:13px;cursor:pointer;color:#fff}
+.btn-p{background:var(--accent)}
+.btn-p:hover{filter:brightness(1.1)}
+.btn-s{background:#595959}
+.btn-s:hover{background:#6a6a6a}
+.btn-d{background:#c40000;margin-right:auto}
 </style>
-<script src="./plugins/builtin.js"></script>
+<script src="./constants.js"></script>
 </head>
 <body>
 
-<!-- Boot manager -->
-<div id="grub"></div>
-
-<!-- Shutdown -->
-<div id="shutdown">
-  <div id="shutdown-spin"></div>
-  <div id="shutdown-text">Shutting down…</div>
-  <video id="shutdown-video" playsinline preload="auto" disablepictureinpicture></video>
-</div>
-
-<!-- Boot sequence -->
-<div id="boot">
-  <div class="boot-screen on" id="boot-start">
-    <div class="boot-title">Click anywhere to start EarlyShell.</div>
-    <div class="boot-hint">EarlyShell is experimental. It uses the older MPCSim version from even before the new theme, but backports all apps, games, wallpapers, and Extra Wallpapers. No features or themes have been backported. EarlyShell will soon have a button in the start page to start, and EarlyShell can be lighter than the main MPCSim.</div>
-  </div>
-  <div class="boot-screen" id="boot-load">
-    <div id="boot-spin"></div>
-    <div class="boot-title" id="boot-load-text" style="font-size:20px">EarlyShell is starting up…</div>
-    <div id="boot-bar"><div id="boot-bar-fill"></div></div>
-    <div class="boot-hint" style="position:absolute;bottom:28px">Press Space to skip</div>
-  </div>
-  <video id="boot-video" playsinline preload="auto" disablepictureinpicture></video>
-</div>
-
-<!-- Lock Screen -->
-<div id="lockscreen">
-  <div id="lock-time">12:00</div>
-  <div id="lock-date">Monday, January 1</div>
-  <div id="lock-hint">Click anywhere to unlock</div>
-</div>
-
-<!-- Start -->
-<div id="start">
-  <div id="start-bg-layer"></div>
-  <canvas id="start-pattern-canvas"></canvas>
-  <div id="start-topbar">
-    <span id="start-logo"><i class="fa-solid fa-grip"></i></span>
-    <span id="start-username">User</span>
-    <input id="start-search" type="text" placeholder="Search everything…" autocomplete="off">
-    <button id="apps-btn" onclick="showApps()"><i class="fa fa-th"></i> All apps</button>
-  </div>
-  <div id="start-accent-bar"></div>
-  <div id="start-tiles-scroll"></div>
-  <div id="start-bottom">
-    <button onclick="openModal('m-settings')"><i class="fa fa-sliders"></i> Personalize</button>
-    <button onclick="addTileDialog()"><i class="fa fa-plus"></i> Add tile</button>
-    <button onclick="addGroupDialog()"><i class="fa fa-folder-plus"></i> Group</button>
-    <button class="btn-power" onclick="shutDown()" title="Shut down"><i class="fa fa-power-off"></i> Shut down</button>
-  </div>
-</div>
-
-<!-- Apps Screen -->
-<div id="apps-screen">
-  <div id="apps-topbar">
-    <h2><i class="fa fa-th" style="margin-right:8px;opacity:.7"></i>Apps</h2>
-    <input type="text" id="apps-search-inp" placeholder="Filter apps…" autocomplete="off">
-    <button onclick="addAppDialog()" style="background:rgba(255,255,255,.12);border:none;border-bottom:2px solid rgba(255,255,255,.3);color:#fff;padding:6px 14px;cursor:pointer;font-size:12px;font-family:'Segoe UI',sans-serif"><i class="fa fa-plus"></i> Add app</button>
-    <button id="apps-close-btn" onclick="hideApps()"><i class="fa fa-times"></i></button>
-  </div>
-  <div id="apps-grid"></div>
-</div>
-
-<!-- Desktop -->
 <div id="desktop">
-  <div id="desktop-bg"></div>
   <div id="desktop-icons-area"></div>
-  <div id="desktop-credit"></div>
-  <!-- Windows layer (inside #desktop so the taskbar stacks above it) -->
   <div id="wins-layer"></div>
-  <div id="menubar">
-    <span class="mb-apple" onclick="mbApple(event)"><i class="fa-brands fa-apple"></i></span>
-    <span class="mb-app" id="mb-app">Finder</span>
-    <span>File</span><span>Edit</span><span>View</span><span>Go</span><span>Window</span><span>Help</span>
-    <span id="mb-clock"></span>
+  <div id="dn-all">
+    <div class="dn-all-head">ALL APPS</div>
+    <div id="dn-grid"></div>
+  </div>
+  <div id="dn-menu">
+    <div id="dn-list"></div>
+    <div class="dn-btns">
+      <button class="dn-btn" onclick="dnToggleAll()">All apps &gt;</button>
+      <button class="dn-btn dn-off" onclick="powerMenu(event)">Power</button>
+    </div>
   </div>
   <div id="taskbar">
-    <div id="start-orb" onclick="toggleStart()" title="Menu"><i class="fa-solid fa-grip"></i></div>
+    <div id="start-orb" onclick="toggleMenu()" title="Menu"><i class="fa-solid fa-grip"></i></div>
     <div id="tb-apps"></div>
-    <div id="tb-right"><div id="tray-crash" title="Stop Window Avalanche" onclick="stopWindowCrash()"><i class="fa-solid fa-bolt"></i></div><div id="tb-clock"></div></div>
+    <div id="tb-right">
+      <div id="tray-fs" title="Back to Fullscreen" onclick="goFullscreen()"><i class="fa-solid fa-expand"></i><span>Back to Fullscreen</span></div>
+      <div id="tb-clock"></div>
+    </div>
   </div>
 </div>
 
-
-<!-- Notifs -->
 <div id="notifs"></div>
-<!-- CTX -->
 <div id="ctx"></div>
 
-<!-- Modal Overlay -->
-<div id="overlay" onclick="overlayClick(event)">
-
-  <!-- Settings -->
-  <div class="modal" id="m-settings" style="display:none">
+<div id="overlay" onclick="if(event.target===this)closeModal()">
+  <div class="modal" id="m-settings">
     <div class="modal-head"><h2>Personalize</h2></div>
     <div class="modal-body">
       <span class="f-label">Accent color</span>
       <div class="color-grid" id="g-accent"></div>
-      <span class="f-label">Start background color</span>
-      <div class="color-grid" id="g-startbg"></div>
-      <span class="f-label">Start pattern</span>
-      <div class="pat-grid" id="g-pattern"></div>
-      <span class="f-label">Theme</span>
-      <select class="f-sel" id="s-theme"></select>
-      <div class="wp-hint">Independent of wallpaper. Restyles the taskbar, Start menu, windows, menus, dialogs and notifications.</div>
-      <span class="f-label">Preset wallpapers</span>
-      <div class="wp-grid" id="g-wallpaper-presets"></div>
-      <div class="wp-hint">Click = set Desktop wallpaper. Shift+click = set Desktop &amp; Start screen.</div>
-      <span class="f-label">Start background image URL</span>
-      <input class="f-inp" type="url" id="s-startimg" placeholder="https://example.com/image.jpg">
-      <span class="f-label">Desktop background image URL</span>
-      <input class="f-inp" type="url" id="s-deskimg" placeholder="https://example.com/image.jpg">
-      <span class="f-label">Username</span>
-      <input class="f-inp" type="text" id="s-user" placeholder="User">
-      <label class="f-label" style="display:flex;align-items:center;gap:8px;cursor:pointer;">
-        <input type="checkbox" id="s-showcredit" style="width:auto;"> Show wallpaper credit text
-      </label>
-      <label class="f-label" style="display:flex;align-items:center;gap:8px;cursor:pointer;">
-        <input type="checkbox" id="s-wobbly" style="width:auto;" onchange="document.getElementById('wobble-amt-row').style.opacity=this.checked?'1':'.4'"> Wobbly windows (jiggle while dragging)
-      </label>
-      <div id="wobble-mode-row">
-        <span class="f-label">Wobble style</span>
-        <select class="f-sel" id="s-wobble-mode">
-          <option value="compiz">Compiz (spring-mesh wobble)</option>
-          <option value="proto">Prototype MCP wobbly windows</option>
-        </select>
-      </div>
-      <div id="wobble-amt-row" style="opacity:.4">
-        <span class="f-label">Wobbliness <span id="s-wobble-val">40</span>%</span>
-        <input class="f-inp" type="range" min="0" max="100" id="s-wobble-amt" oninput="document.getElementById('s-wobble-val').textContent=this.value">
-      </div>
+      <span class="f-label">Time format</span>
+      <select class="f-sel" id="s-clock"><option value="12">12-hour</option><option value="24">24-hour</option></select>
     </div>
     <div class="modal-foot">
-      <button class="btn-s" onclick="doExport()"><i class="fa fa-download"></i> Export</button>
-      <button class="btn-s" onclick="document.getElementById('imp-file').click()"><i class="fa fa-upload"></i> Import</button>
-      <input type="file" id="imp-file" accept=".json" style="display:none" onchange="doImport(this)">
+      <button class="btn-s btn-d" onclick="resetAll()">Reset</button>
       <button class="btn-p" onclick="saveSettings()">Apply</button>
       <button class="btn-s" onclick="closeModal()">Cancel</button>
     </div>
   </div>
-
-  <!-- Window Avalanche error notice -->
-  <div class="modal modal-error" id="m-crash-error" style="display:none">
-    <div class="modal-head"><i class="fa-solid fa-triangle-exclamation"></i><h2>Gravity Failure</h2></div>
-    <div class="modal-body">
-      <p style="color:var(--ui-fg,#ddd);font-size:13px;line-height:1.6">Window physics are still running. Windows will keep falling and bouncing indefinitely.</p>
-      <p style="color:var(--ui-fg,#ddd);font-size:13px;line-height:1.6">To stop it, click the pulsing bolt icon in the system tray next to the clock.</p>
-    </div>
-    <div class="modal-foot">
-      <button class="btn-p" onclick="closeModal()">OK</button>
-    </div>
-  </div>
-
-  <!-- Add/Edit App -->
-  <div class="modal" id="m-app" style="display:none">
-    <div class="modal-head"><h2 id="app-modal-title">Add App</h2></div>
-    <div class="modal-body">
-      <p>Your custom apps will not save. This is for testing only.</p>
-      <span class="f-label">Name</span>
-      <input class="f-inp" type="text" id="a-name" placeholder="App name">
-      <span class="f-label">URL</span>
-      <input class="f-inp" type="url" id="a-url" placeholder="https://...">
-      <span class="f-label">Icon image URL <span style="opacity:.55;font-size:10px;text-transform:none;letter-spacing:0">(leave blank to use symbol below)</span></span>
-      <input class="f-inp" type="url" id="a-iconurl" placeholder="https://example.com/icon.png">
-      <span class="f-label">Fallback symbol</span>
-      <div class="icon-picker" id="app-icon-picker"></div>
-      <span class="f-label">Resolution <span style="opacity:.55;font-size:10px;text-transform:none;letter-spacing:0">(e.g. 70 for 70% — scales iframe content down)</span></span>
-      <div style="display:flex;align-items:center;gap:10px;margin-top:4px">
-        <input class="f-inp" type="number" id="a-resolution" min="10" max="200" placeholder="100" style="width:90px">
-        <span id="a-res-preview" style="color:#aaa;font-size:12px">100%</span>
-      </div>
-      <span class="f-label">Category</span>
-      <input class="f-inp" type="text" id="a-cat" placeholder="Web">
-      <input type="hidden" id="a-id">
-      <input type="hidden" id="a-icon-sel">
-    </div>
-    <div class="modal-foot">
-      <button class="btn-p" onclick="saveApp()">Save</button>
-      <button class="btn-s" onclick="closeModal()">Cancel</button>
-    </div>
-  </div>
-
-  <!-- Add/Edit Tile -->
-  <div class="modal" id="m-tile" style="display:none">
-    <div class="modal-head"><h2 id="tile-modal-title">Add tile</h2></div>
-    <div class="modal-body">
-      <span class="f-label">App</span>
-      <select class="f-sel" id="t-app-sel"></select>
-      <span class="f-label">Group</span>
-      <select class="f-sel" id="t-group-sel"></select>
-      <span class="f-label">Tile size</span>
-      <select class="f-sel" id="t-size">
-        <option value="medium">Medium (2×2)</option>
-        <option value="wide">Wide (4×2)</option>
-        <option value="small">Small (1×1)</option>
-        <option value="large">Large (4×4)</option>
-      </select>
-      <span class="f-label">Tile color</span>
-      <div class="color-grid" id="g-tile-color"></div>
-      <input type="hidden" id="t-edit-id">
-    </div>
-    <div class="modal-foot">
-      <button class="btn-p" onclick="saveTile()">Save</button>
-      <button class="btn-s" onclick="closeModal()">Cancel</button>
-    </div>
-  </div>
-
-  <!-- Add Group -->
-  <div class="modal" id="m-group" style="display:none">
-    <div class="modal-head"><h2>Add group</h2></div>
-    <div class="modal-body">
-      <span class="f-label">Group name</span>
-      <input class="f-inp" type="text" id="grp-name" placeholder="Group name">
-    </div>
-    <div class="modal-foot">
-      <button class="btn-p" onclick="saveGroup()">Add</button>
-      <button class="btn-s" onclick="closeModal()">Cancel</button>
-    </div>
-  </div>
-
-  <!-- Add Desktop Icon -->
-  <div class="modal" id="m-dicon" style="display:none">
-    <div class="modal-head"><h2 id="dicon-title">Add desktop icon</h2></div>
-    <div class="modal-body">
-      <span class="f-label">App</span>
-      <select class="f-sel" id="di-app-sel"></select>
-      <input type="hidden" id="di-edit-id">
-    </div>
-    <div class="modal-foot">
-      <button class="btn-p" onclick="saveDesktopIcon()">Save</button>
-      <button class="btn-s" onclick="closeModal()">Cancel</button>
-    </div>
-  </div>
-
 </div>
 
 <script>
-/* ══════════════════════════════════
-   ICON DEFINITIONS  (FA class strings)
-══════════════════════════════════ */
 const ICON_LIB = [
   {k:'globe',    fa:'fa-solid fa-globe'},
   {k:'earth',    fa:'fa-solid fa-earth-americas'},
@@ -793,421 +253,147 @@ const ICON_LIB = [
   {k:'spotify',  fa:'fa-brands fa-spotify'},
   {k:'youtube',  fa:'fa-brands fa-youtube'},
   {k:'google',   fa:'fa-brands fa-google'},
+  {k:'book',   fa:'fa-solid fa-book'},
 ];
 function faForKey(k) { return (ICON_LIB.find(x=>x.k===k)||ICON_LIB[0]).fa; }
-function iconHtml(k, sizeClass='') {
-  return `<i class="${faForKey(k)} ${sizeClass}"></i>`;
-}
-// Returns a DOM element: <img> if app has iconUrl, else <i> with FA
-function makeIconEl(app, size='medium') {
-  if (app && app.iconUrl) {
-    const img = document.createElement('img');
-    img.src = app.iconUrl;
-    img.alt = app.name || '';
-    img.style.cssText = 'pointer-events:none;object-fit:contain;';
-    if (size === 'small')       { img.style.width = '22px'; img.style.height = '22px'; }
-    else if (size === 'large')  { img.style.width = '54px'; img.style.height = '54px'; }
-    else if (size === 'wide')   { img.style.width = '36px'; img.style.height = '36px'; }
-    else if (size === 'win')    { img.style.width = '14px'; img.style.height = '14px'; }
-    else if (size === 'tb')     { img.style.width = '15px'; img.style.height = '15px'; }
-    else if (size === 'di')     { img.style.width = '28px'; img.style.height = '28px'; }
-    else if (size === 'ae')     { img.style.width = '100%'; img.style.height = '100%'; img.style.objectFit = 'cover'; }
-    else                        { img.style.width = '36px'; img.style.height = '36px'; }
-    return img;
-  }
-  const i = document.createElement('i');
-  i.className = faForKey(app ? app.icon : 'globe');
-  if (size === 'small')       i.style.fontSize = '22px';
-  else if (size === 'large')  i.style.fontSize = '54px';
-  else if (size === 'win')    { i.style.fontSize = '14px'; i.style.color = '#aaa'; }
-  else if (size === 'tb')     { i.style.fontSize = '15px'; i.style.color = '#fff'; }
-  else if (size === 'ae')     { i.style.fontSize = '22px'; i.style.color = '#fff'; }
-  else if (size === 'di')     { i.style.fontSize = '24px'; i.style.color = '#fff'; }
-  else                        i.style.fontSize = '32px';
-  i.style.color = i.style.color || '#fff';
-  i.style.pointerEvents = 'none';
-  return i;
-}
 
+/* ── helpers ── */
+const $=id=>document.getElementById(id);
+const clone=o=>JSON.parse(JSON.stringify(o));
+const uid=()=>'id-'+Date.now()+'-'+Math.random().toString(36).slice(2,6);
+const TB_H=46;
 
-const BOOT={plugins:true,guest:false,oneApp:null,quick:false,quickVideo:null};   // quickVideo: true/false = chosen in the boot manager, null = ask at quick boot
-try{ // default boot options chosen in the boot menu for future boots
-  const _bd=JSON.parse(localStorage.getItem('mpc_bootmode')||'null');
-  if(_bd&&typeof _bd==='object'){BOOT.plugins=_bd.plugins!==false;BOOT.guest=!!_bd.guest;BOOT.oneApp=typeof _bd.oneApp==='string'?_bd.oneApp:null;BOOT.quick=!!_bd.quick;BOOT.quickVideo=typeof _bd.quickVideo==='boolean'?_bd.quickVideo:null;}
-}catch(e){}
-
-let S = {
-  accent:'#0078d4', startBgColor:'#0d1f3c', startBgImage:'', desktopBgImage:WALLPAPER_PRESETS[0].url,
-  pattern:1, username:'User', showCredit:true, wobbly:false, wobbleAmt:40, wobbleMode:'compiz', theme:'default',
-  apps: JSON.parse(JSON.stringify(DEFAULT_APPS)),
-  tiles: JSON.parse(JSON.stringify(DEFAULT_TILES)),
-  dicons: JSON.parse(JSON.stringify(DEFAULT_DICONS)),
-  groups: [...DEFAULT_GROUPS],
-  openWins:[], nextWin:1,
-};
-
-/* ══════════════════════════════════
-   COMPAT SHIMS (symbols used by the boot code that were missing in EarlyShell;
-   each only defines itself if builtin.js or another script has not already)
-══════════════════════════════════ */
-var S_DEFAULTS=JSON.parse(JSON.stringify(S));
-if(typeof vw==='undefined')var vw=()=>window.innerWidth;
-if(typeof vh==='undefined')var vh=()=>window.innerHeight;
-if(typeof vpReady==='undefined')var vpReady=false;
-if(typeof applyViewport==='undefined')var applyViewport=function(){};
-if(typeof SOUND_FILES==='undefined')var SOUND_FILES={};
-if(typeof SFX==='undefined')var SFX={vol:1,muted:false,play(){return null;},stopAll(){},set(){}};   // EarlyShell has no sound engine; mpc.sound() is a no-op
-if(typeof SETUP_VIDEO==='undefined')var SETUP_VIDEO='';
-if(typeof setupIsDone==='undefined')var setupIsDone=()=>true;
-if(typeof maybeStartSetup==='undefined')var maybeStartSetup=function(){};
-if(typeof scheduleIconInvert==='undefined')var scheduleIconInvert=function(){};
-if(typeof PRELOAD==='undefined')var PRELOAD={
-  skip:u=>!u||/^(data|blob):/.test(u),
-  blob:()=>Promise.resolve(null)   // null -> callers fall back to streaming the original URL
-};
-if(typeof cacheAsset==='undefined')var cacheAsset=function(url){
-  return new Promise(res=>{
-    if(!url||/^(data|blob):/.test(url)){res();return;}
-    const img=new Image();let t;
-    const done=()=>{clearTimeout(t);img.onload=img.onerror=null;res();};
-    t=setTimeout(done,8000);img.onload=img.onerror=done;img.src=url;
-  });
-};
-
-/* ══════════════════════════════════
-   PERSIST
-══════════════════════════════════ */
-function loadS(){
-  try{
-    const d=localStorage.getItem('earlyshell');
-    if(d){const p=JSON.parse(d);
-      ['accent','startBgColor','startBgImage','desktopBgImage','pattern','username','showCredit','wobbly','wobbleAmt','wobbleMode','theme'].forEach(k=>{if(p[k]!==undefined)S[k]=p[k];});
-      if(p.tiles&&p.tiles.length)S.tiles=p.tiles;
-      if(p.dicons&&p.dicons.length)S.dicons=p.dicons;
-      if(p.groups&&p.groups.length)S.groups=p.groups;
+/* ── icons: app image if there is one, FA symbol otherwise ── */
+const BLACK=new Map();   // image src -> true when the icon is pure black (inverted on the dark icon tiles)
+function invertIfBlack(img){
+  const run=()=>{
+    let b=BLACK.get(img.src);
+    if(b===undefined){
+      b=false;
+      try{
+        const w=Math.min(48,img.naturalWidth||48),h=Math.min(48,img.naturalHeight||48);
+        const c=document.createElement('canvas');c.width=w;c.height=h;
+        const x=c.getContext('2d',{willReadFrequently:true});x.drawImage(img,0,0,w,h);
+        const d=x.getImageData(0,0,w,h).data;let op=0,tr=0,br=0;
+        for(let i=0;i<d.length;i+=4){if(d[i+3]<30){tr++;continue;}op++;if(Math.max(d[i],d[i+1],d[i+2])>70)br++;}
+        b=op>0&&br===0&&tr/(w*h)>.05;
+      }catch(e){}
+      BLACK.set(img.src,b);
     }
-  }catch(e){}
+    if(b)img.style.filter='invert(1)';
+  };
+  if(img.complete&&img.naturalWidth)run();else img.addEventListener('load',run,{once:true});
 }
-function saveS(){
-  try{const{openWins,nextWin,...r}=S;localStorage.setItem('earlyshell',JSON.stringify(r));}catch(e){}
-}
-function doExport(){
-  const{openWins,nextWin,...r}=S;
-  const b=new Blob([JSON.stringify(r,null,2)],{type:'application/json'});
-  const a=document.createElement('a');a.href=URL.createObjectURL(b);a.download='earlyshell.json';a.click();
-}
-function doImport(inp){
-  const f=inp.files[0];if(!f)return;
-  const r=new FileReader();
-  r.onload=e=>{try{Object.assign(S,JSON.parse(e.target.result));saveS();applyTheme();renderAll();notify('Settings imported!');closeModal();}catch{notify('Invalid file');}};
-  r.readAsText(f);inp.value='';
-}
-
-/* ══════════════════════════════════
-   THEME
-══════════════════════════════════ */
-function hexLuma(hex){
-  if(!hex)return 0;
-  hex=hex.replace('#','');
-  if(hex.length===3)hex=hex.split('').map(c=>c+c).join('');
-  const r=parseInt(hex.substr(0,2),16),g=parseInt(hex.substr(2,2),16),b=parseInt(hex.substr(4,2),16);
-  if(isNaN(r)||isNaN(g)||isNaN(b))return 0;
-  return (0.299*r+0.587*g+0.114*b)/255;
-}
-function isLightBackground(){
-  if(S.desktopBgImage){
-    const preset=WALLPAPER_PRESETS.find(p=>p.url===S.desktopBgImage);
-    return !!(preset&&preset.light);
-  }
-  return hexLuma(S.accent)>0.6;
-}
-function uiOff(){
-  const cs=getComputedStyle(document.body);
-  return {top:parseInt(cs.getPropertyValue('--off-top'))||0,bot:parseInt(cs.getPropertyValue('--off-bot'))||0};
-}
-function updateMenubar(){
-  const el=document.getElementById('mb-app');if(!el)return;
-  let top=null,z=-1;
-  S.openWins.forEach(w=>{
-    if(w.minimized)return;
-    const e=document.getElementById(w.id);if(!e)return;
-    const zi=parseInt(e.style.zIndex)||1;
-    if(zi>=z){z=zi;top=w;}
-  });
-  el.textContent=top?top.name:'Finder';
-}
-function mbApple(e){
-  e.stopPropagation();
-  showCtx({clientX:6,clientY:26},[
-    {label:'About mpcsim',ico:'fa-solid fa-circle-info',fn:()=>notify('mpcsim 1.0 — macOS theme')},
-    '-',
-    {label:'Personalize…',ico:'fa-solid fa-sliders',fn:()=>openModal('m-settings')},
-    {label:'Launchpad',ico:'fa-solid fa-rocket',fn:showStart},
-    {label:'Show Desktop',ico:'fa-solid fa-desktop',fn:goDesktop},
-    '-',
-    {label:'Shut Down…',ico:'fa-solid fa-power-off',fn:shutDown},
-  ]);
-}
-function applyThemeLook(){
-  if(!THEMES[S.theme])S.theme='default';
-  const th=S.theme,cfg=THEMES[th];
-  document.body.dataset.theme=th;
-  document.body.classList.toggle('menu-panel',!!cfg.panel);
-  const o=document.getElementById('start-orb');if(o)o.innerHTML=`<i class="${cfg.orb}"></i>`;
-  const l=document.getElementById('start-logo');if(l)l.innerHTML=`<i class="${cfg.orb}"></i>`;
-  if(th!=='default'&&currentView!=='lock')document.getElementById('desktop').style.display='flex';
-  updateMenubar();
-}
-function applyTheme(){
-  applyThemeLook();
-  document.documentElement.style.setProperty('--accent',S.accent);
-  const sb=document.getElementById('start-bg-layer');
-  sb.style.background=S.startBgColor;
-  sb.style.backgroundImage=S.startBgImage?`url('${S.startBgImage}')`:'none';
-  sb.style.backgroundSize='cover';sb.style.backgroundPosition='center';
-  document.getElementById('start-accent-bar').style.background=S.accent;
-  const db=document.getElementById('desktop-bg');
-  db.style.backgroundColor=S.accent;
-  db.style.backgroundImage=S.desktopBgImage?`url('${S.desktopBgImage}')`:'none';
-  db.style.backgroundSize='cover';db.style.backgroundPosition='center';
-  document.getElementById('start-username').textContent=S.username||'User';
-  // update lockscreen bg
-  const ls=document.getElementById('lockscreen');
-  ls.style.backgroundColor=S.startBgColor;
-  ls.style.backgroundImage=S.startBgImage?`url('${S.startBgImage}')`:'none';
-  // desktop tile previews
-  document.querySelectorAll('.tile-desktop-bg').forEach(el=>{
-    el.style.backgroundImage=S.desktopBgImage?`url('${S.desktopBgImage}')`:'none';
-    el.style.backgroundColor=S.desktopBgImage?'transparent':S.accent;
-  });
-  const credit=document.getElementById('desktop-credit');
-  credit.style.display=S.showCredit?'block':'none';
-  credit.textContent=(S.desktopBgImage===WALLPAPER_PRESETS[0].url)
-    ?'earlyshell is experimental and may not work as expected.'
-    :'earlyshell is experimental and may not work as expected.';
-  credit.classList.toggle('credit-dark',isLightBackground());
-  drawPattern();
-}
-
-/* ══════════════════════════════════
-   PATTERNS
-══════════════════════════════════ */
-function drawPattern(){
-  const c=document.getElementById('start-pattern-canvas');
-  c.width=innerWidth;c.height=innerHeight;
-  const x=c.getContext('2d');x.clearRect(0,0,c.width,c.height);
-  if(S.pattern===1)wv(x,c.width,c.height);
-  else if(S.pattern===2)dt(x,c.width,c.height);
-  else if(S.pattern===3)ln(x,c.width,c.height);
-  else if(S.pattern===4)sq(x,c.width,c.height);
-  else if(S.pattern===5)cr(x,c.width,c.height);
-}
-function wv(c,w,h){c.strokeStyle='#fff';c.lineWidth=1.4;for(let y=0;y<h+60;y+=34){c.beginPath();for(let x=0;x<=w;x+=3)c.lineTo(x,y+Math.sin(x/26)*11);c.stroke();}}
-function dt(c,w,h){c.fillStyle='#fff';for(let x=20;x<w;x+=26)for(let y=20;y<h;y+=26){c.beginPath();c.arc(x,y,1.6,0,Math.PI*2);c.fill();}}
-function ln(c,w,h){c.strokeStyle='#fff';c.lineWidth=.7;for(let x=0;x<w;x+=20){c.beginPath();c.moveTo(x,0);c.lineTo(x,h);c.stroke();}}
-function sq(c,w,h){c.strokeStyle='#fff';c.lineWidth=.7;for(let x=0;x<w;x+=34)for(let y=0;y<h;y+=34)c.strokeRect(x+3,y+3,28,28);}
-function cr(c,w,h){c.strokeStyle='#fff';c.lineWidth=.7;for(let x=0;x<w;x+=26)for(let y=0;y<h;y+=26){c.beginPath();c.moveTo(x-5,y);c.lineTo(x+5,y);c.moveTo(x,y-5);c.lineTo(x,y+5);c.stroke();}}
-
-/* ══════════════════════════════════
-   HELPERS
-══════════════════════════════════ */
-function getApp(id){return S.apps.find(a=>a.id===id);}
-function getTileColor(t){return t.color||S.accent;}
-function uid(){return 'id-'+Date.now()+'-'+Math.random().toString(36).slice(2,6);}
-
-/* ══════════════════════════════════
-   CLOCK
-══════════════════════════════════ */
-function tickClock(){
-  const n=new Date();
-  const h=n.getHours().toString().padStart(2,'0');
-  const m=n.getMinutes().toString().padStart(2,'0');
-  const days=['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
-  const mons=['January','February','March','April','May','June','July','August','September','October','November','December'];
-  document.getElementById('tb-clock').innerHTML=`${h}:${m}<br><span style="font-size:10px;opacity:.65">${days[n.getDay()]}, ${mons[n.getMonth()]} ${n.getDate()}</span>`;
-  document.getElementById('lock-time').textContent=`${h}:${m}`;
-  document.getElementById('lock-date').textContent=`${days[n.getDay()]}, ${mons[n.getMonth()]} ${n.getDate()}`;
-  const mbc=document.getElementById('mb-clock');
-  if(mbc){let hh=n.getHours();const ap=hh>=12?'PM':'AM';hh=hh%12||12;mbc.textContent=`${days[n.getDay()].slice(0,3)} ${mons[n.getMonth()].slice(0,3)} ${n.getDate()}  ${hh}:${m} ${ap}`;}
-}
-
-/* ══════════════════════════════════
-   VIEWS
-══════════════════════════════════ */
-let currentView='lock';
-let _stT=null;
-function unlock(){
-  try{const de=document.documentElement;if(!document.fullscreenElement){const r=de.requestFullscreen||de.webkitRequestFullscreen;if(r){const p=r.call(de);if(p&&p.catch)p.catch(()=>{});}}}catch(e){}
-  const ls=document.getElementById('lockscreen');
-  ls.classList.add('unlocking');ls.style.pointerEvents='none';
-  setTimeout(()=>{ls.style.display='none';showStart();},460);
-}
-function showStart(){
-  currentView='start';
-  clearTimeout(_stT);
-  const s=document.getElementById('start');
-  if(S.theme!=='default')document.getElementById('desktop').style.display='flex';
-  s.style.display='flex';
-  s.classList.remove('start-leaving');
-  s.classList.add('start-entering');
-  setTimeout(()=>s.classList.remove('start-entering'),230);
-  hideApps();
-}
-function goDesktop(){
-  currentView='desktop';
-  const s=document.getElementById('start');
-  const d=document.getElementById('desktop');
-  clearTimeout(_stT);
-  if(s.style.display!=='none'){
-    s.classList.add('start-leaving');
-    _stT=setTimeout(()=>{s.style.display='none';s.classList.remove('start-leaving');},190);
-  }
-  const wasHidden=d.style.display!=='flex';
-  d.style.display='flex';
-  if(wasHidden){d.classList.add('desk-entering');setTimeout(()=>d.classList.remove('desk-entering'),220);}
-  hideApps();
-}
-function toggleStart(){
-  const s=document.getElementById('start');
-  if(S.theme!=='default'&&s.style.display==='flex'&&!s.classList.contains('start-leaving'))goDesktop();
-  else showStart();
-}
-function showApps(){document.getElementById('apps-screen').style.display='flex';renderAppsGrid('');}
-function hideApps(){document.getElementById('apps-screen').style.display='none';}
-
-/* ══════════════════════════════════
-   RENDER TILES
-══════════════════════════════════ */
-function renderTiles(){
-  _tileIdx=0;
-  const area=document.getElementById('start-tiles-scroll');
-  area.innerHTML='';
-  const order=[...S.groups];
-  S.tiles.forEach(t=>{if(!order.includes(t.group))order.push(t.group);});
-  order.forEach(grpName=>{
-    const tiles=S.tiles.filter(t=>t.group===grpName);
-    if(!tiles.length)return;
-    const grpDiv=document.createElement('div');grpDiv.className='tile-group';grpDiv.dataset.group=grpName;
-    const nameEl=document.createElement('div');
-    nameEl.className='tile-group-name';nameEl.contentEditable=true;nameEl.spellcheck=false;nameEl.textContent=grpName;
-    nameEl.onblur=()=>{const nv=nameEl.textContent.trim()||grpName;if(nv!==grpName){const i=S.groups.indexOf(grpName);if(i>=0)S.groups[i]=nv;S.tiles.forEach(t=>{if(t.group===grpName)t.group=nv;});saveS();renderTiles();}};
-    nameEl.onkeydown=e=>{if(e.key==='Enter'){e.preventDefault();nameEl.blur();}};
-    grpDiv.appendChild(nameEl);
-    const grid=document.createElement('div');grid.className='tiles-grid';grid.dataset.group=grpName;
-    tiles.forEach(td=>{
-      const app=getApp(td.appId);if(!app)return;
-      grid.appendChild(makeTileEl(td,app));
-    });
-    grpDiv.appendChild(grid);
-    area.appendChild(grpDiv);
-  });
-}
-
-let _tileIdx=0;
-function makeTileEl(td,app){
-  const el=document.createElement('div');
-  el.className='tile';el.dataset.size=td.size||'medium';el.dataset.id=td.id;
-  const delay=Math.min(_tileIdx*28,400);
-  el.style.animation=`tile-pop .22s cubic-bezier(.2,.8,.4,1) ${delay}ms both`;
-  _tileIdx++;
-  el.style.background=getTileColor(td);
-  if(app.url==='__desktop__'){
-    // Desktop tile: just the wallpaper + label, no tile color, no icon
-    el.style.background='transparent';
-    const bg=document.createElement('div');bg.className='tile-desktop-bg';
-    bg.style.opacity='1';
-    if(S.desktopBgImage){bg.style.backgroundImage=`url('${S.desktopBgImage}')`;bg.style.backgroundSize='cover';}
-    else bg.style.backgroundColor=S.accent;
-    el.appendChild(bg);
-  }else{
-    const iw=document.createElement('div');iw.style.cssText='pointer-events:none;display:flex;align-items:center;justify-content:center;';
-    const iconSize = td.size==='small'?'small':td.size==='large'?'large':td.size==='wide'?'wide':'medium';
-    const iconNode = makeIconEl(app, iconSize);
-    if (!app.iconUrl) iconNode.className += ' tile-fa';
-    iw.appendChild(iconNode);el.appendChild(iw);
-  }
-  const nm=document.createElement('div');nm.className='tile-name';nm.textContent=app.name;
-  if(app.url==='__desktop__')nm.style.textShadow='0 1px 4px rgba(0,0,0,.85)';
-  el.appendChild(nm);
-  const rh=document.createElement('div');rh.className='tile-resize-handle';rh.title='Resize';
-  rh.addEventListener('mousedown',e=>startTileResize(e,td,el));
-  el.appendChild(rh);
-  el.addEventListener('click',e=>{if(e.target===rh||rh.contains(e.target))return;if(el.dataset.dragging)return;launchApp(app);});
-  el.addEventListener('contextmenu',e=>{e.preventDefault();showTileCtx(e,td);});
-  el.draggable=true;
-  el.addEventListener('dragstart',e=>startTileDrag(e,td));
-  el.addEventListener('dragover',e=>{e.preventDefault();el.classList.add('tile-drag-over');});
-  el.addEventListener('dragleave',()=>el.classList.remove('tile-drag-over'));
-  el.addEventListener('drop',e=>dropTile(e,td));
+function makeIconEl(app,cls,dark){
+  const fa=()=>{const i=document.createElement('i');i.className=faForKey(app?app.icon:'globe');return i;};
+  let el;
+  if(app&&app.iconUrl){
+    el=document.createElement('img');el.alt=app.name||'';
+    el.onerror=()=>{el.onerror=null;if(el.parentNode){const f=fa();if(cls)f.className+=' '+cls;el.replaceWith(f);}};
+    el.src=app.iconUrl;
+    if(dark)invertIfBlack(el);
+  }else el=fa();
+  if(cls)el.className=(el.className+' '+cls).trim();
   return el;
 }
 
-/* tile resize */
-function startTileResize(e,td,el){
-  e.stopPropagation();e.preventDefault();
-  const sx=e.clientX,sy=e.clientY,cell=80;
-  const origW={small:1,medium:2,wide:4,large:4}[td.size||'medium'];
-  const origH={small:1,medium:2,wide:2,large:4}[td.size||'medium'];
-  const mv=ev=>{
-    const cols=Math.max(1,Math.min(4,Math.round(origW+(ev.clientX-sx)/cell)));
-    const rows=Math.max(1,Math.min(4,Math.round(origH+(ev.clientY-sy)/cell)));
-    let ns='small';
-    if(cols>=4&&rows>=4)ns='large';else if(cols>=4)ns='wide';else if(cols>=2&&rows>=2)ns='medium';
-    if(ns!==el.dataset.size){el.dataset.size=ns;td.size=ns;}
+/* ── state ── */
+const GONE_IDS=new Set(['app-xwp','app-plug']);                 // apps that depended on removed features
+const GONE_URLS=new Set(['__terminal__','__physics__']);
+const S={
+  accent:'#0078d4',clock24:false,
+  apps:clone(DEFAULT_APPS).filter(a=>!GONE_IDS.has(a.id)&&!GONE_URLS.has(a.url)),
+  tiles:clone(DEFAULT_TILES),
+  dicons:clone(DEFAULT_DICONS),
+  tbPins:['app-ie','app-term','app-yt','app-ai','app-set'],
+  openWins:[],nextWin:1,
+};
+const KEY='mlpcsim';
+const getApp=id=>S.apps.find(a=>a.id===id);
+function loadS(){
+  try{
+    const p=JSON.parse(localStorage.getItem(KEY)||'null');if(!p)return;
+    if(p.accent)S.accent=p.accent;
+    if(typeof p.clock24==='boolean')S.clock24=p.clock24;
+    if(Array.isArray(p.tiles))S.tiles=p.tiles;
+    if(Array.isArray(p.dicons))S.dicons=p.dicons;
+    if(Array.isArray(p.tbPins))S.tbPins=p.tbPins;
+  }catch(e){}
+}
+function saveS(){try{localStorage.setItem(KEY,JSON.stringify({accent:S.accent,clock24:S.clock24,tiles:S.tiles,dicons:S.dicons,tbPins:S.tbPins}));}catch(e){}}
+function applyAccent(){document.body.style.setProperty('--accent',S.accent);}
+
+/* ── clock ── */
+function tickClock(){
+  $('tb-clock').textContent=new Date().toLocaleString(undefined,S.clock24?{hourCycle:'h23'}:{hour12:true});
+}
+
+/* ── Menu + All apps panels ── */
+let _closeT=null,_allT=null;
+const body=document.body;
+function syncMenuHeight(){
+  const m=$('dn-menu');
+  const n=document.querySelectorAll('#dn-list .dn-row').length;
+  const h=Math.max(200,Math.min(14+n*45+72+TB_H+12,window.innerHeight-12));
+  m.style.height=h+'px';body.style.setProperty('--dn-mh',h+'px');
+}
+window.addEventListener('resize',syncMenuHeight);
+function setMenu(open){
+  clearTimeout(_closeT);_closeT=null;
+  if(open){body.classList.remove('dn-closing');body.classList.add('dn-open');syncMenuHeight();return;}
+  if(!body.classList.contains('dn-open')||body.classList.contains('dn-closing'))return;
+  body.classList.add('dn-closing');
+  _closeT=setTimeout(()=>{_closeT=null;body.classList.remove('dn-open','dn-all','dn-closing','dn-all-closing');},160);
+}
+function toggleMenu(){setMenu(!body.classList.contains('dn-open'));}
+function dnToggleAll(){
+  clearTimeout(_allT);_allT=null;
+  if(body.classList.contains('dn-all')&&!body.classList.contains('dn-all-closing')){
+    body.classList.add('dn-all-closing');
+    _allT=setTimeout(()=>{_allT=null;body.classList.remove('dn-all','dn-all-closing');},160);
+  }else{body.classList.remove('dn-all-closing');body.classList.add('dn-all');}
+}
+function dnIcon(app){const w=document.createElement('div');w.className='dn-ico';w.appendChild(makeIconEl(app,'',true));return w;}
+function dnLabel(app){const n=document.createElement('span');n.className='dn-name';n.textContent=app.name;return n;}
+function renderMenu(){
+  const list=$('dn-list'),grid=$('dn-grid');list.innerHTML='';grid.innerHTML='';
+  const wire=(el,app)=>{
+    el.title=app.name;el.onclick=()=>launchApp(app);
+    el.oncontextmenu=e=>{e.preventDefault();e.stopPropagation();showAppCtx(e,app);};
   };
-  const up=()=>{document.removeEventListener('mousemove',mv);document.removeEventListener('mouseup',up);saveS();};
-  document.addEventListener('mousemove',mv);document.addEventListener('mouseup',up);
+  S.tiles.forEach(t=>{
+    const app=getApp(t.appId);if(!app)return;
+    const row=document.createElement('div');row.className='dn-row';
+    row.appendChild(dnIcon(app));row.appendChild(dnLabel(app));wire(row,app);list.appendChild(row);
+  });
+  S.apps.forEach(app=>{
+    const cell=document.createElement('div');cell.className='dn-cell';
+    cell.appendChild(dnIcon(app));cell.appendChild(dnLabel(app));wire(cell,app);grid.appendChild(cell);
+  });
+  syncMenuHeight();
 }
 
-/* tile drag reorder */
-let draggingTileId=null;
-function startTileDrag(e,td){
-  draggingTileId=td.id;e.dataTransfer.effectAllowed='move';
-  setTimeout(()=>{const el=document.querySelector(`.tile[data-id="${td.id}"]`);if(el)el.classList.add('dragging');},0);
-}
-function dropTile(e,target){
-  e.preventDefault();
-  document.querySelectorAll('.tile-drag-over').forEach(el=>el.classList.remove('tile-drag-over'));
-  if(!draggingTileId||draggingTileId===target.id)return;
-  const from=S.tiles.findIndex(t=>t.id===draggingTileId);
-  const to=S.tiles.findIndex(t=>t.id===target.id);
-  if(from<0||to<0)return;
-  const[moved]=S.tiles.splice(from,1);moved.group=target.group;S.tiles.splice(to,0,moved);
-  draggingTileId=null;saveS();renderTiles();
-}
-document.addEventListener('dragend',()=>{
-  document.querySelectorAll('.tile.dragging').forEach(el=>el.classList.remove('dragging'));
-  document.querySelectorAll('.tile-drag-over').forEach(el=>el.classList.remove('tile-drag-over'));
-  draggingTileId=null;
-});
-
-/* ══════════════════════════════════
-   DESKTOP ICONS
-══════════════════════════════════ */
-const ICON_W=82,ICON_H=92;
+/* ── desktop icons ── */
+const ICON_W=82,ICON_H=107;
 function defaultIconPos(idx){
-  // stack top-to-bottom in a column, then wrap to the next column — like classic Windows auto-arrange
-  const rowsPerCol=Math.max(1,Math.floor((innerHeight-120)/ICON_H));
-  const col=Math.floor(idx/rowsPerCol),row=idx%rowsPerCol;
-  return {x:8+col*ICON_W,y:8+row*ICON_H};
+  const rows=Math.max(1,Math.floor((window.innerHeight-58-TB_H-10)/105));
+  return {x:47+Math.floor(idx/rows)*88,y:58+(idx%rows)*105};
 }
 function renderDesktopIcons(){
-  const area=document.getElementById('desktop-icons-area');
-  area.innerHTML='';
+  const area=$('desktop-icons-area');area.innerHTML='';
   S.dicons.forEach((di,idx)=>{
     const app=getApp(di.appId);if(!app)return;
-    if(di.x==null||di.y==null){const p=defaultIconPos(idx);di.x=p.x;di.y=p.y;}
+    if(di.dx==null||di.dy==null){const p=defaultIconPos(idx);di.dx=p.x;di.dy=p.y;}
     const el=document.createElement('div');el.className='desktop-icon';el.dataset.id=di.id;
-    el.style.left=di.x+'px';el.style.top=di.y+'px';
-    el.style.animation=`icon-in .2s ease ${idx*40}ms both`;
-    const iw=document.createElement('div');iw.className='di-icon-wrap';
-    iw.style.background=app.iconUrl?'transparent':S.accent;
-    iw.style.borderRadius=app.iconUrl?'4px':'0';
-    const ico=makeIconEl(app,'di');iw.appendChild(ico);
+    el.style.left=di.dx+'px';el.style.top=di.dy+'px';el.style.animationDelay=(idx*40)+'ms';
+    const iw=document.createElement('div');iw.className='di-icon-wrap';iw.appendChild(makeIconEl(app,'',true));
     const lbl=document.createElement('div');lbl.className='di-label';lbl.textContent=app.name;
     el.appendChild(iw);el.appendChild(lbl);
     el.ondblclick=()=>launchApp(app,false);
-    el.oncontextmenu=e=>{e.preventDefault();showIconCtx(e,di);};
+    el.oncontextmenu=e=>{e.preventDefault();e.stopPropagation();showCtx(e,[
+      {label:'Open',ico:'fa-solid fa-arrow-up-right-from-square',fn:()=>launchApp(app,false)},
+      {label:'Remove from desktop',ico:'fa-solid fa-trash',fn:()=>{S.dicons=S.dicons.filter(d=>d.id!==di.id);saveS();renderDesktopIcons();}},
+    ]);};
     el.addEventListener('mousedown',e=>startIconDrag(e,di,el));
     area.appendChild(el);
   });
@@ -1216,1562 +402,258 @@ function renderDesktopIcons(){
 let iconDrag=null;
 function startIconDrag(e,di,el){
   if(e.button!==0)return;
-  const area=document.getElementById('desktop-icons-area');
-  const areaRect=area.getBoundingClientRect();
   document.querySelectorAll('.desktop-icon.selected').forEach(x=>x.classList.remove('selected'));
   el.classList.add('selected');
-  iconDrag={
-    di,el,moved:false,
-    startX:e.clientX,startY:e.clientY,
-    origLeft:el.offsetLeft,origTop:el.offsetTop,
-    areaRect,scrollL:area.scrollLeft,scrollT:area.scrollTop
-  };
+  iconDrag={di,el,moved:false,sx:e.clientX,sy:e.clientY,ol:el.offsetLeft,ot:el.offsetTop};
   e.preventDefault();
 }
-document.addEventListener('mousemove',e=>{
-  if(!iconDrag)return;
-  const dx=e.clientX-iconDrag.startX,dy=e.clientY-iconDrag.startY;
-  if(!iconDrag.moved&&(Math.abs(dx)>4||Math.abs(dy)>4)){iconDrag.moved=true;iconDrag.el.classList.add('icon-dragging');}
-  if(!iconDrag.moved)return;
-  let nx=iconDrag.origLeft+dx,ny=iconDrag.origTop+dy;
-  const area=document.getElementById('desktop-icons-area');
-  nx=Math.max(0,Math.min(nx,area.scrollWidth-ICON_W+iconDrag.scrollL));
-  ny=Math.max(0,Math.min(ny,Math.max(area.clientHeight,area.scrollHeight)-ICON_H));
-  iconDrag.el.style.left=nx+'px';
-  iconDrag.el.style.top=ny+'px';
-});
-document.addEventListener('mouseup',()=>{
-  if(!iconDrag)return;
-  if(iconDrag.moved){
-    iconDrag.di.x=iconDrag.el.offsetLeft;
-    iconDrag.di.y=iconDrag.el.offsetTop;
-    iconDrag.el.classList.remove('icon-dragging');
-    saveS();
-  }
-  iconDrag=null;
-});
-document.getElementById('desktop-icons-area').addEventListener('mousedown',e=>{
-  if(e.target.closest('.desktop-icon'))return;
-  document.querySelectorAll('.desktop-icon.selected').forEach(x=>x.classList.remove('selected'));
+$('desktop-icons-area').addEventListener('mousedown',e=>{
+  if(!e.target.closest('.desktop-icon'))document.querySelectorAll('.desktop-icon.selected').forEach(x=>x.classList.remove('selected'));
 });
 
-/* ══════════════════════════════════
-   APPS GRID
-══════════════════════════════════ */
-function renderAppsGrid(filter){
-  const area=document.getElementById('apps-grid');area.innerHTML='';
-  const q=filter.toLowerCase();
-  S.apps.filter(a=>!q||a.name.toLowerCase().includes(q)||a.cat.toLowerCase().includes(q)).forEach(app=>{
-    const el=document.createElement('div');el.className='app-entry';
-    const iw=document.createElement('div');iw.className='ae-icon-wrap';
-    iw.style.background=app.iconUrl?'transparent':S.accent;
-    iw.style.borderRadius=app.iconUrl?'4px':'0';
-    const ico=makeIconEl(app,'ae');iw.appendChild(ico);
-    const nm=document.createElement('div');nm.className='ae-name';nm.textContent=app.name;
-    const ct=document.createElement('div');ct.className='ae-cat';ct.textContent=app.cat;
-    el.appendChild(iw);el.appendChild(nm);el.appendChild(ct);
-    el.onclick=()=>launchApp(app);
-    el.oncontextmenu=e=>{e.preventDefault();showAppCtx(e,app);};
-    area.appendChild(el);
-  });
-}
-document.getElementById('apps-search-inp').addEventListener('input',e=>renderAppsGrid(e.target.value));
-
-/* ══════════════════════════════════
-   TASKBAR
-══════════════════════════════════ */
+/* ── taskbar ── */
+function isTbPinned(id){return S.tbPins.includes(id);}
+function pinToTaskbar(id){if(!S.tbPins.includes(id)){S.tbPins.push(id);saveS();renderTaskbar();}}
+function unpinFromTaskbar(id){S.tbPins=S.tbPins.filter(x=>x!==id);saveS();renderTaskbar();}
 function renderTaskbar(){
-  const area=document.getElementById('tb-apps');area.innerHTML='';
-  S.openWins.forEach(w=>{
-    const btn=document.createElement('div');
-    btn.className='tb-btn'+(w.minimized?'':' active');
-    btn.title=w.name;
-    btn.style.borderBottomColor=w.minimized?'transparent':S.accent;
-    const tbApp=S.apps.find(a=>a.id===w.appId)||S.apps.find(a=>a.icon===w.icon)||null;
-    const ico=makeIconEl(tbApp,'tb');ico.className+=' tbi';
-    const tt=document.createElement('span');tt.className='tbt';tt.textContent=w.name;
-    btn.appendChild(ico);btn.appendChild(tt);
-    btn.onclick=()=>toggleWin(w.id);
-    area.appendChild(btn);
+  const area=$('tb-apps');area.innerHTML='';
+  const running=new Set(S.openWins.map(w=>w.appId).filter(Boolean));
+  S.tbPins.forEach(id=>{
+    if(running.has(id))return;
+    const app=getApp(id);if(!app)return;
+    const b=document.createElement('div');b.className='tb-btn';b.title=app.name;
+    b.appendChild(makeIconEl(app,'tbi'));
+    b.onclick=()=>launchApp(app,false);
+    b.oncontextmenu=e=>{e.preventDefault();showCtx(e,[
+      {label:'Open',ico:'fa-solid fa-arrow-up-right-from-square',fn:()=>launchApp(app,false)},
+      {label:'Unpin from taskbar',ico:'fa-solid fa-thumbtack-slash',fn:()=>unpinFromTaskbar(app.id)},
+    ]);};
+    area.appendChild(b);
   });
-  updateMenubar();
+  S.openWins.forEach(w=>{
+    const app=getApp(w.appId);
+    const b=document.createElement('div');b.className='tb-btn'+(w.minimized?'':' active');b.title=w.name;
+    b.appendChild(makeIconEl(app,'tbi'));
+    b.onclick=()=>toggleWin(w.id);
+    b.oncontextmenu=e=>{e.preventDefault();showCtx(e,[
+      app?(isTbPinned(app.id)
+        ?{label:'Unpin from taskbar',ico:'fa-solid fa-thumbtack-slash',fn:()=>unpinFromTaskbar(app.id)}
+        :{label:'Pin to taskbar',ico:'fa-solid fa-thumbtack',fn:()=>pinToTaskbar(app.id)}):null,
+      app?'-':null,
+      {label:'Close window',ico:'fa-solid fa-xmark',fn:()=>closeWin(w.id)},
+    ].filter(Boolean));};
+    area.appendChild(b);
+  });
 }
 
-/* ══════════════════════════════════
-   LAUNCH / WINDOWS
-══════════════════════════════════ */
-function launchApp(app,fromStart=true){
-  if(app.url==='__desktop__'){goDesktop();return;}
-  if(app.url==='__physics__'){goDesktop();triggerWindowCrash();return;}
-  if(!app.url&&app.id==='app-set'){openModal('m-settings');return;}
-  if(!app.url){notify(`${app.name} has no URL.`);return;}
-  goDesktop();
-  const id='w'+(S.nextWin++);
-  const w={id,name:app.name,url:app.url,icon:app.icon,appId:app.id,minimized:false};
-  S.openWins.push(w);buildWindow(w,fromStart);renderTaskbar();
+/* ── launching + windows ── */
+function launchApp(app,fromMenu=true){
+  setMenu(false);
+  if(app.url==='__desktop__')return;
+  if(!app.url&&app.id==='app-set'){openModal();return;}
+  if(!app.url||app.url.startsWith('__')){notify(`${app.name} isn't available in MLPCSim.`);return;}
+  const w={id:'w'+(S.nextWin++),name:app.name,url:app.url,icon:app.icon,appId:app.id,minimized:false};
+  S.openWins.push(w);buildWindow(w,fromMenu);renderTaskbar();
+}
+function winRect(idx){
+  const off=idx*26%150,W=window.innerWidth,H=window.innerHeight;
+  return {left:Math.round(W*0.2477)+off,top:Math.round(H*0.0972)+off,width:Math.round(W*0.6805),height:Math.round(H*0.6708)};
 }
 function buildWindow(w,fullscreen){
-  const area=document.getElementById('wins-layer');
   const el=document.createElement('div');
-  el.className='app-win'+(fullscreen?' win-fs':'');
-  el.id=w.id;el.style.borderTopColor=S.accent;
-  if(!fullscreen){
-    const off=(S.openWins.length-1)*26%150;
-    el.style.cssText+=`;left:${80+off}px;top:${40+off}px;width:860px;height:520px`;
-  }
-  const appData=S.apps.find(a=>a.id===w.appId)||S.apps.find(a=>a.name===w.name&&a.icon===w.icon)||null;
-  const isTerm=w.url==='__terminal__';
-  const res=Math.max(10,Math.min(200,(appData&&appData.resolution!=null)?appData.resolution:100));
-  const zoom=res/100;
-  // iframe wrapper handles zoom so the frame fills the window correctly
-  el.innerHTML=`
-    <div class="win-tb" id="wtb-${w.id}">
-      <div class="win-ico-wrap" id="wico-${w.id}"></div>
-      <span class="win-title">${w.name}</span>
-      ${(!isTerm&&res!==100)?`<span style="font-size:10px;color:rgba(255,255,255,.45);margin-right:4px;letter-spacing:.3px">${res}%</span>`:''}
-      <button class="win-ctrl" onclick="minWin('${w.id}')" title="Minimize">─</button>
-      <button class="win-ctrl" onclick="maxWin('${w.id}')" title="Maximize">□</button>
-      <button class="win-ctrl wc-close" onclick="closeWin('${w.id}')" title="Close">✕</button>
-    </div>
-    ${isTerm?`
-    <div class="term-body" id="wfw-${w.id}">
-      <div class="term-out" id="term-out-${w.id}"></div>
-      <div class="term-inputrow">
-        <span class="term-prompt">${(S.username||'User').toLowerCase()}@localhost:~$</span>
-        <input class="term-input" id="term-in-${w.id}" autocomplete="off" spellcheck="false">
-      </div>
-    </div>`:`
-    <div class="win-frame-wrap" id="wfw-${w.id}" style="flex:1;overflow:hidden;position:relative;">
-      <iframe class="win-frame" src="${w.url}"
-        style="position:absolute;top:0;left:0;width:${zoom!==1?Math.round(100/zoom)+'%':'100%'};height:${zoom!==1?Math.round(100/zoom)+'%':'100%'};transform-origin:top left;transform:scale(${zoom});border:none;"
-        allow="fullscreen" allowfullscreen
-        sandbox="allow-scripts allow-same-origin allow-forms allow-top-navigation"></iframe>
-    </div>`}
-    <div class="rh" id="rh-${w.id}"></div>`;
-  // inject icon element properly (avoids HTML injection issues)
-  const wicoWrap=el.querySelector(`#wico-${w.id}`);
-  if(wicoWrap)wicoWrap.appendChild(makeIconEl(appData,'win'));
-  area.appendChild(el);
-  makeDraggable(el,document.getElementById('wtb-'+w.id));
-  makeResizable(el,document.getElementById('rh-'+w.id));
+  el.className='app-win'+(fullscreen?' win-fs':'');el.id=w.id;
+  if(!fullscreen){const r=winRect(S.openWins.length-1);Object.assign(el.style,{left:r.left+'px',top:r.top+'px',width:r.width+'px',height:r.height+'px'});}
+  const app=getApp(w.appId);
+  const res=Math.max(10,Math.min(200,(app&&app.resolution!=null)?app.resolution:100)),zoom=res/100;
+  const tb=document.createElement('div');tb.className='win-tb';
+  const title=document.createElement('span');title.className='win-title';title.textContent=w.name;tb.appendChild(title);
+  if(res!==100){const r=document.createElement('span');r.className='win-res';r.textContent=res+'%';tb.appendChild(r);}
+  [['Minimize','─',()=>minWin(w.id)],['Maximize','□',()=>maxWin(w.id)],['Close','✕',()=>closeWin(w.id),'wc-close']].forEach(([t,s,fn,c])=>{
+    const b=document.createElement('button');b.className='win-ctrl'+(c?' '+c:'');b.title=t;b.textContent=s;b.onclick=fn;tb.appendChild(b);
+  });
+  const wrap=document.createElement('div');wrap.style.cssText='flex:1;overflow:hidden;position:relative';
+  const f=document.createElement('iframe');f.className='win-frame';f.src=w.url;
+  f.style.cssText=`position:absolute;top:0;left:0;width:${zoom!==1?Math.round(100/zoom)+'%':'100%'};height:${zoom!==1?Math.round(100/zoom)+'%':'100%'};transform-origin:top left;transform:scale(${zoom});border:none`;
+  f.setAttribute('allow','fullscreen; pointer-lock; autoplay; gamepad; keyboard-map; clipboard-write');
+  f.setAttribute('allowfullscreen','');
+  f.setAttribute('sandbox','allow-scripts allow-same-origin allow-forms allow-top-navigation allow-pointer-lock allow-popups allow-modals allow-downloads');
+  f.addEventListener('load',()=>{try{f.focus();f.contentWindow.focus();}catch(e){}});
+  wrap.appendChild(f);
+  const rh=document.createElement('div');rh.className='rh';
+  el.append(tb,wrap,rh);
+  $('wins-layer').appendChild(el);
+  makeDraggable(el,tb);makeResizable(el,rh);
   el.addEventListener('mousedown',()=>bringFront(el));
-  if(isTerm)initTerminal(w.id);
-}
-
-/* ══════════════════════════════════
-   WINDOW AVALANCHE — funny physics app
-   Runs indefinitely until stopped from the system tray.
-══════════════════════════════════ */
-let crashActive=false;
-let crashBodies=[];
-let crashRaf=null;
-function triggerWindowCrash(){
-  const wins=[...document.querySelectorAll('.app-win')].filter(el=>!el.classList.contains('win-min'));
-  if(!wins.length){notify('No windows open to crash — launch something first!');return;}
-  const tbH=uiOff().bot;
-  wins.forEach((el,i)=>{
-    // if a body already exists for this window (re-triggered), just re-launch it
-    el.classList.remove('win-fs');
-    const rect=el.getBoundingClientRect();
-    el.style.transition='none';
-    el.style.position='fixed';
-    el.style.margin='0';
-    el.style.left=rect.left+'px';
-    el.style.top=rect.top+'px';
-    el.style.width=rect.width+'px';
-    el.style.height=rect.height+'px';
-    el.style.zIndex=9000+i;
-    crashBodies.push({
-      el,
-      x:rect.left,y:rect.top,rot:0,
-      vx:(Math.random()-0.5)*9,vy:-2-Math.random()*5,vr:(Math.random()-0.5)*12,
-      g:0.8+Math.random()*0.45,
-      bounce:0.4+Math.random()*0.25,
-      floor:window.innerHeight-tbH-rect.height,
-      w:rect.width
-    });
-  });
-  if(!crashActive){
-    crashActive=true;
-    document.getElementById('tray-crash').style.display='flex';
-    openModal('m-crash-error');
-    crashLoop();
-  }
-}
-function crashLoop(){
-  if(!crashActive)return;
-  const winW=window.innerWidth;
-  crashBodies.forEach(b=>{
-    b.vy+=b.g;b.x+=b.vx;b.y+=b.vy;b.rot+=b.vr;
-    if(b.y>b.floor){
-      b.y=b.floor;b.vy=-b.vy*b.bounce;b.vr*=0.75;
-      // keep it lively forever: a small random nudge whenever it nearly rests
-      if(Math.abs(b.vy)<2.2){b.vy=-(2+Math.random()*4);b.vx+=(Math.random()-0.5)*3;b.vr+=(Math.random()-0.5)*4;}
-    }
-    if(b.y<0){b.y=0;b.vy=Math.abs(b.vy)*0.6;} // keep the titlebar from flying off the top of the screen
-    if(b.x<-(b.w-TITLEBAR_VIS)){b.x=-(b.w-TITLEBAR_VIS);b.vx=Math.abs(b.vx)*0.8;}
-    if(b.x>winW-TITLEBAR_VIS){b.x=winW-TITLEBAR_VIS;b.vx=-Math.abs(b.vx)*0.8;}
-    b.el.style.left=b.x+'px';b.el.style.top=b.y+'px';
-    b.el.style.transform=`rotate(${b.rot}deg)`;
-  });
-  crashRaf=requestAnimationFrame(crashLoop);
-}
-function stopWindowCrash(){
-  if(!crashActive)return;
-  crashActive=false;
-  if(crashRaf)cancelAnimationFrame(crashRaf);
-  crashRaf=null;
-  crashBodies.forEach(b=>{b.el.style.transform='none';});
-  crashBodies=[];
-  document.getElementById('tray-crash').style.display='none';
-  notify('Gravity restored. Windows are stable again.');
-}
-
-/* ══════════════════════════════════
-   TERMINAL APP — hooks straight into desktop state
-══════════════════════════════════ */
-function termPrint(winId,text,cls){
-  const out=document.getElementById('term-out-'+winId);if(!out)return;
-  const line=document.createElement('div');
-  if(cls)line.className=cls;
-  line.textContent=text;
-  out.appendChild(line);
-  out.scrollTop=out.scrollHeight;
-}
-/* ── fastfetch ── */
-const FF_LOAD_TIME=Date.now();
-function ffEsc(s){return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
-function ffUptime(){
-  let m=Math.floor((Date.now()-FF_LOAD_TIME)/60000);
-  const h=Math.floor(m/60);m%=60;
-  const p=[];
-  if(h)p.push(h+(h===1?' hour':' hours'));
-  p.push(m+(m===1?' min':' mins'));
-  return p.join(', ');
-}
-function ffBrowser(){
-  const u=navigator.userAgent;
-  if(/Edg\//.test(u))return 'Edge';
-  if(/Firefox\//.test(u))return 'Firefox';
-  if(/Chrome\//.test(u))return 'Chrome';
-  if(/Safari\//.test(u))return 'Safari';
-  return 'Browser';
-}
-async function runFastfetch(winId){
-  const out=document.getElementById('term-out-'+winId);if(!out)return;
-  const user=(S.username||'User').toLowerCase().replace(/\s+/g,'');
-  const host='mpcsim';
-  let battery=null;
-  try{if(navigator.getBattery){const b=await navigator.getBattery();battery=Math.round(b.level*100)+'% ['+(b.charging?'Charging':'Discharging')+']';}}catch(e){}
-  const wp=WALLPAPER_PRESETS.find(p=>p.url===S.desktopBgImage);
-  const dpr=window.devicePixelRatio||1;
-  const info=[];
-  const title=`${user}@${host}`;
-  info.push({t:title});
-  info.push({t:'-'.repeat(title.length),plain:true});
-  info.push({k:'OS',v:'mpcsim 1.0'});
-  info.push({k:'Host',v:'Virtual Desktop'});
-  info.push({k:'Kernel',v:'Browser '+ffBrowser()});
-  info.push({k:'Uptime',v:ffUptime()});
-  info.push({k:'Packages',v:`${S.apps.length} (apps), ${S.tiles.length} (tiles)`});
-  info.push({k:'Shell',v:'mpcsh 1.0'});
-  info.push({k:'Display',v:`${innerWidth}x${innerHeight}${dpr!==1?' @ '+dpr+'x':''} [Virtual]`});
-  info.push({k:'Desktop Environment',v:'mpcsim Start'});
-  info.push({k:'Window Manager',v:S.wobbly?(S.wobbleMode==='proto'?'mpcwm (wobbly, prototype)':'mpcwm (wobbly, compiz)'):'mpcwm'});
-  info.push({k:'WM Theme',v:S.theme==='default'?'Metro':THEMES[S.theme].name});
-  info.push({k:'Theme',v:`Accent ${S.accent}`});
-  info.push({k:'Icons',v:'Font Awesome 6.5'});
-  info.push({k:'Font',v:'Segoe UI'});
-  info.push({k:'Wallpaper',v:S.desktopBgImage?(wp?wp.name:'custom image'):'solid accent color'});
-  info.push({k:'Terminal',v:'mpcsim terminal'});
-  info.push({k:'CPU',v:`${navigator.hardwareConcurrency||'?'} cores`});
-  info.push({k:'GPU',v:'Browser Compositor'});
-  if(navigator.deviceMemory)info.push({k:'Memory',v:`${navigator.deviceMemory} GiB (device)`});
-  info.push({k:'Windows',v:`${S.openWins.length} open`});
-  info.push({k:'Desktop Icons',v:String(S.dicons.length)});
-  if(battery)info.push({k:'Battery',v:battery});
-  info.push({k:'Locale',v:(navigator.language||'en-US').replace('-','_')+'.utf8'});
-  const rows=info.length;
-  const col='#51a2da';
-  let html='';
-  for(let i=0;i<rows;i++){
-    const r=info[i];
-    if(r){
-      if(r.t&&!r.plain)html+=`<span style="color:${col};font-weight:bold">${ffEsc(user)}</span>@<span style="color:${col};font-weight:bold">${ffEsc(host)}</span>`;
-      else if(r.plain)html+=ffEsc(r.t);
-      else html+=`<span style="color:${col};font-weight:bold">${ffEsc(r.k)}</span>: ${ffEsc(r.v)}`;
-    }
-    html+='\n';
-  }
-  const line=document.createElement('div');
-  line.style.whiteSpace='pre';
-  line.style.lineHeight='1.25';
-  line.innerHTML=html;
-  out.appendChild(line);
-  out.scrollTop=out.scrollHeight;
-}
-function initTerminal(winId){
-  const out=document.getElementById('term-out-'+winId);
-  const inp=document.getElementById('term-in-'+winId);
-  if(!out||!inp)return;
-  termPrint(winId,'System Terminal  —  type "help" for commands','term-line-dim');
-  const hist=[];let histIdx=-1;
-  const el=document.getElementById(winId);
-  el.addEventListener('mousedown',()=>setTimeout(()=>inp.focus(),0));
-  setTimeout(()=>inp.focus(),30);
-  inp.addEventListener('keydown',e=>{
-    if(e.key==='Enter'){
-      const raw=inp.value;inp.value='';
-      if(!raw.trim())return;
-      hist.push(raw);histIdx=hist.length;
-      termPrint(winId,`${(S.username||'User').toLowerCase()}@earlyshell:~$ ${raw}`,'term-line-in');
-      runTerminalCmd(raw.trim(),winId);
-    } else if(e.key==='ArrowUp'){
-      e.preventDefault();if(histIdx>0){histIdx--;inp.value=hist[histIdx]||'';}
-    } else if(e.key==='ArrowDown'){
-      e.preventDefault();if(histIdx<hist.length-1){histIdx++;inp.value=hist[histIdx]||'';}else{histIdx=hist.length;inp.value='';}
-    }
-  });
-}
-function runTerminalCmd(raw,winId){
-  const parts=raw.split(/\s+/);
-  const cmd=parts[0].toLowerCase();
-  const rest=parts.slice(1).join(' ');
-  switch(cmd){
-    case 'help':
-      termPrint(winId,[
-        'Commands:',
-        '  help                 show this list',
-        '  apps                 list installed apps',
-        '  open <name>          launch an app / "open desktop"',
-        '  close                close this terminal window',
-        '  clear / cls          clear the screen',
-        '  whoami               show current user',
-        '  date                 show date & time',
-        '  accent <hex>         change accent color, e.g. accent #e74856',
-        '  wallpaper <name|url> set desktop wallpaper (see: wallpapers)',
-        '  wallpapers           list hardcoded wallpaper presets',
-        '  theme [name]         switch theme (default, win11, win10, win7, mac, gnome, chromeos)',
-        '  shutdown             play the outro and close the tab (alias: poweroff)',
-        '  settings             open Personalize',
-        '  desktop              jump to the desktop',
-        '  fastfetch            system / theme summary (alias: neofetch)',
-        '  echo <text>          print text',
-      ].join('\n'));
-      break;
-    case 'apps': case 'ls':
-      termPrint(winId,S.apps.map(a=>`  ${a.id.padEnd(12)} ${a.name}`).join('\n'));
-      break;
-    case 'open': case 'launch': case 'start': {
-      if(!rest){termPrint(winId,'usage: open <app name>','term-line-err');break;}
-      const q=rest.toLowerCase();
-      const app=S.apps.find(a=>a.id.toLowerCase()===q)||S.apps.find(a=>a.name.toLowerCase()===q)||S.apps.find(a=>a.name.toLowerCase().includes(q));
-      if(!app){termPrint(winId,`no app matching "${rest}"`,'term-line-err');break;}
-      termPrint(winId,`launching ${app.name}…`,'term-line-ok');
-      launchApp(app,false);
-      break;
-    }
-    case 'close': closeWin(winId); break;
-    case 'clear': case 'cls': document.getElementById('term-out-'+winId).innerHTML=''; break;
-    case 'whoami': termPrint(winId,S.username||'User'); break;
-    case 'date': termPrint(winId,new Date().toString()); break;
-    case 'echo': termPrint(winId,rest); break;
-    case 'accent': {
-      if(!rest||!/^#?[0-9a-f]{3,6}$/i.test(rest.replace('#',''))){termPrint(winId,'usage: accent #rrggbb','term-line-err');break;}
-      S.accent=rest.startsWith('#')?rest:'#'+rest;saveS();applyTheme();renderAll();
-      termPrint(winId,`accent set to ${S.accent}`,'term-line-ok');
-      break;
-    }
-    case 'wallpapers': {
-      termPrint(winId,WALLPAPER_PRESETS.map(p=>`  ${p.name}`).join('\n'));
-      break;
-    }
-    case 'wallpaper': case 'wp': {
-      if(!rest){termPrint(winId,'usage: wallpaper <preset name|url|none>','term-line-err');break;}
-      let url=rest;
-      if(rest.toLowerCase()==='none')url='';
-      else{
-        const preset=WALLPAPER_PRESETS.find(p=>p.name.toLowerCase()===rest.toLowerCase());
-        if(preset)url=preset.url;
-      }
-      S.desktopBgImage=url;saveS();applyTheme();
-      termPrint(winId,url?`desktop wallpaper set`:'desktop wallpaper cleared','term-line-ok');
-      break;
-    }
-    case 'theme': {
-      if(!rest){termPrint(winId,Object.keys(THEMES).map(k=>`  ${k.padEnd(10)} ${THEMES[k].name}${k===S.theme?'  (current)':''}`).join('\n'));break;}
-      const q=rest.toLowerCase().replace(/\s+/g,'');
-      const key=Object.keys(THEMES).find(k=>k===q||THEMES[k].alias.includes(q)||THEMES[k].name.toLowerCase().replace(/\s+/g,'')===q);
-      if(!key){termPrint(winId,`no theme matching "${rest}" — type "theme" for the list`,'term-line-err');break;}
-      S.theme=key;saveS();applyTheme();
-      termPrint(winId,`theme set to ${THEMES[key].name}`,'term-line-ok');
-      break;
-    }
-    case 'shutdown': case 'poweroff': termPrint(winId,'shutting down…','term-line-ok'); shutDown(); break;
-    case 'settings': case 'personalize': openModal('m-settings'); termPrint(winId,'opening Personalize…','term-line-ok'); break;
-    case 'desktop': goDesktop(); termPrint(winId,'showing desktop','term-line-ok'); break;
-    case 'fastfetch': case 'neofetch': case 'info': {
-      runFastfetch(winId);
-      break;
-    }
-    case '': break;
-    default:
-      termPrint(winId,`'${cmd}' is not recognized. Type "help" for a list of commands.`,'term-line-err');
-  }
+  bringFront(el);
 }
 let winDrag=null,winResize=null;
-/* ══════════════════════════════════
-   COMPIZ-STYLE WOBBLY WINDOWS
-   Four spring-damped corner nodes; the window is warped
-   with a perspective (matrix3d) transform onto the moving quad.
-   Nodes near the grab point are stiff, far ones trail behind.
-══════════════════════════════════ */
-const wobblers=new Map();
-let wobbleRaf=null;
-function wobbleStart(el,gx,gy){
-  const w=el.offsetWidth,h=el.offsetHeight;
-  const a=Math.max(0,Math.min(100,S.wobbleAmt??40))/100;
-  const rest=[[0,0],[w,0],[w,h],[0,h]];
-  const d=rest.map(r=>Math.hypot(r[0]-gx,r[1]-gy));
-  const dmax=Math.max(1,...d);
-  // looser springs = more wobble; stiffness falls off with distance from the grab point
-  const kFar=0.035+0.11*(1-a), kNear=0.30+0.25*(1-a);
-  let s=wobblers.get(el);
-  if(!s){s={o:[0,1,2,3].map(()=>({x:0,y:0,vx:0,vy:0})),active:true};wobblers.set(el,s);}
-  s.active=true;
-  s.k=d.map(di=>{const t=1-di/dmax;return kFar+(kNear-kFar)*t*t;});
-  s.c=0.10+0.10*(1-a);          // friction
-  s.lim=(30+170*a);             // max node displacement in px
-  el.classList.add('win-settled'); // stop the open animation from overriding our transform
-  el.style.transformOrigin='0 0';
-  wobbleEnsureLoop();
-}
-function wobbleShift(el,dx,dy){
-  const s=wobblers.get(el);if(!s||!s.active)return;
-  // window moved rigidly, nodes keep their inertia -> offset relative to the window grows
-  s.o.forEach(p=>{p.x-=dx;p.y-=dy;const m=Math.hypot(p.x,p.y);if(m>s.lim){p.x*=s.lim/m;p.y*=s.lim/m;}});
-}
-function wobbleRelease(el){const s=wobblers.get(el);if(s)s.active=false;}
-function wobbleKill(el){if(wobblers.has(el)){wobblers.delete(el);if(!crashActive)el.style.transform='';}}
-function wobbleEnsureLoop(){if(!wobbleRaf)wobbleRaf=requestAnimationFrame(wobbleLoop);}
-function wobbleMatrix(el,s){
-  const w=el.offsetWidth,h=el.offsetHeight;
-  const P=[[s.o[0].x,s.o[0].y],[w+s.o[1].x,s.o[1].y],[w+s.o[2].x,h+s.o[2].y],[s.o[3].x,h+s.o[3].y]];
-  const [x0,y0]=P[0],[x1,y1]=P[1],[x2,y2]=P[2],[x3,y3]=P[3];
-  const dx1=x1-x2,dx2=x3-x2,dx3=x0-x1+x2-x3;
-  const dy1=y1-y2,dy2=y3-y2,dy3=y0-y1+y2-y3;
-  const den=dx1*dy2-dx2*dy1;
-  let g=0,hh=0;
-  if(Math.abs(dx3)>1e-6||Math.abs(dy3)>1e-6){
-    if(Math.abs(den)<1e-6)return null;
-    g=(dx3*dy2-dx2*dy3)/den;hh=(dx1*dy3-dx3*dy1)/den;
-  }
-  const a=x1-x0+g*x1,b=x3-x0+hh*x3,c=x0,d=y1-y0+g*y1,e=y3-y0+hh*y3,f=y0;
-  return `matrix3d(${a/w},${d/w},0,${g/w},${b/h},${e/h},0,${hh/h},0,0,1,0,${c},${f},0,1)`;
-}
-function wobbleLoop(){
-  wobbleRaf=null;
-  if(!wobblers.size)return;
-  wobblers.forEach((s,el)=>{
-    if(!el.isConnected){wobblers.delete(el);return;}
-    const n=s.o;
-    let energy=0;
-    const fx=[],fy=[];
-    for(let i=0;i<4;i++){
-      const p=n[i],pa=n[(i+3)%4],pb=n[(i+1)%4];
-      // spring to rest + a little coupling to neighbours so the mesh stays coherent
-      fx[i]=-s.k[i]*p.x-s.c*p.vx+0.06*((pa.x+pb.x)/2-p.x);
-      fy[i]=-s.k[i]*p.y-s.c*p.vy+0.06*((pa.y+pb.y)/2-p.y);
-    }
-    for(let i=0;i<4;i++){
-      const p=n[i];
-      p.vx+=fx[i];p.vy+=fy[i];p.x+=p.vx;p.y+=p.vy;
-      const m=Math.hypot(p.x,p.y);
-      if(m>s.lim){p.x*=s.lim/m;p.y*=s.lim/m;}
-      energy+=Math.abs(p.x)+Math.abs(p.y)+Math.abs(p.vx)*8+Math.abs(p.vy)*8;
-    }
-    if(crashActive)return;
-    if(!s.active&&energy<0.6){
-      el.style.transform='';wobblers.delete(el);return;
-    }
-    const m=wobbleMatrix(el,s);
-    if(m)el.style.transform=m;
-  });
-  if(wobblers.size)wobbleRaf=requestAnimationFrame(wobbleLoop);
-}
-
-const TITLEBAR_H=30;
-const TITLEBAR_VIS=60; // min px of titlebar that must stay reachable on screen
-function clampWinLeft(left,width){
-  const winW=window.innerWidth;
-  const min=-(width-TITLEBAR_VIS);
-  const max=winW-TITLEBAR_VIS;
-  return Math.max(min,Math.min(max,left));
-}
-function clampWinTop(top){
-  const tbH=uiOff().bot;
-  const min=uiOff().top;
-  const max=window.innerHeight-tbH-TITLEBAR_H;
-  return Math.max(min,Math.min(max,top));
-}
 function makeDraggable(win,handle){
   handle.addEventListener('mousedown',e=>{
-    if(win.classList.contains('win-fs'))return;
+    if(e.target.closest('.win-ctrl')||win.classList.contains('win-fs'))return;
     winDrag={win,ox:e.clientX-win.offsetLeft,oy:e.clientY-win.offsetTop};
-    document.body.classList.add('win-interacting');
-    if(S.wobbly){
-      if(S.wobbleMode==='proto'){
-        win.style.setProperty('--wobble-deg',(Math.max(0,Math.min(100,S.wobbleAmt??40))/100*7).toFixed(2));
-        win.classList.add('wobbling');
-      }else{
-        wobbleStart(win,e.clientX-win.offsetLeft,e.clientY-win.offsetTop);
-      }
-    }
-    e.preventDefault();
+    body.classList.add('win-interacting');e.preventDefault();
   });
 }
 function makeResizable(win,handle){
   handle.addEventListener('mousedown',e=>{
     winResize={win,sx:e.clientX,sy:e.clientY,sw:win.offsetWidth,sh:win.offsetHeight};
-    document.body.classList.add('win-interacting');
-    e.preventDefault();
+    body.classList.add('win-interacting');e.preventDefault();
   });
 }
 document.addEventListener('mousemove',e=>{
-  if(winDrag){
-    const w=winDrag.win;
-    const left=clampWinLeft(e.clientX-winDrag.ox,w.offsetWidth);
-    const top=clampWinTop(e.clientY-winDrag.oy);
-    const pdx=left-w.offsetLeft,pdy=top-w.offsetTop;
-    w.style.left=left+'px';w.style.top=top+'px';
-    if(S.wobbly&&S.wobbleMode!=='proto')wobbleShift(w,pdx,pdy);
+  if(iconDrag){
+    const dx=e.clientX-iconDrag.sx,dy=e.clientY-iconDrag.sy;
+    if(!iconDrag.moved&&(Math.abs(dx)>4||Math.abs(dy)>4)){iconDrag.moved=true;iconDrag.el.classList.add('icon-dragging');}
+    if(iconDrag.moved){
+      const a=$('desktop-icons-area');
+      iconDrag.el.style.left=Math.max(0,Math.min(iconDrag.ol+dx,a.clientWidth-ICON_W))+'px';
+      iconDrag.el.style.top=Math.max(0,Math.min(iconDrag.ot+dy,a.clientHeight-ICON_H))+'px';
+    }
   }
-  if(winResize){winResize.win.style.width=Math.max(360,winResize.sw+(e.clientX-winResize.sx))+'px';winResize.win.style.height=Math.max(260,winResize.sh+(e.clientY-winResize.sy))+'px';}
+  if(winDrag){
+    const w=winDrag.win,W=window.innerWidth,H=window.innerHeight;
+    w.style.left=Math.max(-(w.offsetWidth-60),Math.min(W-60,e.clientX-winDrag.ox))+'px';
+    w.style.top=Math.max(0,Math.min(H-TB_H-30,e.clientY-winDrag.oy))+'px';
+  }
+  if(winResize){
+    winResize.win.style.width=Math.max(360,winResize.sw+e.clientX-winResize.sx)+'px';
+    winResize.win.style.height=Math.max(260,winResize.sh+e.clientY-winResize.sy)+'px';
+  }
 });
 document.addEventListener('mouseup',()=>{
-  if(winDrag){winDrag.win.classList.remove('wobbling');wobbleRelease(winDrag.win);}
-  winDrag=null;winResize=null;
-  document.body.classList.remove('win-interacting');
+  if(iconDrag){
+    if(iconDrag.moved){iconDrag.di.dx=iconDrag.el.offsetLeft;iconDrag.di.dy=iconDrag.el.offsetTop;iconDrag.el.classList.remove('icon-dragging');saveS();}
+    iconDrag=null;
+  }
+  winDrag=winResize=null;body.classList.remove('win-interacting');
 });
-function bringFront(el){let mx=1;document.querySelectorAll('.app-win').forEach(w=>mx=Math.max(mx,parseInt(w.style.zIndex)||1));el.style.zIndex=Math.min(mx+1,99999);updateMenubar();}
+function bringFront(el){let mx=1;document.querySelectorAll('.app-win').forEach(w=>mx=Math.max(mx,parseInt(w.style.zIndex)||1));el.style.zIndex=Math.min(mx+1,99999);}
 function minWin(id){
-  const w=S.openWins.find(x=>x.id===id);if(!w)return;
-  const el=document.getElementById(id);if(!el)return;
-  el.classList.remove('win-settled');wobbleKill(el);el.classList.add('win-minimizing');
+  const w=S.openWins.find(x=>x.id===id),el=$(id);if(!w||!el)return;
+  el.classList.add('win-minimizing');
   setTimeout(()=>{el.classList.remove('win-minimizing');w.minimized=true;el.classList.add('win-min');renderTaskbar();},170);
 }
-function maxWin(id){const el=document.getElementById(id);if(!el)return;const fs=el.classList.toggle('win-fs');if(!fs){el.style.left='80px';el.style.top='40px';el.style.width='860px';el.style.height='520px';}}
+function maxWin(id){
+  const el=$(id);if(!el)return;
+  if(!el.classList.toggle('win-fs')){const r=winRect(0);Object.assign(el.style,{left:r.left+'px',top:r.top+'px',width:r.width+'px',height:r.height+'px'});}
+}
 function closeWin(id){
-  const el=document.getElementById(id);if(!el)return;
-  el.classList.remove('win-settled');wobbleKill(el);el.classList.add('win-closing');
-  crashBodies=crashBodies.filter(b=>b.el!==el);
+  const el=$(id);if(!el)return;
+  el.classList.add('win-closing');
   setTimeout(()=>{el.remove();S.openWins=S.openWins.filter(w=>w.id!==id);renderTaskbar();},160);
 }
 function toggleWin(id){
-  const w=S.openWins.find(x=>x.id===id);if(!w)return;
-  const el=document.getElementById(id);
-  if(w.minimized){
-    w.minimized=false;el.classList.remove('win-min','win-settled');
-    el.classList.add('win-restoring');
-    setTimeout(()=>el.classList.remove('win-restoring'),200);
-    bringFront(el);
-  }else{
-    el.classList.remove('win-settled');wobbleKill(el);el.classList.add('win-minimizing');
-    setTimeout(()=>{el.classList.remove('win-minimizing');w.minimized=true;el.classList.add('win-min');},170);
-  }
-  renderTaskbar();
+  const w=S.openWins.find(x=>x.id===id),el=$(id);if(!w||!el)return;
+  if(w.minimized){w.minimized=false;el.classList.remove('win-min');bringFront(el);renderTaskbar();}
+  else minWin(id);
 }
 
-/* ══════════════════════════════════
-   CONTEXT MENUS
-══════════════════════════════════ */
+/* ── context menus ── */
 function showCtx(e,items){
-  const menu=document.getElementById('ctx');menu.innerHTML='';menu.style.borderTopColor=S.accent;
-  items.forEach(item=>{
-    if(item==='-'){const s=document.createElement('div');s.className='sep';menu.appendChild(s);return;}
+  const m=$('ctx');m.innerHTML='';
+  items.forEach(it=>{
+    if(it==='-'){const s=document.createElement('div');s.className='sep';m.appendChild(s);return;}
     const d=document.createElement('div');
-    d.innerHTML=`<i class="${item.ico||'fa-solid fa-circle-dot'}" style="width:16px;opacity:.7"></i>${item.label}`;
-    d.onclick=()=>{menu.style.display='none';item.fn();};
-    menu.appendChild(d);
+    const i=document.createElement('i');i.className=it.ico||'fa-solid fa-circle-dot';i.style.cssText='width:16px;opacity:.7';
+    d.appendChild(i);d.appendChild(document.createTextNode(it.label));
+    d.onclick=()=>{m.style.display='none';it.fn();};m.appendChild(d);
   });
-  menu.style.left=Math.min(e.clientX,innerWidth-195)+'px';
-  menu.style.top=Math.min(e.clientY,innerHeight-220)+'px';
-  menu.style.display='block';
-}
-function showTileCtx(e,td){
-  showCtx(e,[
-    {label:'Edit tile',            ico:'fa-solid fa-pen',       fn:()=>editTileDialog(td)},
-    {label:'Remove from Start',    ico:'fa-solid fa-thumbtack', fn:()=>removeTile(td.id)},
-    '-',
-    {label:'Small',   ico:'fa-regular fa-square',         fn:()=>resizeTile(td.id,'small')},
-    {label:'Medium',  ico:'fa-solid fa-square',            fn:()=>resizeTile(td.id,'medium')},
-    {label:'Wide',    ico:'fa-solid fa-rectangle-wide',   fn:()=>resizeTile(td.id,'wide')},
-    {label:'Large',   ico:'fa-solid fa-expand',            fn:()=>resizeTile(td.id,'large')},
-    '-',
-    {label:'Open on desktop', ico:'fa-solid fa-desktop',  fn:()=>{const a=getApp(td.appId);goDesktop();if(a)launchApp(a,false);}},
-  ]);
-}
-function showIconCtx(e,di){
-  showCtx(e,[
-    {label:'Edit',   ico:'fa-solid fa-pen',   fn:()=>editIconDialog(di)},
-    {label:'Remove', ico:'fa-solid fa-trash', fn:()=>removeIcon(di.id)},
-    '-',
-    {label:'Add icon', ico:'fa-solid fa-plus', fn:addIconDialog},
-  ]);
+  m.style.display='block';
+  m.style.left=Math.max(0,Math.min(e.clientX,window.innerWidth-m.offsetWidth-6))+'px';
+  m.style.top=Math.max(0,Math.min(e.clientY,window.innerHeight-m.offsetHeight-6))+'px';
 }
 function showAppCtx(e,app){
   const pinned=S.tiles.some(t=>t.appId===app.id);
   showCtx(e,[
     pinned
-      ?{label:'Unpin from Start', ico:'fa-solid fa-thumbtack', fn:()=>unpinApp(app.id)}
-      :{label:'Pin to Start',     ico:'fa-solid fa-thumbtack', fn:()=>pinAppToStart(app)},
-    {label:'Add to desktop', ico:'fa-solid fa-desktop',   fn:()=>addIconForApp(app)},
-    '-',
-    {label:'Edit app',    ico:'fa-solid fa-pen',   fn:()=>editAppDialog(app)},
-    {label:'Delete app',  ico:'fa-solid fa-trash', fn:()=>deleteApp(app.id)},
+      ?{label:'Unpin from menu',ico:'fa-solid fa-thumbtack',fn:()=>{S.tiles=S.tiles.filter(t=>t.appId!==app.id);saveS();renderMenu();}}
+      :{label:'Pin to menu',ico:'fa-solid fa-thumbtack',fn:()=>{S.tiles.push({id:uid(),appId:app.id,size:'medium',group:'Apps'});saveS();renderMenu();}},
+    isTbPinned(app.id)
+      ?{label:'Unpin from taskbar',ico:'fa-solid fa-thumbtack-slash',fn:()=>unpinFromTaskbar(app.id)}
+      :{label:'Pin to taskbar',ico:'fa-solid fa-thumbtack',fn:()=>pinToTaskbar(app.id)},
+    {label:'Add to desktop',ico:'fa-solid fa-desktop',fn:()=>{
+      if(S.dicons.some(d=>d.appId===app.id)){notify(`${app.name} is already on the desktop`);return;}
+      S.dicons.push({id:uid(),appId:app.id});renderDesktopIcons();}},
   ]);
 }
-document.addEventListener('click',e=>{
-  if(!e.target.closest('#ctx'))document.getElementById('ctx').style.display='none';
-});
-document.addEventListener('mousedown',e=>{
-  if(S.theme==='default')return;
-  const s=document.getElementById('start');
-  if(s.style.display!=='flex'||s.classList.contains('start-leaving'))return;
-  if(THEMES[S.theme].panel){
-    if(!e.target.closest('#start,#apps-screen,#start-orb,#ctx,#overlay,#notifs'))goDesktop();
-  }else if(['start','start-bg-layer','start-tiles-scroll','start-pattern-canvas'].includes(e.target.id)){
-    goDesktop();
-  }
-});
-document.getElementById('desktop').addEventListener('contextmenu',e=>{
-  if(e.target.closest('.desktop-icon')||e.target.closest('#taskbar'))return;
+function powerMenu(e){
+  e.stopPropagation();
+  showCtx(e,[
+    {label:'Restart',ico:'fa-solid fa-rotate-right',fn:()=>location.reload()},
+    {label:'Fullscreen',ico:'fa-solid fa-expand',fn:goFullscreen},
+  ]);
+}
+$('desktop').addEventListener('contextmenu',e=>{
+  if(e.target.closest('.desktop-icon,#taskbar,#dn-menu,#dn-all')){if(e.target.closest('#dn-menu,#dn-all'))e.preventDefault();return;}
   e.preventDefault();
   showCtx(e,[
-    {label:'Add desktop icon', ico:'fa-solid fa-plus',        fn:addIconDialog},
-    {label:'Personalize',      ico:'fa-solid fa-sliders',     fn:()=>openModal('m-settings')},
+    {label:'Personalize',ico:'fa-solid fa-sliders',fn:openModal},
+    {label:'Fullscreen',ico:'fa-solid fa-expand',fn:goFullscreen},
     '-',
-    {label:'Export settings',  ico:'fa-solid fa-download',    fn:doExport},
-    '-',
-    {label:'Shut down',        ico:'fa-solid fa-power-off',   fn:shutDown},
+    {label:'Restart',ico:'fa-solid fa-rotate-right',fn:()=>location.reload()},
   ]);
 });
+document.addEventListener('click',e=>{if(!e.target.closest('#ctx'))$('ctx').style.display='none';});
+document.addEventListener('mousedown',e=>{
+  if(body.classList.contains('dn-open')&&!e.target.closest('#dn-menu,#dn-all,#start-orb,#ctx,#overlay,#notifs'))setMenu(false);
+});
 
-/* ══════════════════════════════════
-   TILE OPERATIONS
-══════════════════════════════════ */
-function removeTile(id){S.tiles=S.tiles.filter(t=>t.id!==id);saveS();renderTiles();}
-function resizeTile(id,size){const t=S.tiles.find(x=>x.id===id);if(t){t.size=size;saveS();renderTiles();}}
-function pinAppToStart(app){
-  if(S.tiles.some(t=>t.appId===app.id)){notify(`${app.name} already pinned`);return;}
-  S.tiles.push({id:uid(),appId:app.id,size:'medium',group:S.groups[0]||'Apps',color:''});
-  saveS();renderTiles();hideApps();notify(`${app.name} pinned to Start`);
-}
-function unpinApp(appId){S.tiles=S.tiles.filter(t=>t.appId!==appId);saveS();renderTiles();renderAppsGrid('');}
-function addTileDialog(){
-  document.getElementById('tile-modal-title').textContent='Add tile';
-  document.getElementById('t-edit-id').value='';
-  const sel=document.getElementById('t-app-sel');sel.innerHTML='<option value="">— choose an app —</option>';
-  S.apps.forEach(a=>{const o=document.createElement('option');o.value=a.id;o.textContent=a.name;sel.appendChild(o);});
-  const gs=document.getElementById('t-group-sel');gs.innerHTML='';
-  S.groups.forEach(g=>{const o=document.createElement('option');o.value=g;o.textContent=g;gs.appendChild(o);});
-  renderTileColorGrid('');openModal('m-tile');
-}
-function editTileDialog(td){
-  document.getElementById('tile-modal-title').textContent='Edit tile';
-  document.getElementById('t-edit-id').value=td.id;
-  const sel=document.getElementById('t-app-sel');sel.innerHTML='';
-  S.apps.forEach(a=>{const o=document.createElement('option');o.value=a.id;o.textContent=a.name;o.selected=a.id===td.appId;sel.appendChild(o);});
-  const gs=document.getElementById('t-group-sel');gs.innerHTML='';
-  S.groups.forEach(g=>{const o=document.createElement('option');o.value=g;o.textContent=g;o.selected=g===td.group;gs.appendChild(o);});
-  document.getElementById('t-size').value=td.size||'medium';
-  renderTileColorGrid(td.color);openModal('m-tile');
-}
-function saveTile(){
-  const eid=document.getElementById('t-edit-id').value;
-  const appId=document.getElementById('t-app-sel').value;if(!appId){notify('Pick an app');return;}
-  const group=document.getElementById('t-group-sel').value||S.groups[0];
-  const size=document.getElementById('t-size').value;
-  const color=document.querySelector('#g-tile-color .sel')?.dataset.color||'';
-  if(eid){const t=S.tiles.find(x=>x.id===eid);if(t){t.appId=appId;t.group=group;t.size=size;t.color=color;}}
-  else S.tiles.push({id:uid(),appId,group,size,color});
-  saveS();renderTiles();closeModal();
-}
-function addGroupDialog(){document.getElementById('grp-name').value='';openModal('m-group');}
-function saveGroup(){const n=document.getElementById('grp-name').value.trim();if(!n)return;S.groups.push(n);saveS();renderTiles();closeModal();}
-
-/* ══════════════════════════════════
-   DESKTOP ICON OPERATIONS
-══════════════════════════════════ */
-function addIconDialog(){
-  document.getElementById('dicon-title').textContent='Add desktop icon';
-  document.getElementById('di-edit-id').value='';
-  const sel=document.getElementById('di-app-sel');sel.innerHTML='<option value="">— choose an app —</option>';
-  S.apps.forEach(a=>{const o=document.createElement('option');o.value=a.id;o.textContent=a.name;sel.appendChild(o);});
-  openModal('m-dicon');
-}
-function addIconForApp(app){
-  if(S.dicons.some(d=>d.appId===app.id)){notify(`${app.name} already on desktop`);return;}
-  S.dicons.push({id:uid(),appId:app.id});saveS();renderDesktopIcons();notify(`${app.name} added to desktop`);
-}
-function editIconDialog(di){
-  document.getElementById('dicon-title').textContent='Edit desktop icon';
-  document.getElementById('di-edit-id').value=di.id;
-  const sel=document.getElementById('di-app-sel');sel.innerHTML='';
-  S.apps.forEach(a=>{const o=document.createElement('option');o.value=a.id;o.textContent=a.name;o.selected=a.id===di.appId;sel.appendChild(o);});
-  openModal('m-dicon');
-}
-function saveDesktopIcon(){
-  const eid=document.getElementById('di-edit-id').value;
-  const appId=document.getElementById('di-app-sel').value;if(!appId){notify('Pick an app');return;}
-  if(eid){const di=S.dicons.find(x=>x.id===eid);if(di)di.appId=appId;}
-  else S.dicons.push({id:uid(),appId});
-  saveS();renderDesktopIcons();closeModal();
-}
-function removeIcon(id){S.dicons=S.dicons.filter(d=>d.id!==id);saveS();renderDesktopIcons();}
-
-/* ══════════════════════════════════
-   APP OPERATIONS
-══════════════════════════════════ */
-function buildIconPicker(selected){
-  const picker=document.getElementById('app-icon-picker');picker.innerHTML='';
-  document.getElementById('a-icon-sel').value=selected||'globe';
-  ICON_LIB.forEach(ic=>{
-    const d=document.createElement('div');d.className='ip-opt'+(ic.k===selected?' sel':'');d.dataset.key=ic.k;
-    const i=document.createElement('i');i.className=ic.fa;d.appendChild(i);
-    d.onclick=()=>{picker.querySelectorAll('.ip-opt').forEach(x=>x.classList.remove('sel'));d.classList.add('sel');document.getElementById('a-icon-sel').value=ic.k;};
-    picker.appendChild(d);
+/* ── Personalize ── */
+function openModal(){
+  const accents=(typeof ACCENT_COLORS!=='undefined'&&ACCENT_COLORS)||[S.accent];
+  const g=$('g-accent');g.innerHTML='';
+  accents.forEach(c=>{
+    const s=document.createElement('div');s.className='cswatch'+(c===S.accent?' sel':'');s.style.background=c;s.dataset.color=c;
+    s.onclick=()=>{g.querySelectorAll('.cswatch').forEach(x=>x.classList.remove('sel'));s.classList.add('sel');};
+    g.appendChild(s);
   });
+  $('s-clock').value=S.clock24?'24':'12';
+  $('overlay').classList.add('on');
 }
-function addAppDialog(){
-  document.getElementById('app-modal-title').textContent='Add App';
-  document.getElementById('a-id').value='';
-  document.getElementById('a-name').value='';
-  document.getElementById('a-url').value='';
-  document.getElementById('a-iconurl').value='';
-  document.getElementById('a-resolution').value='100';
-  document.getElementById('a-res-preview').textContent='100%';
-  document.getElementById('a-cat').value='Web';
-  buildIconPicker('globe');openModal('m-app');
-}
-function editAppDialog(app){
-  document.getElementById('app-modal-title').textContent='Edit App';
-  document.getElementById('a-id').value=app.id;
-  document.getElementById('a-name').value=app.name;
-  document.getElementById('a-url').value=app.url==='__desktop__'?'':app.url;
-  document.getElementById('a-iconurl').value=app.iconUrl||'';
-  const res=app.resolution!=null?app.resolution:100;
-  document.getElementById('a-resolution').value=res;
-  document.getElementById('a-res-preview').textContent=res+'%';
-  document.getElementById('a-cat').value=app.cat||'';
-  buildIconPicker(app.icon||'globe');openModal('m-app');
-}
-function saveApp(){
-  const id=document.getElementById('a-id').value;
-  const name=document.getElementById('a-name').value.trim()||'App';
-  const url=document.getElementById('a-url').value.trim();
-  const icon=document.getElementById('a-icon-sel').value||'globe';
-  const iconUrl=document.getElementById('a-iconurl').value.trim();
-  const resolution=Math.max(10,Math.min(200,parseInt(document.getElementById('a-resolution').value)||100));
-  const cat=document.getElementById('a-cat').value.trim()||'Apps';
-  if(id){const app=S.apps.find(a=>a.id===id);if(app){app.name=name;app.url=url;app.icon=icon;app.iconUrl=iconUrl;app.resolution=resolution;app.cat=cat;}}
-  else S.apps.push({id:uid(),name,url,icon,iconUrl,resolution,cat});
-  saveS();renderTiles();renderAppsGrid('');renderDesktopIcons();closeModal();
-}
-function deleteApp(id){
-  S.apps=S.apps.filter(a=>a.id!==id);S.tiles=S.tiles.filter(t=>t.appId!==id);S.dicons=S.dicons.filter(d=>d.appId!==id);
-  saveS();renderTiles();renderAppsGrid('');renderDesktopIcons();
-}
-
-/* ══════════════════════════════════
-   SETTINGS
-══════════════════════════════════ */
-function renderColorGrid(cid,colors,selected){
-  const el=document.getElementById(cid);el.innerHTML='';
-  colors.forEach(c=>{
-    const s=document.createElement('div');s.className='cswatch'+(c===selected?' sel':'');
-    s.style.background=c;s.dataset.color=c;
-    s.onclick=()=>{el.querySelectorAll('.cswatch').forEach(x=>x.classList.remove('sel'));s.classList.add('sel');};
-    el.appendChild(s);
-  });
-}
-function renderTileColorGrid(selected){
-  const el=document.getElementById('g-tile-color');el.innerHTML='';
-  // "accent" option first
-  const acc=document.createElement('div');acc.className='cswatch'+(selected===''?' sel':'');
-  acc.style.background=S.accent;acc.dataset.color='';acc.title='Use accent';
-  acc.onclick=()=>{el.querySelectorAll('.cswatch').forEach(x=>x.classList.remove('sel'));acc.classList.add('sel');};
-  el.appendChild(acc);
-  TILE_COLORS.forEach(c=>{
-    const s=document.createElement('div');s.className='cswatch'+(c===selected?' sel':'');
-    s.style.background=c;s.dataset.color=c;
-    s.onclick=()=>{el.querySelectorAll('.cswatch').forEach(x=>x.classList.remove('sel'));s.classList.add('sel');};
-    el.appendChild(s);
-  });
-}
-function renderWallpaperPresets(){
-  const g=document.getElementById('g-wallpaper-presets');g.innerHTML='';
-  WALLPAPER_PRESETS.forEach(p=>{
-    const d=document.createElement('div');
-    d.className='wp-swatch'+((p.url||'')===(document.getElementById('s-deskimg').value.trim())?' sel':'');
-    if(p.url){d.style.backgroundImage=`url('${p.url}')`;}
-    else{d.classList.add('wp-none');}
-    const lbl=document.createElement('span');lbl.textContent=p.name;d.appendChild(lbl);
-    d.onclick=(e)=>{
-      document.getElementById('s-deskimg').value=p.url;
-      if(e.shiftKey)document.getElementById('s-startimg').value=p.url;
-      g.querySelectorAll('.wp-swatch').forEach(x=>x.classList.remove('sel'));
-      d.classList.add('sel');
-    };
-    g.appendChild(d);
-  });
-}
-function populateSettingsModal(){
-  const ts=document.getElementById('s-theme');ts.innerHTML='';
-  Object.keys(THEMES).forEach(k=>{const o=document.createElement('option');o.value=k;o.textContent=THEMES[k].name;o.selected=k===S.theme;ts.appendChild(o);});
-  renderColorGrid('g-accent',ACCENT_COLORS,S.accent);
-  renderColorGrid('g-startbg',BG_COLORS,S.startBgColor);
-  const pg=document.getElementById('g-pattern');pg.innerHTML='';
-  PATTERNS.forEach((n,i)=>{const d=document.createElement('div');d.className='popt'+(i===S.pattern?' sel':'');d.textContent=n;d.dataset.idx=i;d.onclick=()=>{pg.querySelectorAll('.popt').forEach(x=>x.classList.remove('sel'));d.classList.add('sel');};pg.appendChild(d);});
-  document.getElementById('s-startimg').value=S.startBgImage||'';
-  document.getElementById('s-deskimg').value=S.desktopBgImage||'';
-  document.getElementById('s-user').value=S.username||'User';
-  document.getElementById('s-showcredit').checked=S.showCredit!==false;
-  document.getElementById('s-wobbly').checked=!!S.wobbly;
-  document.getElementById('s-wobble-mode').value=S.wobbleMode||'compiz';
-  document.getElementById('s-wobble-amt').value=S.wobbleAmt??40;
-  document.getElementById('s-wobble-val').textContent=S.wobbleAmt??40;
-  document.getElementById('wobble-amt-row').style.opacity=S.wobbly?'1':'.4';
-  renderWallpaperPresets();
-}
+function closeModal(){$('overlay').classList.remove('on');}
 function saveSettings(){
-  S.theme=document.getElementById('s-theme').value||'default';
-  S.accent=document.querySelector('#g-accent .sel')?.dataset.color||S.accent;
-  S.startBgColor=document.querySelector('#g-startbg .sel')?.dataset.color||S.startBgColor;
-  S.pattern=parseInt(document.querySelector('#g-pattern .sel')?.dataset.idx??S.pattern);
-  S.startBgImage=document.getElementById('s-startimg').value.trim();
-  S.desktopBgImage=document.getElementById('s-deskimg').value.trim();
-  S.username=document.getElementById('s-user').value.trim()||'User';
-  S.showCredit=document.getElementById('s-showcredit').checked;
-  S.wobbly=document.getElementById('s-wobbly').checked;
-  S.wobbleAmt=parseInt(document.getElementById('s-wobble-amt').value)||0;
-  S.wobbleMode=document.getElementById('s-wobble-mode').value||'compiz';
-  if(!S.wobbly)document.querySelectorAll('.app-win.wobbling').forEach(w=>w.classList.remove('wobbling'));
-  saveS();applyTheme();renderTiles();closeModal();notify('Personalization applied!');
+  const sel=document.querySelector('#g-accent .sel');
+  if(sel)S.accent=sel.dataset.color;
+  S.clock24=$('s-clock').value==='24';
+  saveS();applyAccent();tickClock();closeModal();notify('Personalization applied!');
+}
+function resetAll(){
+  if(!confirm('Reset MLPCSim settings, pins and desktop icons?'))return;
+  try{localStorage.removeItem(KEY);}catch(e){}
+  location.reload();
 }
 
-/* ══════════════════════════════════
-   MODAL
-══════════════════════════════════ */
-// Live preview for resolution field
-document.getElementById('a-resolution').addEventListener('input',e=>{
-  const v=parseInt(e.target.value)||100;
-  document.getElementById('a-res-preview').textContent=v+'%';
-});
-function openModal(id){
-  document.getElementById('overlay').classList.add('on');
-  document.querySelectorAll('.modal').forEach(m=>m.style.display='none');
-  document.getElementById(id).style.display='flex';
-  if(id==='m-settings')populateSettingsModal();
-}
-function closeModal(){document.getElementById('overlay').classList.remove('on');document.querySelectorAll('.modal').forEach(m=>m.style.display='none');}
-function overlayClick(e){if(e.target===document.getElementById('overlay'))closeModal();}
-
-/* ══════════════════════════════════
-   CHARMS / SEARCH / NOTIFS
-══════════════════════════════════ */
-document.getElementById('start-search').addEventListener('keydown',e=>{
-  if(e.key==='Enter'){const q=e.target.value.trim();if(q){launchApp({id:'srch',name:`Search: ${q}`,url:`https://www.bing.com/search?q=${encodeURIComponent(q)}`,icon:'search',cat:'Web'},false);e.target.value='';}}
-});
+/* ── notifications + fullscreen tray ── */
 function notify(msg,dur=2800){
-  const area=document.getElementById('notifs');
-  const n=document.createElement('div');n.className='notif';n.style.borderLeftColor=S.accent;n.textContent=msg;
-  n.onclick=()=>n.remove();area.appendChild(n);
+  const n=document.createElement('div');n.className='notif';n.textContent=msg;
+  n.onclick=()=>n.remove();$('notifs').appendChild(n);
   setTimeout(()=>{n.style.transition='opacity .3s';n.style.opacity='0';setTimeout(()=>n.remove(),320);},dur);
 }
-document.addEventListener('keydown',e=>{if(e.key==='Escape'){
-    const s_=document.getElementById('start');
-    const modalOn=document.getElementById('overlay').classList.contains('on');
-    const appsOn=document.getElementById('apps-screen').style.display==='flex';
-    if(S.theme!=='default'&&s_.style.display==='flex'&&!modalOn&&!appsOn)goDesktop();
-    closeModal();hideApps();
-  }if(e.key==='F1'){e.preventDefault();openModal('m-settings');}});
-document.getElementById('lockscreen').onclick=unlock;
-window.addEventListener('resize',drawPattern);
-
-/* ══════════════════════════════════
-   RENDER ALL + BOOT
-══════════════════════════════════ */
-function renderAll(){renderTiles();renderDesktopIcons();renderTaskbar();}
-loadS();applyTheme();renderAll();tickClock();setInterval(tickClock,1000);
-try{ // add the Plugins tile once to layouts saved before the app existed
-  if(!BOOT.guest&&!localStorage.getItem('earlyshell_plug_tile')){
-    if(!S.tiles.some(x=>x.appId==='app-plug'))S.tiles.push({id:'tl'+Date.now()+'p',appId:'app-plug',size:'medium',group:'Tools and Utilities',color:'#744da9'});
-    localStorage.setItem('earlyshell_plug_tile','1');saveS();
-  }
-}catch(e){}
-
-/* ══════════════════════════════════
-   BOOT SEQUENCE
-   click -> fullscreen + loading -> 5s wait -> intro video -> lock screen
-   Space skips straight to the lock screen at any point after the click.
-══════════════════════════════════ */
-const INTRO_VIDEO='./classic/intro.mp4';   // put your intro video here (or change this path)
-let bootPhase='click';
-let bootVideoOK=false;
-const bootEl=document.getElementById('boot');
-const bootVideo=document.getElementById('boot-video');
-function bootShow(id){document.querySelectorAll('.boot-screen').forEach(e=>e.classList.toggle('on',e.id===id));bootVideo.style.display='none';}
-function bootSleep(ms){return new Promise(r=>setTimeout(r,ms));}
-function bootFinish(){
-  if(bootPhase==='done')return;
-  bootPhase='done';
-  try{bootVideo.pause();}catch(e){}
-  bootEl.classList.add('boot-out');bootEl.classList.remove('playing');
-  setTimeout(()=>{bootEl.style.display='none';bootVideo.removeAttribute('src');try{bootVideo.load();}catch(e){}},520);
+function goFullscreen(){
+  try{const de=document.documentElement,r=de.requestFullscreen||de.webkitRequestFullscreen;if(r){const p=r.call(de);if(p&&p.catch)p.catch(()=>{});}}catch(e){}
 }
-function bootLoadImage(url){
-  return new Promise(res=>{
-    const img=new Image();let t;
-    const done=()=>{clearTimeout(t);img.onload=img.onerror=null;res();};
-    t=setTimeout(done,8000);
-    img.onload=img.onerror=done;
-    img.src=url;
-  });
+function checkFullscreenTray(){
+  const off=Math.abs(window.innerWidth-screen.width)>5||Math.abs(window.innerHeight-screen.height)>5;
+  $('tray-fs').style.display=off?'flex':'none';
 }
-function bootLoadVideo(){
-  return new Promise(res=>{
-    let t;
-    const done=ok=>{clearTimeout(t);bootVideo.oncanplaythrough=bootVideo.onerror=null;bootVideoOK=ok;res();};
-    t=setTimeout(()=>done(bootVideo.readyState>=2),15000);
-    bootVideo.oncanplaythrough=()=>done(true);
-    bootVideo.onerror=()=>done(false);
-    bootVideo.src=INTRO_VIDEO;bootVideo.load();
-  });
-}
-async function bootPreload(){
-  // everything except the apps/games themselves: wallpapers, app icons, the intro video
-  const urls=[];const add=u=>{if(u&&!urls.includes(u))urls.push(u);};
-  add(S.desktopBgImage);add(S.startBgImage);
-  S.apps.forEach(a=>add(a.iconUrl));
-  WALLPAPER_PRESETS.forEach(p=>add(p.url));
-  const total=urls.length+1;let done=0;
-  const bar=document.getElementById('boot-bar-fill'),txt=document.getElementById('boot-load-text');
-  const tick=()=>{done++;bar.style.width=Math.round(done/total*100)+'%';if(bootPhase==='load')txt.textContent=`Loading… ${done} / ${total}`;};
-  txt.textContent=`Loading… 0 / ${total}`;
-  let i=0;
-  const worker=async()=>{while(i<urls.length&&bootPhase==='load'){const u=urls[i++];await bootLoadImage(u);tick();}};
-  const jobs=[...Array(8)].map(worker);
-  jobs.push(bootLoadVideo().then(tick));
-  await Promise.race([Promise.all(jobs),bootSleep(30000)]);   // never hang longer than 30s
-}
-function bootPlayVideo(){
-  return new Promise(res=>{
-    if(!bootVideoOK){res();return;}
-    document.querySelectorAll('.boot-screen').forEach(e=>e.classList.remove('on'));
-    bootVideo.style.display='block';bootEl.classList.add('playing');
-    bootVideo.onended=()=>res();bootVideo.onerror=()=>res();
-    bootVideo.currentTime=0;
-    const p=bootVideo.play();
-    if(p&&p.catch)p.catch(()=>{bootVideo.muted=true;const q=bootVideo.play();if(q&&q.catch)q.catch(()=>res());});
-  });
-}
-async function bootStart(){
-  if(bootPhase!=='click')return;
-  bootPhase='load';
-  try{const de=document.documentElement;if(!document.fullscreenElement){const r=de.requestFullscreen||de.webkitRequestFullscreen;if(r){const p=r.call(de);if(p&&p.catch)p.catch(()=>{});}}}catch(e){}
-  bootShow('boot-load');
-  await bootPreload();
-  if(bootPhase!=='load')return;
-  bootPhase='wait';
-  document.getElementById('boot-load-text').textContent='Starting…';
-  document.getElementById('boot-bar-fill').style.width='100%';
-  await bootSleep(5000);
-  if(bootPhase!=='wait')return;
-  bootPhase='video';
-  await bootPlayVideo();
-  bootFinish();
-}
-bootEl.addEventListener('click',()=>{if(bootPhase==='click')bootStart();});
+['resize','fullscreenchange','webkitfullscreenchange','focus'].forEach(ev=>window.addEventListener(ev,checkFullscreenTray));
 document.addEventListener('keydown',e=>{
-  if(e.code==='Space'&&bootPhase!=='click'&&bootPhase!=='done'){e.preventDefault();bootFinish();}
+  if(e.key==='Escape'){
+    if($('overlay').classList.contains('on')){closeModal();return;}
+    if(body.classList.contains('dn-open')){if(body.classList.contains('dn-all'))dnToggleAll();else setMenu(false);}
+  }
+  if(e.key==='F1'){e.preventDefault();openModal();}
 });
-/* ══════════════════════════════════
-   PLUGIN RUNTIME
-   Plugins run here in the host page so they can start during loading.
-   The Plugins app (./plugins/) is just a front-end for this object.
-══════════════════════════════════ */
-const MPC={
-  running:new Map(),logs:[],onLog:null,onChange:null,_ga:{},_gi:[],
-  S:()=>S,
-  log(m,c){
-    const e={t:new Date().toLocaleTimeString(),m:String(m),c:c||''};
-    MPC.logs.push(e);if(MPC.logs.length>300)MPC.logs.shift();
-    try{if(MPC.onLog)MPC.onLog(e);}catch(_){}
-  },
-  changed(){try{if(MPC.onChange)MPC.onChange();}catch(_){}},
-  builtin(){return (window.MPC_BUILTIN_PLUGINS||[]).map(p=>({...p,builtin:true}));},
-  custom(){if(BOOT.guest)return [];try{return JSON.parse(localStorage.getItem('mpc_plugins'))||[];}catch(e){return [];}},
-  autoMap(){if(BOOT.guest)return MPC._ga;try{const m=JSON.parse(localStorage.getItem('mpc_autostart'));return (m&&typeof m==='object'&&!Array.isArray(m))?m:{};}catch(e){return {};}},
-  isAuto(p){const m=MPC.autoMap();if(m[p.id]!==undefined)return !!m[p.id];if(!BOOT.guest&&MPC._ga[p.id]!==undefined)return !!MPC._ga[p.id];return !!p.autostart;},
-  setAuto(p,on){
-    if(BOOT.guest){MPC._ga[p.id]=!!on;return;}
-    const m=MPC.autoMap();m[p.id]=!!on;
-    try{localStorage.setItem('mpc_autostart',JSON.stringify(m));}catch(e){MPC.log('Could not save autostart setting: '+e.message,'e');}
-    MPC._ga[p.id]=!!on;   // in-memory fallback so the setting at least sticks for this session
-  },
-  _dropApps(r){   // remove the apps a plugin installed (desktop icons/tiles are kept so they reappear in place)
-    if(!r||!r.apps||!r.apps.length)return;
-    S.apps=S.apps.filter(a=>!r.apps.includes(a.id));
-    renderAll();renderAppsGrid('');
-  },
-  /* Installed apps (from the Plugins app / mpc.addApp({persist:true})) survive reloads */
-  installed(){if(BOOT.guest)return MPC._gi;try{return JSON.parse(localStorage.getItem('mpc_installed_apps'))||[];}catch(e){return [];}},
-  isInstalled(id){return MPC.installed().some(a=>a.id===id);},
-  _store(l){
-    if(BOOT.guest){MPC._gi=l;return;}
-    try{localStorage.setItem('mpc_installed_apps',JSON.stringify(l));}catch(e){MPC.log('Could not save app: '+e.message,'e');}
-  },
-  saveInstalled(rec){const l=MPC.installed().filter(a=>a.id!==rec.id);l.push(rec);MPC._store(l);},
-  uninstallApp(id){
-    MPC._store(MPC.installed().filter(a=>a.id!==id));
-    S.apps=S.apps.filter(a=>a.id!==id);S.tiles=S.tiles.filter(t=>t.appId!==id);S.dicons=S.dicons.filter(d=>d.appId!==id);
-    saveS();renderAll();renderAppsGrid('');
-  },
-  restoreApps(){
-    if(BOOT.guest)return;
-    MPC.installed().forEach(r=>{
-      try{
-        const url=r.html!=null?URL.createObjectURL(new Blob([r.html],{type:'text/html'})):r.url;
-        S.apps=S.apps.filter(a=>a.id!==r.id);
-        S.apps.push({id:r.id,name:r.name,url,icon:r.icon||'globe',cat:r.cat||'Custom',iconUrl:r.iconUrl||'',resolution:r.resolution||100});
-      }catch(e){MPC.log('Could not restore '+(r&&r.name)+': '+e.message,'e');}
-    });
-  },
-  async getCode(p){
-    if(p.code!=null)return p.code;
-    const r=await fetch(p.path,{cache:'no-store'});
-    if(!r.ok)throw new Error('HTTP '+r.status+' loading '+p.path);
-    return r.text();
-  },
-  registerApp(o){
-    let url=o.url;
-    if(o.html!=null)url=URL.createObjectURL(new Blob([o.html],{type:'text/html'}));
-    if(!url)throw new Error('App needs html or url');
-    const id=o.id||'app-'+uid();
-    S.apps=S.apps.filter(a=>a.id!==id);
-    const app={id,name:o.name||'App',url,icon:o.icon||'globe',cat:o.cat||'Custom',iconUrl:o.iconUrl||'',resolution:o.resolution||100};
-    S.apps.push(app);
-    if(o.persist)MPC.saveInstalled({id,name:app.name,html:o.html!=null?o.html:null,url:o.html!=null?'':(o.url||''),icon:app.icon,iconUrl:app.iconUrl,cat:app.cat,resolution:app.resolution});
-    renderAll();renderAppsGrid('');
-    if(o.desktop&&!S.dicons.some(d=>d.appId===id))addIconForApp(app);
-    return app;
-  },
-  api(id){
-    const run=MPC.running.get(id);
-    return {
-      host:window,S:()=>S,doc:()=>document,
-      notify:m=>notify(String(m)),
-      sound:(n,o)=>SFX.play(n,o),
-      log:m=>MPC.log('['+id+'] '+m),
-      save:()=>saveS(),
-      refresh:()=>{applyTheme();renderAll();},
-      launchApp:key=>{
-        const k=String(key).toLowerCase();
-        const a=S.apps.find(x=>x.id.toLowerCase()===k||x.name.toLowerCase()===k)||S.apps.find(x=>x.name.toLowerCase().includes(k));
-        if(!a)throw new Error('No app: '+key);
-        launchApp(a,false);
-      },
-      setAccent:c=>{S.accent=c;applyTheme();renderAll();},
-      setWallpaper:u=>{S.desktopBgImage=u;saveS();applyTheme();},
-      setTheme:t=>{S.theme=t;saveS();applyTheme();},
-      addApp:o=>{
-        // apps are owned by the plugin that adds them: removed again when the plugin stops
-        const aid=o.id||('app-'+id+'-'+String(o.name||'app').toLowerCase().replace(/[^a-z0-9]+/g,'-'));
-        const app=MPC.registerApp({...o,id:aid});
-        if(run&&!run.apps.includes(aid))run.apps.push(aid);
-        return app;
-      },
-      injectCSS:css=>{const st=document.createElement('style');st.textContent=css;document.head.appendChild(st);if(run)run.stops.push(()=>st.remove());return st;},
-      onStop:fn=>{if(run)run.stops.push(fn);},
-      interval:(fn,ms)=>{const t=setInterval(fn,ms);if(run)run.stops.push(()=>clearInterval(t));return t;},
-    };
-  },
-  async start(p){
-    if(!BOOT.plugins){MPC.log('Plugins are disabled (safe mode): '+p.name,'e');return;}
-    if(MPC.running.has(p.id))return;
-    MPC.running.set(p.id,{stops:[],apps:[]});MPC.changed();
-    try{
-      const code=await MPC.getCode(p);
-      const fn=new Function('mpc',code+'\n//# sourceURL=plugin-'+p.id+'.js');
-      const ret=await fn(MPC.api(p.id));
-      const r=MPC.running.get(p.id);
-      if(r&&ret&&typeof ret.stop==='function')r.stops.push(ret.stop);
-      MPC.log(p.name+' ran','o');
-      // plugins that registered no stop hooks are one-shot
-      if(r&&!r.stops.length&&!r.apps.length)MPC.running.delete(p.id);
-    }catch(e){MPC.running.delete(p.id);MPC.log(p.name+': '+e.message,'e');}
-    MPC.changed();
-  },
-  stop(p){
-    const r=MPC.running.get(p.id);if(!r)return;
-    r.stops.forEach(f=>{try{f();}catch(e){MPC.log('stop error: '+e.message,'e');}});
-    MPC._dropApps(r);
-    MPC.running.delete(p.id);MPC.log(p.name+' stopped');MPC.changed();
-  },
-  stopAll(){
-    [...MPC.running.keys()].forEach(id=>{
-      const r=MPC.running.get(id);
-      if(r){r.stops.forEach(f=>{try{f();}catch(e){}});MPC._dropApps(r);}
-      MPC.running.delete(id);
-    });
-    MPC.changed();
-  },
-  async startAuto(){
-    const list=[...MPC.builtin(),...MPC.custom()].filter(p=>MPC.isAuto(p));
-    if(!list.length)return;
-    MPC.log('Autostarting '+list.length+' plugin(s)');
-    await Promise.race([Promise.all(list.map(p=>MPC.start(p))),new Promise(r=>setTimeout(r,8000))]);
-  },
-};
-window.MPC=MPC;window.BOOT=BOOT;
-MPC.restoreApps();renderAll();   // bring back installed apps before first paint
 
-/* Notifications raised during boot wait until the desktop is visible */
-const _notifyOrig=notify;const notifyQ=[];
-notify=function(msg,dur){if(bootPhase!=='done'){notifyQ.push([msg,dur]);return;}_notifyOrig(msg,dur);};
-function flushNotifs(){notifyQ.splice(0).forEach(a=>_notifyOrig(a[0],a[1]));}
-/* ══════════════════════════════════
-   BOOT MODES
-══════════════════════════════════ */
-let bootModeApplied=false,pluginsStarted=false,bootVideoP=null,bootRunId=0;
-function applyBootMode(){
-  if(bootModeApplied)return;
-  bootModeApplied=true;
-  if(BOOT.guest){
-    // fresh defaults; saveS() is a no-op from here on, so localStorage stays untouched
-    const nw=S.nextWin;
-    S=JSON.parse(JSON.stringify(S_DEFAULTS));S.nextWin=nw;S.openWins=[];
-    applyTheme();renderAll();tickClock();
-    notify('Guest session — nothing will be saved.');
-  }
-  if(!BOOT.plugins)notify('Safe mode — plugins are disabled.');
-  document.body.classList.toggle('oneapp',!!BOOT.oneApp);
-}
-async function startBootPlugins(){
-  if(pluginsStarted)return;
-  pluginsStarted=true;
-  if(!BOOT.plugins)return;
-  try{await MPC.startAuto();}catch(e){MPC.log('autostart: '+e.message,'e');}
-}
-function bootLaunchOneApp(){
-  if(!BOOT.oneApp)return;
-  const a=getApp(BOOT.oneApp);
-  if(!a){notify('1-app mode: app not found.');return;}
-  document.getElementById('lockscreen').style.display='none';
-  launchApp(a,false);
-  const el=document.getElementById('w'+(S.nextWin-1));if(!el)return;
-  const w=Math.round(vw()*.9),h=Math.round(vh()*.88);
-  el.style.left=Math.round((vw()-w)/2)+'px';el.style.top=Math.round((vh()-h)/2)+'px';
-  el.style.width=w+'px';el.style.height=h+'px';
-}
-async function bootRun(fast){
-  // quick boot that was not chosen from the boot manager: ask about the video now
-  if(BOOT.quick&&BOOT.quickVideo===null){openQuickAsk();return;}
-  const my=++bootRunId;
-  const live=ph=>my===bootRunId&&bootPhase===ph;
-  bootPhase='load';bootShow('');                       // black while the startup video loads
-  const wantVideo=(!BOOT.quick||BOOT.quickVideo===true)&&!S.lite;   // performance mode: no startup video
-  if(wantVideo){
-    if(!bootVideoP)bootVideoP=bootLoadVideo();
-    await bootVideoP;
-    if(!live('load'))return;
-  }
-  const useVideo=wantVideo&&bootVideoOK;
-  let vp=null;
-  if(useVideo)vp=bootPlayVideo(!BOOT.quick);           // the startup video replaces the loading screen (loops while loading)
-  else if(!BOOT.quick)bootShow('boot-load');           // no video file: fall back to the old loading screen
-  if(!BOOT.quick)await bootPreload();                  // quick boot: assets load lazily
-  else if(!S.lite&&setupWillRun())PRELOAD.blob(SETUP_VIDEO,{kind:'video'});   // quick boot: still warm the setup video in the background
-  if(!live('load'))return;
-  if(!BOOT.quick){try{applyTheme();}catch(e){}}        // relink wallpapers to the preloaded copies
-  bootPhase='wait';
-  document.getElementById('boot-bar-fill').style.width='100%';
-  document.getElementById('boot-load-text').textContent=BOOT.plugins?'Starting plugins…':'Starting (safe mode)…';
-  applyBootMode();
-  await startBootPlugins();
-  if(!live('wait'))return;
-  if(useVideo){
-    if(BOOT.quick){
-      bootVideo.loop=false;                            // quick boot: the video ends on its own 1s in
-      await vp;
-    }else{
-      await bootFadeVideo(900);                        // full load: loading is done, fade the video (and its sound) out
-    }
-    if(!live('wait'))return;
-  }else if(!BOOT.quick){
-    document.getElementById('boot-load-text').textContent='Starting…';
-    await bootSleep(fast?1200:5000);
-    if(!live('wait'))return;
-  }
-  bootFinish();
-}
-/* ══════════════════════════════════
-   SHUT DOWN — outro video, then the tab closes
-══════════════════════════════════ */
-const OUTRO_VIDEO='./classic/outro.mp4';   // put your outro video here (or change this path)
-let shuttingDown=false;
-function shutDown(){
-  if(shuttingDown)return;
-  shuttingDown=true;
-  closeModal();hideApps();
-  document.getElementById('ctx').style.display='none';
-  stopWindowCrash();
-  const ov=document.getElementById('shutdown'),v=document.getElementById('shutdown-video');
-  const txt=document.getElementById('shutdown-text'),spin=document.getElementById('shutdown-spin');
-  ov.classList.add('on');
-  let started=false,finished=false;
-  const finish=()=>{
-    if(finished)return;finished=true;
-    try{v.pause();}catch(e){}
-    v.style.display='none';ov.classList.remove('playing');
-    spin.style.display='none';txt.style.display='block';
-    txt.textContent='It is now safe to close this tab.';
-    try{window.close();}catch(e){}
-    // browsers only let scripts close tabs they opened, so fall back to a blank page
-    setTimeout(()=>{location.replace('about:blank');},600);
-  };
-  const guard=setTimeout(()=>{if(!started)finish();},8000);
-  v.onplaying=()=>{started=true;clearTimeout(guard);v.style.display='block';spin.style.display='none';txt.style.display='none';ov.classList.add('playing');};
-  v.onended=finish;
-  v.onerror=()=>{clearTimeout(guard);if(started)finish();else setTimeout(finish,1500);};   // no video: show the message briefly, then close
-  v.src=OUTRO_VIDEO;
-  const pr=v.play();
-  if(pr&&pr.catch)pr.catch(()=>{v.muted=true;const q=v.play();if(q&&q.catch)q.catch(()=>{clearTimeout(guard);setTimeout(finish,1500);});});
-}
-/* ══════════════════════════════════
-   GRUB-LIKE BOOT MENU  (press 1 while loading)
-══════════════════════════════════ */
-let grubOpen=false,grubUsed=false;
-const GS={view:'main',from:'main',idx:0,save:false,msg:'',qv:null,sel:{safe:false,guest:false,one:false,quick:false},app:null};
-const GRUB_MAIN=[
-  'Boot mpcsim normally',
-  'Quick boot (startup video only, then the lock screen)',
-  'Boot mpcsim without plugins (safe mode)',
-  'Boot mpcsim in Guest mode (temporary session, nothing is saved)',
-  'Boot mpcsim in 1-app mode (one app in a window on a black background)',
-  'Multiple modes…',
-  'Set default boot options for future boots…',
-];
-function savedBoot(){try{return JSON.parse(localStorage.getItem('mpc_bootmode')||'null')||{};}catch(e){return {};}}
-function bootSummary(b){
-  const p=[];
-  if(b.plugins===false)p.push('safe mode');
-  if(b.guest)p.push('guest');
-  if(b.oneApp){const a=getApp(b.oneApp);p.push('1-app ('+(a?a.name:b.oneApp)+')');}
-  if(b.quick)p.push('quick boot ('+(b.quickVideo===true?'video on':b.quickVideo===false?'video off':'asks about the video')+')');
-  return p.length?p.join(' + '):'normal boot';
-}
-function saveBootDefault(m){
-  const d={plugins:m.plugins!==false,guest:!!m.guest,oneApp:m.oneApp||null,quick:!!m.quick,quickVideo:(m.quick&&typeof m.quickVideo==='boolean')?m.quickVideo:null};
-  try{
-    if(d.plugins&&!d.guest&&!d.oneApp&&!d.quick)localStorage.removeItem('mpc_bootmode');
-    else localStorage.setItem('mpc_bootmode',JSON.stringify(d));
-    return true;
-  }catch(e){return false;}
-}
-function grubApps(){return S.apps.filter(a=>a.url&&!a.url.startsWith('__'));}
-function grubItems(){
-  if(GS.view==='main')return GRUB_MAIN.slice();
-  if(GS.view==='apps')return grubApps().map(a=>a.name).concat(['<< Back']);
-  if(GS.view==='qv'){const l=['Turn the startup video ON  (play it, then go to the lock screen)','Turn the startup video OFF (go straight to the lock screen)'];if(GS.from!=='ask')l.push('<< Back');return l;}
-  const nm=GS.app?((getApp(GS.app)||{}).name||'?'):'none selected';
-  return [
-    '['+(GS.sel.safe?'*':' ')+'] Safe mode (no plugins)',
-    '['+(GS.sel.guest?'*':' ')+'] Guest mode (temporary session)',
-    '['+(GS.sel.one?'*':' ')+'] 1-app mode (app: '+nm+')',
-    '['+(GS.sel.quick?'*':' ')+'] Quick boot (startup video only, then the lock screen'+(GS.sel.quick?'; video: '+(GS.qv===true?'on':GS.qv===false?'off':'ask at boot'):'')+')',
-    GS.save?'Save as default for future boots':'Boot with the selected options',
-    '<< Back',
-  ];
-}
-function grubRender(){
-  const el=document.getElementById('grub');
-  const titles={main:'mpcsim boot manager 1.0',apps:'1-app mode — choose the app to boot into',multi:GS.save?'Default boot options — choose, then save':'Multiple modes — choose your options, then boot',qv:'Quick boot — play the startup video?'};
-  const helps={
-    main:'Use the ↑ and ↓ keys to select which entry is highlighted.\nPress Enter to boot the selected entry, or 1–7 to pick one directly.\nEsc boots mpcsim normally.\n\nSaved default: '+bootSummary(savedBoot())+(GS.msg?'\n'+GS.msg:''),
-    apps:'Use the ↑ and ↓ keys to select an app, Enter to choose it, Esc to go back.',
-    multi:'Enter or Space toggles an option. Choose "Boot with the selected options" when ready.\nEsc goes back.',
-    qv:GS.from==='ask'?'Quick boot is on but the startup video was not chosen yet.\nUse the ↑ and ↓ keys and Enter to choose. Esc turns the video on.':'Choose whether quick boot plays the startup video.\nUse the ↑ and ↓ keys and Enter to choose. Esc goes back.',
-  };
-  el.innerHTML='';
-  const t=document.createElement('div');t.className='g-title';t.textContent=titles[GS.view];el.appendChild(t);
-  const box=document.createElement('div');box.className='g-box';
-  grubItems().forEach((txt,i)=>{
-    const r=document.createElement('div');r.className='g-row'+(i===GS.idx?' sel':'');
-    r.textContent=((GS.view==='main'||GS.view==='multi'||GS.view==='qv')&&i<9?(i+1)+'  ':'   ')+txt;
-    r.onclick=()=>{GS.idx=i;grubActivate(i);};
-    box.appendChild(r);
-  });
-  el.appendChild(box);
-  const h=document.createElement('div');h.className='g-help';h.textContent=helps[GS.view];el.appendChild(h);
-  const sel=box.querySelector('.sel');if(sel)sel.scrollIntoView({block:'nearest'});
-}
-function openGrub(){
-  grubOpen=true;grubUsed=true;
-  bootPhase='menu';bootRunId++;           // pause the boot sequence
-  Object.assign(GS,{view:'main',from:'main',idx:0,save:false,msg:'',qv:null,sel:{safe:false,guest:false,one:false,quick:false},app:null});
-  bootVideoStop();
-  document.getElementById('grub').classList.add('on');
-  grubRender();
-}
-function bootVideoStop(){try{bootVideo.pause();}catch(e){}bootVideo.style.display='none';bootEl.classList.remove('playing');}
-// quick boot without a saved video choice: ask on the spot
-function openQuickAsk(){
-  grubOpen=true;
-  bootPhase='menu';bootRunId++;
-  Object.assign(GS,{view:'qv',from:'ask',idx:0,save:false,msg:''});
-  bootVideoStop();
-  document.getElementById('grub').classList.add('on');
-  grubRender();
-}
-function closeGrub(){grubOpen=false;document.getElementById('grub').classList.remove('on');}
-function grubConfirm(m){
-  BOOT.plugins=m.plugins!==false;BOOT.guest=!!m.guest;BOOT.oneApp=m.oneApp||null;BOOT.quick=!!m.quick;BOOT.quickVideo=m.quick&&typeof m.quickVideo==='boolean'?m.quickVideo:null;
-  closeGrub();
-  MPC.stopAll();pluginsStarted=false;bootModeApplied=false;   // restart under the chosen mode
-  bootRun(true);
-}
-function grubActivate(i){
-  const v=GS.view;
-  if(v==='main'){
-    if(i===0)return grubConfirm({});
-    if(i===1){GS.view='qv';GS.from='main';GS.idx=0;return grubRender();}
-    if(i===2)return grubConfirm({plugins:false});
-    if(i===3)return grubConfirm({guest:true});
-    if(i===4){GS.view='apps';GS.from='main';GS.idx=0;return grubRender();}
-    if(i===5){GS.save=false;GS.view='multi';GS.idx=0;return grubRender();}
-    if(i===6){
-      const b=savedBoot();
-      GS.sel={safe:b.plugins===false,guest:!!b.guest,one:!!(b.oneApp&&getApp(b.oneApp)),quick:!!b.quick};
-      GS.app=GS.sel.one?b.oneApp:null;GS.qv=typeof b.quickVideo==='boolean'?b.quickVideo:null;
-      GS.save=true;GS.msg='';GS.view='multi';GS.idx=0;return grubRender();
-    }
-  }else if(v==='qv'){
-    if(i>1){GS.view=GS.from==='main'?'main':'multi';GS.idx=GS.from==='main'?1:3;return grubRender();}
-    const on=i===0;
-    if(GS.from==='main')return grubConfirm({quick:true,quickVideo:on});
-    if(GS.from==='ask'){BOOT.quickVideo=on;closeGrub();return bootRun(true);}
-    GS.sel.quick=true;GS.qv=on;GS.view='multi';GS.idx=3;
-  }else if(v==='apps'){
-    const list=grubApps();
-    if(i>=list.length){GS.view=GS.from;GS.idx=GS.from==='main'?4:2;return grubRender();}
-    if(GS.from==='main')return grubConfirm({oneApp:list[i].id});
-    GS.app=list[i].id;GS.sel.one=true;GS.view='multi';GS.idx=2;return grubRender();
-  }else{
-    if(i===0)GS.sel.safe=!GS.sel.safe;
-    else if(i===1)GS.sel.guest=!GS.sel.guest;
-    else if(i===2){if(GS.sel.one)GS.sel.one=false;else{GS.view='apps';GS.from='multi';GS.idx=0;}}
-    else if(i===3){if(GS.sel.quick){GS.sel.quick=false;GS.qv=null;}else{GS.view='qv';GS.from='multi';GS.idx=0;}}
-    else if(i===4){
-      const m={plugins:!GS.sel.safe,guest:GS.sel.guest,oneApp:GS.sel.one?GS.app:null,quick:GS.sel.quick,quickVideo:GS.sel.quick?GS.qv:null};
-      if(!GS.save)return grubConfirm(m);
-      GS.msg=saveBootDefault(m)?'Saved. Future boots will use: '+bootSummary(m)+'.':'Could not save (storage unavailable).';
-      GS.save=false;GS.view='main';GS.idx=6;
-    }
-    else{GS.view='main';GS.idx=GS.save?6:5;GS.save=false;}
-    grubRender();
-  }
-}
-function grubBack(){
-  if(GS.view==='main')return grubConfirm({});
-  if(GS.view==='qv'){
-    if(GS.from==='ask'){BOOT.quickVideo=true;closeGrub();return bootRun(true);}
-    GS.view=GS.from==='main'?'main':'multi';GS.idx=GS.from==='main'?1:3;return grubRender();
-  }
-  if(GS.view==='multi')GS.save=false;
-  GS.view=GS.view==='apps'?GS.from:'main';GS.idx=0;grubRender();
-}
-function grubKey(e){
-  e.preventDefault();e.stopPropagation();
-  const n=grubItems().length;
-  if(e.key==='ArrowDown'){GS.idx=(GS.idx+1)%n;}
-  else if(e.key==='ArrowUp'){GS.idx=(GS.idx-1+n)%n;}
-  else if(e.key==='Enter'||e.code==='Space'){if(!e.repeat)grubActivate(GS.idx);return;}
-  else if(e.key==='Escape'){if(!e.repeat)grubBack();return;}
-  else if(/^[1-9]$/.test(e.key)){
-    if(e.repeat)return;
-    const k=+e.key-1;
-    if(k<n&&GS.view!=='apps'){GS.idx=k;grubActivate(k);}
-    return;
-  }
-  grubRender();
-}
-function bootShow(id){document.querySelectorAll('.boot-screen').forEach(e=>e.classList.toggle('on',e.id===id));bootVideo.style.display='none';}
-function bootSleep(ms){return new Promise(r=>setTimeout(r,ms));}
-function bootFinish(){
-  if(bootPhase==='done')return;
-  closeGrub();
-  applyBootMode();startBootPlugins();
-  bootPhase='done';
-  vpReady=true;applyViewport();renderAll();
-  try{maybeStartSetup();}catch(e){console.error('setup wizard',e);}   // first-run setup wizard (covers the screen before the boot overlay fades)
-  scheduleIconInvert();
-  bootLaunchOneApp();
-  setTimeout(flushNotifs,700);
-  try{bootVideo.pause();}catch(e){}
-  bootEl.classList.add('boot-out');bootEl.classList.remove('playing');
-  setTimeout(()=>{bootEl.style.display='none';bootVideo.removeAttribute('src');try{bootVideo.load();}catch(e){}},520);
-}
-function bootLoadImage(url){
-  return cacheAsset(url);
-}
-
-function bootLoadVideo(){
-  return PRELOAD.blob(INTRO_VIDEO,{kind:'video'}).then(linked=>new Promise(res=>{   // linked = in-memory copy, or null -> stream the file as before
-    let t;
-    const done=ok=>{clearTimeout(t);bootVideo.oncanplaythrough=bootVideo.onerror=null;bootVideoOK=ok;res();};
-    t=setTimeout(()=>done(bootVideo.readyState>=2),15000);
-    bootVideo.oncanplaythrough=()=>done(true);
-    bootVideo.onerror=()=>done(false);
-    bootVideo.src=linked||INTRO_VIDEO;bootVideo.load();
-  }));
-}
-// will the setup wizard run on this boot? (same rules as maybeStartSetup)
-function setupWillRun(){
-  if(BOOT.guest||BOOT.oneApp)return false;
-  return /[?&]setup(=|&|$)/.test(location.search)||!setupIsDone();
-}
-async function bootPreload(){
-  // Preload everything and link it: wallpapers, app icons, profile pic, desktop/start bg, system sounds,
-  // the intro video and (only if the setup wizard is about to run) the setup video.
-  // Local files (./wp/, ./sounds/, ./intro.mp4 …) are preloaded too, not just http(s) ones.
-  const cur=[],rest=[];
-  const addTo=(list,u)=>{if(!PRELOAD.skip(u)&&!cur.includes(u)&&!rest.includes(u))list.push(u);};
-  addTo(cur,S.desktopBgImage);addTo(cur,S.startBgImage);addTo(cur,S.profilePic);
-  if(!S.lite){   // performance mode: skip the app icons, the wallpaper presets and the videos (they load when needed)
-    S.apps.forEach(a=>addTo(rest,a.iconUrl));
-    WALLPAPER_PRESETS.forEach(p=>addTo(rest,p.url));
-  }
-  const sounds=[...new Set(Object.values(SOUND_FILES).filter(Boolean))];
-  const tasks=[
-    ...cur.map(u=>()=>cacheAsset(u)),
-    ...sounds.map(u=>()=>PRELOAD.blob(u,{kind:'audio'})),
-    ...rest.map(u=>()=>cacheAsset(u)),
-  ];
-  const wantSetup=!S.lite&&setupWillRun();
-  const total=tasks.length+(S.lite?0:1)+(wantSetup?1:0);
-  let done=0;
-  const bar=document.getElementById('boot-bar-fill'),txt=document.getElementById('boot-load-text');
-  const tick=()=>{
-    done++;
-    bar.style.width=Math.round(done/total*100)+'%';
-    if(bootPhase==='load')txt.textContent=`Loading… ${Math.min(done,total)} / ${total}`;
-  };
-  txt.textContent=`Loading… 0 / ${total}`;
-
-  // Parallel loading with worker pool
-  let i=0;
-  const workerCount=Math.min(12,tasks.length||1);
-  const worker=async()=>{
-    while(i<tasks.length&&bootPhase==='load'){
-      const job=tasks[i++];
-      try{await job();}catch(e){}
-      tick();
-    }
-  };
-  const jobs=[...Array(workerCount)].map(()=>worker());
-  if(!S.lite){
-    if(!bootVideoP)bootVideoP=bootLoadVideo();
-    jobs.push(bootVideoP.then(tick));
-  }
-  if(wantSetup)jobs.push(PRELOAD.blob(SETUP_VIDEO,{kind:'video'}).then(tick,tick));
-
-  // Load with timeout fallback (anything still downloading keeps going and gets linked as soon as it arrives)
-  await Promise.race([Promise.all(jobs),bootSleep(45000)]);
-}
-function bootFadeVideo(ms){
-  return new Promise(res=>{
-    const v=bootVideo;
-    if(v.paused||v.ended){res();return;}
-    const v0=v.volume,t0=performance.now();
-    v.loop=false;
-    v.style.transition='opacity '+ms+'ms ease';
-    requestAnimationFrame(()=>{v.style.opacity='0';});
-    const iv=setInterval(()=>{
-      const k=Math.min(1,(performance.now()-t0)/ms);
-      try{v.volume=Math.max(0,v0*(1-k));}catch(e){}
-      if(k>=1){clearInterval(iv);try{v.pause();}catch(e){}try{v.volume=v0;}catch(e){}res();}
-    },30);
-  });
-}
-function bootPlayVideo(loop){
-  return new Promise(res=>{
-    if(!bootVideoOK){res();return;}
-    let capT=null;
-    const _res=res;res=()=>{clearInterval(capT);_res();};
-    document.querySelectorAll('.boot-screen').forEach(e=>e.classList.remove('on'));
-    bootVideo.style.transition='none';bootVideo.style.opacity='1';
-    bootVideo.style.display='block';bootEl.classList.add('playing');
-    bootVideo.loop=!!loop;
-    bootVideo.onended=()=>res();bootVideo.onerror=()=>res();
-    bootVideo.currentTime=0;
-    if(BOOT.quick){   // quick boot: the video ends 1s into playback
-      capT=setInterval(()=>{if(bootVideo.currentTime>=1)res();},50);
-      bootVideo.ontimeupdate=()=>{if(bootVideo.currentTime>=1)res();};
-    }
-    const p=bootVideo.play();
-    if(p&&p.catch)p.catch(()=>{bootVideo.muted=true;const q=bootVideo.play();if(q&&q.catch)q.catch(()=>res());});
-  });
-}
-async function bootStart(){
-  if(bootPhase!=='click')return;
-  bootPhase='load';
-    try{const de=document.documentElement;if(!document.fullscreenElement){const r=de.requestFullscreen||de.webkitRequestFullscreen;if(r){const p=r.call(de);if(p&&p.catch)p.catch(()=>{});}}}catch(e){}
-  if(key1Held&&!grubUsed){openGrub();return;}   // 1 held while clicking: straight to the boot menu
-  bootRun(false);
-}
-bootEl.addEventListener('click',()=>{if(bootPhase==='click')bootStart();});
-let key1Held=false;
-document.addEventListener('keyup',e=>{if(e.key==='1')key1Held=false;},true);
-window.addEventListener('blur',()=>{key1Held=false;});
-document.addEventListener('keydown',e=>{
-  if(e.key==='1')key1Held=true;
-  if(grubOpen){grubKey(e);return;}
-  if(e.key==='1'&&!e.repeat&&!grubUsed&&(bootPhase==='load'||bootPhase==='wait')){e.preventDefault();openGrub();return;}
-  if(e.code==='Space'&&bootPhase!=='click'&&bootPhase!=='done'&&bootPhase!=='menu'){e.preventDefault();bootFinish();}
-},true);
-/* ══════════════════════════════════
-   EXTRA WALLPAPERS BRIDGE
-   The Extra Wallpapers app (./extrawp/) sends {type:'extrawp:set',url,target:'desktop'|'start'|'both'}
-══════════════════════════════════ */
-const xwpStartOK=()=>!!(THEMES[S.theme]&&THEMES[S.theme].startBg);   // only themes with startBg:true show a Start background
-const xwpState=()=>({type:'extrawp:state',desktop:S.desktopBgImage||'',start:S.startBgImage||'',startSupported:xwpStartOK()});
-window.addEventListener('message',e=>{
-  const d=e.data;if(!d||typeof d!=='object')return;
-  const reply=()=>{if(e.source)e.source.postMessage(xwpState(),'*');};
-  if(d.type==='extrawp:hello'){reply();return;}
-  if(d.type!=='extrawp:set')return;
-  const u=d.url;
-  if(typeof u!=='string'||!(u.startsWith('data:image/')||/^(https?:|\.\/)/.test(u)))return;
-  if(d.target==='start'&&!xwpStartOK()){reply();return;}
-  if(d.target==='desktop'||d.target==='both')S.desktopBgImage=u;
-  if((d.target==='start'||d.target==='both')&&xwpStartOK())S.startBgImage=u;
-  saveS();applyTheme();
-});
-// tell open Extra Wallpapers windows when the theme (and so Start support) changes
-const _xwpApplyTheme=applyTheme;
-applyTheme=function(){
-  _xwpApplyTheme.apply(this,arguments);
-  document.querySelectorAll('iframe.win-frame').forEach(f=>{try{f.contentWindow.postMessage(xwpState(),'*')}catch(e){}});
-};
-// restarted via Power > Enter Boot Manager: skip the click-to-start screen and open the boot manager
-try{
-  if(sessionStorage.getItem('mpc_open_boot_manager')){
-    sessionStorage.removeItem('mpc_open_boot_manager');
-    key1Held=true;bootStart();key1Held=false;
-  }
-}catch(e){}
+/* ── start ── */
+loadS();
+applyAccent();
+(function(){   // use the menu button icon from constants.js if it defines one
+  try{if(typeof THEMES!=='undefined'&&THEMES.defaultnew&&THEMES.defaultnew.orb)$('start-orb').innerHTML=`<i class="${THEMES.defaultnew.orb}"></i>`;}catch(e){}
+})();
+renderMenu();renderDesktopIcons();renderTaskbar();
+tickClock();setInterval(tickClock,1000);
+checkFullscreenTray();setInterval(checkFullscreenTray,1000);
 </script>
 </body>
 </html>
