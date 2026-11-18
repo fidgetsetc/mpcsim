@@ -5237,6 +5237,10 @@ try{
     key1Held=true;bootStart();key1Held=false;
   }
 }catch(e){}
+// ?skipclick: skip the click-to-start screen and begin loading right away
+try{
+  if(/[?&]skipclick(=|&|$)/.test(location.search)&&bootPhase==='click')bootStart();
+}catch(e){}
 </script>
 </body>
 </html>
