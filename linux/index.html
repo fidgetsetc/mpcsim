@@ -123,7 +123,7 @@
 /* ------------------------------------------------------------------ */
 
 // Path/URL to a bootable CD image (.iso).
-const CD_IMAGE_URL = "https://shy-shape-35f8.scrappywriter.workers.dev/alpine-standard-3.24.4-x86.iso";
+const CD_IMAGE_URL = "https://shy-shape-35f8.scrappywriter.workers.dev/linux.iso";
 
 // true  = fetch CD sectors on demand via HTTP Range requests (server must
 //         support Range; best for large images).
@@ -258,6 +258,7 @@ const progressEl = document.createElement("span");
 progressEl.style.cssText = "display:block;margin-top:4px;color:#9ab;font-size:13px";
 notice.querySelector(".text").appendChild(progressEl);
 if (emulator) {
+  notice.classList.add("hidden");
   emulator.add_listener("download-progress", function (e) {
     const name = (e.file_name || "").split("/").pop();
     if (e.lengthComputable && e.total) {

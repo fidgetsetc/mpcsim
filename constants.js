@@ -811,7 +811,7 @@ const DEFAULT_APPS = [
   },
   {
     id: 'app-linux',
-    name: 'Linux Terminal',
+    name: 'Linux (TinyCore)',
     url: './linux/index.html',
     icon: 'gamepad',
     cat: 'Tools',
