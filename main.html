@@ -5161,6 +5161,7 @@ const POWER_ITEMS=()=>[
   {label:'Reboot',             ico:'fa-solid fa-rotate-right',       fn:powerReboot},
   {label:'Lock',               ico:'fa-solid fa-lock',               fn:powerLock},
   {label:'Enter Boot Manager', ico:'fa-solid fa-screwdriver-wrench', fn:powerBootManager},
+  {label:'Back to selector',   ico:'fa-solid fa-arrow-left',         fn:()=>{window.location.href='changelog.html';}},
 ];
 // Show the popup next to a rectangle {left,right,top,bottom}; side=true puts it to the right (Menu panel button)
 function showPowerPopup(r,side){

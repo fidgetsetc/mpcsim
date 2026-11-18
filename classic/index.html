@@ -582,6 +582,7 @@ function powerMenu(e){
   showCtx(e,[
     {label:'Restart',ico:'fa-solid fa-rotate-right',fn:()=>location.reload()},
     {label:'Fullscreen',ico:'fa-solid fa-expand',fn:goFullscreen},
+    {label:'Back to selector',ico:'fa-solid fa-arrow-left',fn:()=>{window.location.href='changelog.html';}},
   ]);
 }
 $('desktop').addEventListener('contextmenu',e=>{
