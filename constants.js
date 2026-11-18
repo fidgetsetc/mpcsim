@@ -241,7 +241,15 @@ const DEFAULT_APPS = [
     iconUrl: 'https://cdn-icons-png.flaticon.com/512/6979/6979672.png',
     resolution: 80
   },
-
+  {
+    id: 'app-isweartogodifyoufindthenotebookhotiwilldisinegrateyou',
+    name: 'MyDraw',
+    url: './mydraw/index.html',
+    icon: 'image',
+    cat: 'Tools',
+    iconUrl: './mydraw/index.png',
+    resolution: 100
+  },
   /* ── Entertainment ── */
   {
     id: 'app-yt',
@@ -806,7 +814,7 @@ const DEFAULT_APPS = [
     name: 'Linux Terminal',
     url: './linux/index.html',
     icon: 'gamepad',
-    cat: 'Games',
+    cat: 'Tools',
     iconUrl: './linux/index.jpg',
     resolution: 100
   },
@@ -828,6 +836,7 @@ const DEFAULT_TILES = [
 ];
 const DEFAULT_DICONS = [
   {id:'di1',appId:'app-ie'},
+  {id:'di2',appId:'app-isweartogodifyoufindthenotebookhotiwilldisinegrateyou'}
   {id:'di3',appId:'app-set'},
   {id:'di4',appId:'app-term'},
   {id:'di5',appId:'app-xwp'},
