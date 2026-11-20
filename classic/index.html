@@ -15,9 +15,10 @@ body{
   --dn-tb-h:46px;--dn-left:calc(1% + 12px);--fs-top:9px;--fs-bot:57px;
 }
 
-/* ── Desktop (wallpaper is plain black) ── */
+/* ── Desktop ── */
 #desktop{position:fixed;inset:0;display:flex;flex-direction:column;background:#000}
-#desktop-icons-area{position:relative;flex:1;padding:8px;overflow:hidden}
+#desktop-bg{position:absolute;inset:0;background-size:cover;background-position:center;z-index:0}
+#desktop-icons-area{position:relative;flex:1;padding:8px;overflow:hidden;z-index:1}
 .desktop-icon{position:absolute;width:82px;height:107px;display:flex;flex-direction:column;align-items:center;justify-content:flex-start;gap:5px;cursor:pointer;border-radius:10px;touch-action:none;animation:icon-in .2s ease both}
 .desktop-icon:hover{background:rgba(255,255,255,.18)}
 .desktop-icon.selected{background:rgba(255,255,255,.28)}
@@ -142,6 +143,10 @@ body.win-interacting .win-frame{pointer-events:none}
 .color-grid{display:flex;flex-wrap:wrap;gap:5px}
 .cswatch{width:28px;height:28px;cursor:pointer;border:3px solid transparent;border-radius:4px}
 .cswatch:hover,.cswatch.sel{border-color:#fff}
+.wp-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(70px,1fr));gap:7px;margin-top:6px;max-height:180px;overflow-y:auto;scrollbar-width:thin;scrollbar-color:#808080 transparent}
+.wp-swatch{position:relative;min-height:40px;background:#1a1a1a;cursor:pointer;border:2px solid #444;transition:border-color .12s;display:flex;align-items:center;justify-content:center;padding:4px 6px;color:#fff;font-size:10px;text-align:center;overflow:hidden;text-overflow:ellipsis;word-break:break-word}
+.wp-swatch:hover{border-color:var(--accent,#0078d4)}
+.wp-swatch.sel{border-color:#fff;box-shadow:0 0 0 1px #777}
 .modal-foot{padding:13px 22px;background:#000;display:flex;gap:8px;justify-content:flex-end}
 .btn-p,.btn-s{border:none;border-radius:6px;padding:8px 20px;font-size:13px;cursor:pointer;color:#fff}
 .btn-p{background:var(--accent)}
@@ -155,6 +160,7 @@ body.win-interacting .win-frame{pointer-events:none}
 <body>
 
 <div id="desktop">
+  <div id="desktop-bg"></div>
   <div id="desktop-icons-area"></div>
   <div id="wins-layer"></div>
   <div id="dn-all">
@@ -187,6 +193,8 @@ body.win-interacting .win-frame{pointer-events:none}
     <div class="modal-body">
       <span class="f-label">Accent color</span>
       <div class="color-grid" id="g-accent"></div>
+      <span class="f-label">Preset wallpapers</span>
+      <div class="wp-grid" id="g-wallpaper-presets"></div>
       <span class="f-label">Time format</span>
       <select class="f-sel" id="s-clock"><option value="12">12-hour</option><option value="24">24-hour</option></select>
     </div>
@@ -301,7 +309,7 @@ function makeIconEl(app,cls,dark){
 const GONE_IDS=new Set(['app-xwp','app-plug']);                 // apps that depended on removed features
 const GONE_URLS=new Set(['__terminal__','__physics__']);
 const S={
-  accent:'#0078d4',clock24:false,
+  accent:'#0078d4',clock24:false,desktopBgImage:WALLPAPER_PRESETS&&WALLPAPER_PRESETS[0]?WALLPAPER_PRESETS[0].url:'',
   apps:clone(DEFAULT_APPS).filter(a=>!GONE_IDS.has(a.id)&&!GONE_URLS.has(a.url)),
   tiles:clone(DEFAULT_TILES),
   dicons:clone(DEFAULT_DICONS),
@@ -318,10 +326,22 @@ function loadS(){
     if(Array.isArray(p.tiles))S.tiles=p.tiles;
     if(Array.isArray(p.dicons))S.dicons=p.dicons;
     if(Array.isArray(p.tbPins))S.tbPins=p.tbPins;
+    if(p.desktopBgImage)S.desktopBgImage=p.desktopBgImage;
   }catch(e){}
 }
-function saveS(){try{localStorage.setItem(KEY,JSON.stringify({accent:S.accent,clock24:S.clock24,tiles:S.tiles,dicons:S.dicons,tbPins:S.tbPins}));}catch(e){}}
-function applyAccent(){document.body.style.setProperty('--accent',S.accent);}
+function saveS(){try{localStorage.setItem(KEY,JSON.stringify({accent:S.accent,clock24:S.clock24,tiles:S.tiles,dicons:S.dicons,tbPins:S.tbPins,desktopBgImage:S.desktopBgImage}));}catch(e){}}
+function applyAccent(){document.body.style.setProperty('--accent',S.accent);applyWallpaper();}
+function applyWallpaper(){const db=$('desktop-bg');db.style.backgroundImage=S.desktopBgImage?`url('${S.desktopBgImage}')`:'none';}
+function renderWallpaperPresets(){
+  const g=$('g-wallpaper-presets');g.innerHTML='';
+  WALLPAPER_PRESETS.forEach(p=>{
+    const d=document.createElement('div');
+    d.className='wp-swatch'+((p.url||'')===(S.desktopBgImage||'').trim()?' sel':'');
+    d.textContent=p.name;d.title=p.name;
+    d.onclick=()=>{S.desktopBgImage=p.url;renderWallpaperPresets();applyWallpaper();};
+    g.appendChild(d);
+  });
+}
 
 /* ── clock ── */
 function tickClock(){
@@ -609,6 +629,7 @@ function openModal(){
     s.onclick=()=>{g.querySelectorAll('.cswatch').forEach(x=>x.classList.remove('sel'));s.classList.add('sel');};
     g.appendChild(s);
   });
+  renderWallpaperPresets();
   $('s-clock').value=S.clock24?'24':'12';
   $('overlay').classList.add('on');
 }
