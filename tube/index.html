@@ -526,6 +526,54 @@
 
         /* Toast */
         #yyt-toast { position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%); background: #333; color: #fff; padding: 10px 18px; border-radius: 8px; font-size: 14px; z-index: 9999; opacity: 0; transition: opacity .25s; pointer-events: none; }
+
+        /* ═══ TV Mode ═══ */
+        body.tv-mode { padding: calc(var(--tv-oy, 0) * 1vh) calc(var(--tv-ox, 0) * 1vw); }
+        body.tv-mode #yt-header, body.tv-mode #app-body { zoom: var(--tv-scale, 1.25); }
+        body.tv-mode .fade-in { animation: none; }
+        body.tv-mode ::-webkit-scrollbar { display: none; }
+        body.tv-mode.tv-nomouse, body.tv-mode.tv-nomouse * { cursor: none !important; }
+        body.tv-mode .card-add { display: none; }
+        .tv-focus { outline: 4px solid #3ea6ff !important; outline-offset: 3px; border-radius: 10px; scroll-margin: 90px; }
+        .sidebar-item.tv-focus, .chip.tv-focus { background: #1a3a5c; }
+        body.tv-playing { padding: 0 !important; }
+        body.tv-playing #yt-header, body.tv-playing #sidebar { display: none !important; }
+        body.tv-playing #app-body { zoom: 1 !important; }
+        body.tv-playing #main-content { padding: 0 !important; overflow: hidden !important; }
+        body.tv-playing #player-sidebar, body.tv-playing #player-extras, body.tv-playing .player-title,
+        body.tv-playing .player-channel, body.tv-playing #player-main > button { display: none !important; }
+        body.tv-playing #yt-custom-player, body.tv-playing #yt-saved-player {
+            position: fixed !important; inset: 0; width: 100vw !important; height: 100vh !important; z-index: 500; }
+        body.tv-playing .ytcp-controls { display: none !important; }
+
+        #tv-panel { position: fixed; top: 0; bottom: 0; right: 0; width: 23em; max-width: 92vw; display: none; flex-direction: column;
+            justify-content: center; gap: .35em; z-index: 900; font-size: calc(16px * var(--tv-scale, 1.25));
+            padding: calc(var(--tv-oy, 0) * 1vh + .8em) calc(var(--tv-ox, 0) * 1vw + 1.1em) calc(var(--tv-oy, 0) * 1vh + .8em) 2.2em;
+            background: linear-gradient(to left, rgba(0,0,0,.95) 70%, rgba(0,0,0,0)); color: #f1f1f1; }
+        .tvp-title { font-weight: 700; font-size: 1.05em; line-height: 1.3; display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; }
+        .tvp-ch { color: #aaa; font-size: .8em; margin-bottom: .5em; }
+        .tvp-bar { height: .3em; background: rgba(255,255,255,.25); border-radius: .2em; overflow: hidden; }
+        .tvp-fill { height: 100%; width: 0; background: #f00; }
+        .tvp-time { font-size: .8em; color: #ddd; margin: .3em 0 .6em; font-variant-numeric: tabular-nums; }
+        .tvp-item { display: flex; align-items: center; gap: .7em; padding: .55em .8em; border-radius: .5em; background: rgba(255,255,255,.09); font-size: .95em; cursor: pointer; }
+        .tvp-item i { width: 1.2em; text-align: center; }
+        .tvp-item.sel { background: #f1f1f1; color: #0f0f0f; }
+        .tvp-hint { margin-top: .7em; font-size: .7em; color: #888; }
+
+        .tv-modal { position: fixed; inset: 0; z-index: 9500; background: rgba(0,0,0,.85); display: flex; align-items: center; justify-content: center; font-size: calc(16px * var(--tv-scale, 1.25)); }
+        .tv-box { background: #212121; border-radius: 1em; padding: 1.4em 1.8em; max-width: 30em; text-align: center; position: relative; z-index: 2; }
+        .tv-box h2 { font-size: 1.3em; font-weight: 700; margin: 0 0 .5em; }
+        .tv-box p { color: #ccc; font-size: .95em; line-height: 1.5; margin: 0 0 1em; }
+        .tv-box .yt-btn, .tv-box .yt-btn-ghost { font-size: 1em; padding: .45em 1.2em; margin: .2em; }
+        .tv-os { background: rgba(0,0,0,.9); }
+        .tv-os-frame { position: absolute; left: calc(var(--tv-ox, 0) * 1vw); right: calc(var(--tv-ox, 0) * 1vw); top: calc(var(--tv-oy, 0) * 1vh); bottom: calc(var(--tv-oy, 0) * 1vh); border: 4px dashed #ffd400; pointer-events: none; }
+        .tv-os-row { display: flex; align-items: center; justify-content: center; gap: .8em; margin-bottom: .6em; }
+        .tv-os-row b { min-width: 7em; font-weight: 500; }
+        .tv-stepper { display: flex; align-items: center; gap: 14px; margin-bottom: 8px; font-size: 16px; }
+        .tv-stepper span { min-width: 56px; text-align: center; }
+        .tv-map-row { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 4px 0; font-size: 14px; flex-wrap: wrap; }
+        .tv-map-btns { display: flex; gap: 8px; }
+        .tv-map-btns .yt-btn-ghost { padding: 5px 12px; font-size: 12px; }
     </style>
 </head>
 <body>
@@ -1484,7 +1532,7 @@ function attachSavedPlayerLogic(rec) {
         if (wantPlay) startBoth(); else { pauseBoth(); showControls(); }
     }
     function seekTo(t) {
-        const dur = getDuration(); t = Math.max(0, Math.min(t, dur || 0));
+        const dur = getDuration(); t = Math.max(0, dur ? Math.min(t, dur) : t);
         ended = false; vid.currentTime = t; if (hasAudio) aud.currentTime = t;
         showControls();
     }
@@ -1798,7 +1846,7 @@ function attachManualSyncLogic() {
         if (!wantPlay) { pauseBoth(); showControls(); }
     }
     function seekTo(t) {
-        const dur = getDuration(); t = Math.max(0, Math.min(t, dur || 0));
+        const dur = getDuration(); t = Math.max(0, dur ? Math.min(t, dur) : t);
         ended = false; lastAlignVt = -1;
         // 720p: hold both streams still while they re-buffer at the new spot; tick() restarts them together.
         if (hasAudio) pauseBoth();
@@ -3011,5 +3059,431 @@ render();
 loadFeed();
 setTimeout(shortsPump, 2500);   // quietly warm up a few Shorts in the background
 </script>
+<script>
+// ═══ TV Mode ═════════════════════════════════════════════════════════════════
+const TV_ACTIONS = [['up','Up'],['down','Down'],['left','Left (seek back in video)'],['right','Right (seek forward in video)'],['select','Select / OK'],['back','Back'],['menu','Menu (search / toggle controls)'],['playPause','Play / Pause'],['seekBack','Seek back 10s'],['seekFwd','Seek forward 10s'],['volUp','Volume up'],['volDown','Volume down'],['mute','Mute']];
+const TV_DEF = {
+    keys: { up:['ArrowUp'], down:['ArrowDown'], left:['ArrowLeft'], right:['ArrowRight'], select:['Enter'], back:['Escape','Backspace','BrowserBack'], menu:['ContextMenu','Tab'],
+            playPause:[' ','MediaPlayPause'], seekBack:['j','MediaTrackPrevious'], seekFwd:['l','MediaTrackNext'], volUp:[']','AudioVolumeUp'], volDown:['[','AudioVolumeDown'], mute:['m','AudioVolumeMute'] },
+    pad:  { up:[12], down:[13], left:[14], right:[15], select:[0], back:[1], menu:[2], playPause:[9], seekBack:[4], seekFwd:[5], volUp:[7], volDown:[6], mute:[3] }
+};
+const TV_PAD_NAMES = ['A','B','X','Y','LB','RB','LT','RT','Back','Start','L3','R3','D-Up','D-Down','D-Left','D-Right','Home'];
+const TV_SEL = '.video-card,.pl-row,.ch-row,.queue-row,.sidebar-item,.chip,.yt-btn:not([disabled]),.yt-btn-ghost:not([disabled]),.method-option,.save-row:not(.disabled),.hdr-icon-btn:not(:disabled),#search-input,#search-btn,.tag-input,.tag-pill button,.pl-tools button:not(:disabled),.pl-menu-row,#pl-menu input,#pl-menu button,.shorts-nav button,.ytcp-error button';
+const tvClone = o => JSON.parse(JSON.stringify(o));
+const tvNum = (v, d, lo, hi) => { v = Number(v); return isFinite(v) ? Math.min(hi, Math.max(lo, v)) : d; };
+const tvNk = k => (k && k.length === 1 ? k.toLowerCase() : k);
+const tvKeyName = k => ({ ' ':'Space', ArrowUp:'↑', ArrowDown:'↓', ArrowLeft:'←', ArrowRight:'→', Escape:'Esc', ContextMenu:'Menu' }[k] || (k.length === 1 ? k.toUpperCase() : k));
+const tvPadName = i => TV_PAD_NAMES[i] || ('Button ' + i);
+
+function tvLoad() {
+    let s = {}; try { s = JSON.parse(localStorage.getItem('yyt_tv') || '{}') || {}; } catch {}
+    const t = { on: !!s.on, ox: tvNum(s.ox, 0, 0, 15), oy: tvNum(s.oy, 0, 0, 15), scale: tvNum(s.scale, 1.25, .75, 2), keys: tvClone(TV_DEF.keys), pad: tvClone(TV_DEF.pad) };
+    for (const a in t.keys) {
+        if (s.keys && Array.isArray(s.keys[a])) t.keys[a] = s.keys[a].map(String);
+        if (s.pad && Array.isArray(s.pad[a])) t.pad[a] = s.pad[a].map(Number).filter(Number.isInteger);
+    }
+    return t;
+}
+const tv = Object.assign(tvLoad(), { cur: null, sigIdx: null, sigKey: null, modal: null, remap: null, panelOpen: false, sel: 0, items: [],
+    panelTimer: 0, progIv: 0, raf: 0, held: {}, fsByUs: false, resume: null, synth: false, hintId: null });
+function tvSave() { try { localStorage.setItem('yyt_tv', JSON.stringify({ on: tv.on, ox: tv.ox, oy: tv.oy, scale: tv.scale, keys: tv.keys, pad: tv.pad })); } catch {} }
+
+const tvPlaying = () => state.view === 'player' || (state.view === 'savedPlayer' && !!state.savedRecord && !state.savedLoading);
+const tvFsEl = () => document.fullscreenElement || document.webkitFullscreenElement;
+function tvEnterFs() {
+    if (tvFsEl()) return Promise.resolve(false);
+    const el = document.documentElement, f = el.requestFullscreen || el.webkitRequestFullscreen;
+    if (!f) return Promise.resolve(false);
+    try { return Promise.resolve(f.call(el)).then(() => true, () => false); } catch { return Promise.resolve(false); }
+}
+function tvExitFs() { if (tvFsEl()) { try { (document.exitFullscreen || document.webkitExitFullscreen).call(document); } catch {} } }
+
+function tvApply() {
+    const r = document.documentElement.style;
+    r.setProperty('--tv-scale', tv.scale); r.setProperty('--tv-ox', tv.ox); r.setProperty('--tv-oy', tv.oy);
+    document.body.classList.toggle('tv-mode', tv.on);
+    if (!tv.on) { document.body.classList.remove('tv-playing', 'tv-nomouse'); tvHidePanel(); tvClearFocus(); }
+    else if (!tv.raf) tv.raf = requestAnimationFrame(tvPoll);
+}
+function tvToggle() {
+    tv.on = !tv.on; tvSave(); tvApply();
+    if (tv.on) { tvEnterFs(); render(); tvAskOverscan(); }
+    else { tvExitFs(); render(); }
+}
+function tvStep(k, d) { tv[k] = tvNum(+(tv[k] + d).toFixed(2), 1.25, .75, 2); tvSave(); tvApply(); keepScrollRender(); }
+function tvOs(axis, d) {
+    const k = axis === 'x' ? 'ox' : 'oy';
+    tv[k] = tvNum(+(tv[k] + d).toFixed(1), 0, 0, 15); tvSave(); tvApply();
+    const e = document.getElementById('tv-os-' + axis); if (e) e.textContent = tv[k] + '%';
+}
+function tvResetMap() { tv.keys = tvClone(TV_DEF.keys); tv.pad = tvClone(TV_DEF.pad); tvSave(); keepScrollRender(); toastMsg('Controls reset'); }
+
+// ── Modals ──
+function tvOpenModal(type, html, cls) {
+    tvCloseModal(true);
+    const el = document.createElement('div');
+    el.className = 'tv-modal ' + (cls || ''); el.innerHTML = html;
+    document.body.appendChild(el);
+    tv.modal = { type, el };
+    return el;
+}
+function tvCloseModal(quiet) {
+    if (!tv.modal) return;
+    tv.modal.el.remove(); tv.modal = null; tvSave();
+    if (quiet) return;
+    if (state.view === 'settings') keepScrollRender();
+    tvRestore();
+}
+function tvAskOverscan() {
+    const el = tvOpenModal('prompt', `<div class="tv-box"><h2>Adjust overscan?</h2>
+        <p>Many TVs crop the edges of the picture. You can pull the interface in from the edges so nothing is cut off.</p>
+        <button class="yt-btn" onclick="tvCloseModal(true);tvOverscan()">Adjust overscan</button>
+        <button class="yt-btn-ghost" onclick="tvCloseModal()">Skip</button></div>`);
+    tvFocus(el.querySelector('.yt-btn'));
+}
+function tvOverscan() {
+    tvOpenModal('overscan', `<div class="tv-os-frame"></div><div class="tv-box"><h2>Overscan</h2>
+        <p>Increase the margin until the yellow dashed border is fully visible on all four edges.</p>
+        <div class="tv-os-row"><button class="yt-btn-ghost" onclick="tvOs('x',-.5)">−</button><b>Horizontal <span id="tv-os-x">${tv.ox}%</span></b><button class="yt-btn-ghost" onclick="tvOs('x',.5)">+</button></div>
+        <div class="tv-os-row"><button class="yt-btn-ghost" onclick="tvOs('y',-.5)">−</button><b>Vertical <span id="tv-os-y">${tv.oy}%</span></b><button class="yt-btn-ghost" onclick="tvOs('y',.5)">+</button></div>
+        <p style="font-size:.8em;margin:.4em 0 .8em">→ / ↑ add margin · ← / ↓ remove it · Select to finish</p>
+        <button class="yt-btn" onclick="tvCloseModal()">Done</button>
+        <button class="yt-btn-ghost" onclick="tvOs('x',-99);tvOs('y',-99)">Reset</button></div>`, 'tv-os');
+}
+
+// ── Remapping ──
+function tvRemap(action, kind) {
+    tvCancelRemap();
+    const lab = (TV_ACTIONS.find(x => x[0] === action) || [])[1] || action;
+    const el = document.createElement('div');
+    el.className = 'tv-modal'; el.id = 'tv-remap';
+    el.innerHTML = `<div class="tv-box"><h2>${esc(lab)}</h2><p>Press the ${kind === 'key' ? 'key' : 'controller button'} you want to use.<br><span id="tv-remap-s">8</span>s until this cancels…</p><button class="yt-btn-ghost" onclick="tvCancelRemap()">Cancel</button></div>`;
+    document.body.appendChild(el);
+    const r = tv.remap = { action, kind, el, t0: performance.now(), left: 8, iv: 0 };
+    r.iv = setInterval(() => { r.left--; const s = document.getElementById('tv-remap-s'); if (s) s.textContent = r.left; if (r.left <= 0) tvCancelRemap(); }, 1000);
+}
+function tvCancelRemap() { const r = tv.remap; if (!r) return; clearInterval(r.iv); r.el.remove(); tv.remap = null; }
+function tvAssign(val) {
+    const r = tv.remap; if (!r) return;
+    const map = r.kind === 'key' ? tv.keys : tv.pad;
+    for (const a in map) map[a] = map[a].filter(x => x !== val);
+    map[r.action] = [val];
+    tvCancelRemap(); tvSave();
+    toastMsg('Mapped ' + (r.kind === 'key' ? tvKeyName(val) : tvPadName(val)));
+    if (state.view === 'settings') keepScrollRender();
+}
+
+// ── Settings section ──
+function tvPads() { try { return Array.from((navigator.getGamepads && navigator.getGamepads()) || []); } catch { return []; } }
+function tvPadStatus() {
+    const g = tvPads().find(Boolean);
+    return g ? 'Controller detected: ' + esc(g.id.slice(0, 48)) : 'No controller detected yet — press a button on it to wake it up.';
+}
+function tvSettingsHTML() {
+    let h = `<div class="settings-section"><div class="settings-sub">TV Mode</div>
+        <div class="settings-desc">A big, remote-friendly interface with a scalable UI, an overscan safe area, keyboard / remote and controller navigation, and remappable buttons. Videos open full screen — press any button to bring up the controls on the right.</div>
+        <div class="tag-input-row"><button class="yt-btn" onclick="tvToggle()">${tv.on ? 'Turn off TV Mode' : 'Turn on TV Mode'}</button></div>`;
+    if (tv.on) {
+        h += `<div class="settings-sub" style="margin-top:20px">UI scale</div>
+            <div class="tv-stepper"><button class="yt-btn-ghost" onclick="tvStep('scale',-.05)">−</button><span>${Math.round(tv.scale * 100)}%</span><button class="yt-btn-ghost" onclick="tvStep('scale',.05)">+</button></div>
+            <div class="settings-sub" style="margin-top:20px">Overscan</div>
+            <div class="settings-desc">Current inset: ${tv.ox}% horizontal · ${tv.oy}% vertical.</div>
+            <div class="tag-input-row"><button class="yt-btn-ghost" onclick="tvOverscan()">Adjust overscan</button></div>
+            <div class="settings-sub" style="margin-top:20px">Controls</div>
+            <div class="settings-desc">Pick a button to remap it, then press the new key or controller button. ${tvPadStatus()}</div>
+            ${TV_ACTIONS.map(([a, l]) => `<div class="tv-map-row"><span>${l}</span><span class="tv-map-btns">
+                <button class="yt-btn-ghost" onclick="tvRemap('${a}','key')"><i class="fa fa-keyboard"></i> ${tv.keys[a].length ? esc(tv.keys[a].map(tvKeyName).join(' / ')) : '—'}</button>
+                <button class="yt-btn-ghost" onclick="tvRemap('${a}','pad')"><i class="fa fa-gamepad"></i> ${tv.pad[a].length ? tv.pad[a].map(tvPadName).join(' / ') : '—'}</button></span></div>`).join('')}
+            <div class="tag-input-row" style="margin-top:12px"><button class="yt-btn-ghost" onclick="tvResetMap()">Reset controls</button></div>`;
+    }
+    return h + '</div>';
+}
+const _tvRenderSettings = renderSettings;
+renderSettings = function () { let h = _tvRenderSettings(); try { const t = tvSettingsHTML(); h = h.replace('<div class="settings-section">', () => t + '<div class="settings-section">'); } catch (e) { console.error(e); } return h; };
+
+// ── Focus navigation (browsing) ──
+function tvScope() {
+    if (tv.modal) return tv.modal.el;
+    const m = document.getElementById('pl-menu');
+    return m && m.style.display === 'block' ? m : document;
+}
+function tvCands() {
+    return [...tvScope().querySelectorAll(TV_SEL)].filter(el => {
+        const r = el.getBoundingClientRect();
+        return r.width > 0 && r.height > 0 && !el.closest('#shorts-holder,#tv-panel');
+    });
+}
+const tvFirst = l => l.find(e => e.closest('#main-content')) || l[0];
+function tvClearFocus() { document.querySelectorAll('.tv-focus').forEach(x => x.classList.remove('tv-focus')); tv.cur = null; }
+function tvFocus(el) {
+    if (!el) return;
+    document.querySelectorAll('.tv-focus').forEach(x => x.classList.remove('tv-focus'));
+    el.classList.add('tv-focus'); tv.cur = el;
+    try { el.scrollIntoView({ block: 'nearest', inline: 'nearest' }); } catch {}
+    if (tvScope() === document) { tv.sigIdx = tvCands().indexOf(el); tv.sigKey = viewKey(); }
+}
+function tvRestore() {
+    if (!tv.on || tvPlaying()) return;
+    if (state.view !== 'shorts') tv.navShorts = false;
+    else if (!tv.navShorts) { tvClearFocus(); return; }
+    const list = tvCands();
+    if (!list.length) { tv.cur = null; return; }
+    if (tv.cur && tv.cur.isConnected && list.includes(tv.cur)) { tv.cur.classList.add('tv-focus'); return; }
+    const keep = tvScope() === document && tv.sigKey === viewKey() && list[tv.sigIdx];
+    tvFocus(keep || tvFirst(list));
+}
+function tvMove(dir) {
+    const list = tvCands(); if (!list.length) return;
+    const cur = tv.cur && tv.cur.isConnected && list.includes(tv.cur) ? tv.cur : null;
+    if (!cur) { tvFocus(tvFirst(list)); return; }
+    const c = cur.getBoundingClientRect(), ccx = c.left + c.width / 2, ccy = c.top + c.height / 2;
+    let best = null, bs = Infinity;
+    for (const el of list) {
+        if (el === cur || el.contains(cur) || cur.contains(el)) continue;
+        const r = el.getBoundingClientRect(), cx = r.left + r.width / 2, cy = r.top + r.height / 2;
+        let p, s;
+        if (dir === 'right') { p = cx - ccx; s = Math.abs(cy - ccy); }
+        else if (dir === 'left') { p = ccx - cx; s = Math.abs(cy - ccy); }
+        else if (dir === 'down') { p = cy - ccy; s = Math.abs(cx - ccx); }
+        else { p = ccy - cy; s = Math.abs(cx - ccx); }
+        if (p <= 2) continue;
+        const score = p + s * 2.5;
+        if (score < bs) { bs = score; best = el; }
+    }
+    if (best) tvFocus(best);
+}
+function tvActivate() {
+    const el = tv.cur;
+    if (!el || !el.isConnected) { tvRestore(); return; }
+    if (el.tagName === 'INPUT' && !['button', 'range', 'checkbox'].includes(el.type)) { el.focus(); return; }
+    el.click();
+}
+
+// ── Actions ──
+function tvAction(a) {
+    if (tv.remap) return;
+    if (tv.modal) return tvModalAction(a);
+    if (tvPlaying()) return tvPlayAction(a);
+    const m = document.getElementById('pl-menu'), menuOpen = m && m.style.display === 'block';
+    if (state.view === 'shorts' && !menuOpen && !tv.navShorts) return tvShortsAction(a);
+    if (state.view === 'shorts' && tv.navShorts && (a === 'right' || a === 'back')) { tv.navShorts = false; tvClearFocus(); return; }
+    switch (a) {
+        case 'up': case 'down': case 'left': case 'right': tvMove(a); break;
+        case 'select': tvActivate(); break;
+        case 'back':
+            if (menuOpen) m.style.display = 'none';
+            else if (navStack.length) goBack();
+            else if (state.view !== 'home') goHome();
+            break;
+        case 'menu': { const s = document.getElementById('search-input'); if (s) tvFocus(s); break; }
+    }
+}
+function tvModalAction(a) {
+    if (tv.modal.type === 'overscan') {
+        if (a === 'right') tvOs('x', .5); else if (a === 'left') tvOs('x', -.5);
+        else if (a === 'up') tvOs('y', .5); else if (a === 'down') tvOs('y', -.5);
+        else if (a === 'select' || a === 'back') tvCloseModal();
+        return;
+    }
+    if (['up', 'down', 'left', 'right'].includes(a)) tvMove(a);
+    else if (a === 'select') tvActivate();
+    else if (a === 'back') tvCloseModal();
+}
+function tvShortsAction(a) {
+    switch (a) {
+        case 'up': shortsGo(-1); break;
+        case 'down': shortsGo(1); break;
+        case 'select': case 'playPause': shortsTogglePlay(); break;
+        case 'mute': case 'menu': shortsToggleMute(); break;
+        case 'back': if (navStack.length) goBack(); else goHome(); break;
+        case 'left': tv.navShorts = true; tvFocus(document.getElementById('nav-shorts')); break;
+    }
+}
+
+// ── Fullscreen player + right-hand control panel ──
+function tvMedia() {
+    return { v: document.getElementById('yt-dash-video') || document.getElementById('ytsp-video'), a: document.getElementById('yt-dash-audio') || document.getElementById('ytsp-audio') };
+}
+function tvSynthKey(k) {   // reuse the player's own keyboard shortcuts (j / l = ∓10s, space, m)
+    tv.synth = true;
+    try { document.dispatchEvent(new KeyboardEvent('keydown', { key: k, bubbles: true, cancelable: true })); } finally { tv.synth = false; }
+}
+function tvVol(d) {
+    const r = document.getElementById('ytcp-vol') || document.getElementById('ytsp-vol'); if (!r) return;
+    r.value = Math.round(Math.max(0, Math.min(1, (ytMuted ? 0 : ytVolume) + d)) * 20) / 20;
+    r.dispatchEvent(new Event('input', { bubbles: true }));
+}
+const tvFmt = s => { s = Math.floor(s || 0); const h = Math.floor(s / 3600), m = Math.floor(s % 3600 / 60), x = s % 60; return (h ? h + ':' + String(m).padStart(2, '0') : m) + ':' + String(x).padStart(2, '0'); };
+function tvBuildItems() {
+    const icon = document.getElementById('ytcp-play-icon') || document.getElementById('ytsp-play-icon');
+    const playing = !!(icon && icon.className.includes('fa-pause'));
+    const L = [
+        { icon: playing ? 'fa-pause' : 'fa-play', label: playing ? 'Pause' : 'Play', run: () => tvSynthKey(' ') },
+        { icon: 'fa-rotate-left', label: 'Back 10 seconds', run: () => tvSynthKey('j') },
+        { icon: 'fa-rotate-right', label: 'Forward 10 seconds', run: () => tvSynthKey('l') },
+        { icon: ytMuted ? 'fa-volume-xmark' : 'fa-volume-high', label: ytMuted ? 'Unmute' : 'Mute', run: () => tvSynthKey('m') },
+        { icon: 'fa-volume-low', label: 'Volume down', run: () => tvVol(-.1) },
+        { icon: 'fa-volume-high', label: 'Volume up · ' + Math.round((ytMuted ? 0 : ytVolume) * 100) + '%', run: () => tvVol(.1) },
+    ];
+    if (state.view === 'player' && state.selectedItem) {
+        const it = state.selectedItem, modes = getDirectSources(it.id).length ? ['direct', 'manual', 'pre'] : ['manual', 'pre'];
+        const cur = modes.includes(state.ytMethod) ? state.ytMethod : 'manual';
+        L.push({ icon: 'fa-gear', label: 'Quality: ' + { direct: 'Direct', manual: '720p', pre: '360p' }[cur] + ' (change)', run: () => {
+            const { v } = tvMedia(); tv.resume = { id: it.id, t: v ? v.currentTime : 0 };
+            setYTMethod(modes[(modes.indexOf(cur) + 1) % modes.length]);
+        } });
+        const c = state.playlistCtx;
+        if (c && c.index > 0) L.push({ icon: 'fa-backward-step', label: 'Previous video', run: playlistPrev });
+        if (c && c.index < c.items.length - 1) L.push({ icon: 'fa-forward-step', label: 'Next video', run: playlistNext });
+    }
+    L.push({ icon: 'fa-arrow-left', label: 'Exit video', run: tvExitVideo });
+    return L;
+}
+function tvProgress() {
+    const { v } = tvMedia(), f = document.getElementById('tvp-fill'), t = document.getElementById('tvp-time');
+    if (!v || !f) return;
+    const d = isFinite(v.duration) ? v.duration : 0, c = v.currentTime || 0;
+    f.style.width = (d ? Math.min(100, c / d * 100) : 0) + '%';
+    t.textContent = tvFmt(c) + ' / ' + tvFmt(d);
+}
+function tvRenderPanel() {
+    let p = document.getElementById('tv-panel');
+    if (!p) { p = document.createElement('div'); p.id = 'tv-panel'; document.body.appendChild(p); }
+    const rec = state.view === 'savedPlayer' ? state.savedRecord : state.selectedItem;
+    tv.items = tvBuildItems();
+    tv.sel = Math.max(0, Math.min(tv.sel, tv.items.length - 1));
+    p.innerHTML = `<div class="tvp-title">${esc(rec ? rec.title : '')}</div><div class="tvp-ch">${esc(rec ? rec.channel || '' : '')}</div>
+        <div class="tvp-bar"><div class="tvp-fill" id="tvp-fill"></div></div><div class="tvp-time" id="tvp-time"></div>
+        ${tv.items.map((it, i) => `<div class="tvp-item ${i === tv.sel ? 'sel' : ''}" onclick="tvPanelRun(${i})"><i class="fa ${it.icon}"></i><span>${esc(it.label)}</span></div>`).join('')}
+        <div class="tvp-hint">Back exits the video · press any button to show this menu</div>`;
+    p.style.display = 'flex';
+    tvProgress();
+}
+function tvShowPanel() {
+    tv.panelOpen = true; tvRenderPanel();
+    clearTimeout(tv.panelTimer); tv.panelTimer = setTimeout(tvHidePanel, 5000);
+    if (!tv.progIv) tv.progIv = setInterval(tvProgress, 250);
+}
+function tvHidePanel() {
+    tv.panelOpen = false; clearTimeout(tv.panelTimer); clearInterval(tv.progIv); tv.progIv = 0;
+    const p = document.getElementById('tv-panel'); if (p) p.style.display = 'none';
+}
+function tvPanelRun(i) {
+    const it = tv.items[i]; if (!it) return;
+    tv.sel = i;
+    try { it.run(); } catch (e) { console.error(e); }
+    setTimeout(() => { if (tv.panelOpen && tvPlaying()) tvShowPanel(); }, 90);
+}
+function tvExitVideo() { tvHidePanel(); if (navStack.length) goBack(); else goHome(); }
+function tvPlayAction(a) {
+    const open = tv.panelOpen, n = tv.items.length || 1;
+    switch (a) {
+        case 'left': case 'seekBack': tvSynthKey('j'); tvShowPanel(); break;
+        case 'right': case 'seekFwd': tvSynthKey('l'); tvShowPanel(); break;
+        case 'playPause': tvSynthKey(' '); tvShowPanel(); break;
+        case 'mute': tvSynthKey('m'); tvShowPanel(); break;
+        case 'volUp': tvVol(.1); tvShowPanel(); break;
+        case 'volDown': tvVol(-.1); tvShowPanel(); break;
+        case 'up': if (open) tv.sel = (tv.sel - 1 + n) % n; tvShowPanel(); break;
+        case 'down': if (open) tv.sel = (tv.sel + 1) % n; tvShowPanel(); break;
+        case 'select': if (open) tvPanelRun(tv.sel); else tvShowPanel(); break;
+        case 'menu': if (open) tvHidePanel(); else tvShowPanel(); break;
+        case 'back': if (open) tvExitVideo(); else tvShowPanel(); break;
+    }
+}
+
+// ── After every render ──
+function tvAfterRender() {
+    if (!tv.on) return;
+    const playing = tvPlaying();
+    document.body.classList.toggle('tv-playing', playing);
+    tvHidePanel(); tv.sel = 0;
+    if (playing) {
+        tvClearFocus();
+        tvEnterFs().then(ok => { if (ok) tv.fsByUs = true; });
+        if (tv.resume) {
+            const r = tv.resume; tv.resume = null;
+            if (state.selectedItem && state.selectedItem.id === r.id) {
+                const { v, a } = tvMedia();
+                if (v) v.addEventListener('loadedmetadata', () => { try { v.currentTime = r.t; if (a) a.currentTime = r.t; } catch {} }, { once: true });
+            }
+        }
+        const id = state.selectedItem && state.selectedItem.id;
+        if (state.view === 'player' && tv.hintId !== id) { tv.hintId = id; toastMsg('Press any button for controls'); }
+    } else {
+        if (tv.fsByUs) { tvExitFs(); tv.fsByUs = false; }
+        tvRestore();
+    }
+}
+const _tvRender = render;
+render = function () { _tvRender.apply(this, arguments); try { tvAfterRender(); } catch (e) { console.error(e); } };
+
+// ── Keyboard ──
+const tvActsForKey = k => Object.keys(tv.keys).filter(a => tv.keys[a].map(tvNk).includes(k));
+const tvHideMouse = () => document.body.classList.add('tv-nomouse');
+document.addEventListener('keydown', e => {
+    if (tv.synth) return;
+    const k = tvNk(e.key);
+    if (tv.remap && tv.remap.kind === 'key') {
+        e.preventDefault(); e.stopImmediatePropagation();
+        if (e.repeat || performance.now() - tv.remap.t0 < 350 || ['Shift', 'Control', 'Alt', 'Meta'].includes(e.key)) return;
+        tvAssign(k); return;
+    }
+    if (!tv.on || e.ctrlKey || e.metaKey || e.altKey) return;
+    const t = e.target, tag = t && t.tagName;
+    if ((tag === 'INPUT' && !['range', 'checkbox', 'button'].includes(t.type)) || tag === 'TEXTAREA') {
+        if (k === 'Enter') { setTimeout(() => { t.blur(); tvClearFocus(); }, 30); return; }
+        if (k === 'Escape') { e.preventDefault(); t.blur(); tvRestore(); return; }
+        const a = tvActsForKey(k);
+        if (!(a.includes('up') || a.includes('down'))) return;
+        t.blur();
+    }
+    const acts = tvActsForKey(k);
+    e.preventDefault(); e.stopImmediatePropagation();
+    tvHideMouse();
+    if (!acts.length) { if (tvPlaying() && !tv.modal) tvShowPanel(); return; }
+    acts.forEach(tvAction);
+}, true);
+let tvMx = 0, tvMy = 0;
+document.addEventListener('mousemove', e => {
+    if (Math.abs(e.clientX - tvMx) + Math.abs(e.clientY - tvMy) > 4) document.body.classList.remove('tv-nomouse');
+    tvMx = e.clientX; tvMy = e.clientY;
+});
+
+// ── Controller ──
+const tvRepeats = i => Object.keys(tv.pad).some(a => tv.pad[a].includes(i) && ['up', 'down', 'left', 'right', 'volUp', 'volDown', 'seekBack', 'seekFwd'].includes(a));
+function tvPadBtn(i) {
+    if (tv.remap) { if (tv.remap.kind === 'pad' && performance.now() - tv.remap.t0 > 350) tvAssign(i); return; }
+    tvHideMouse();
+    const acts = Object.keys(tv.pad).filter(a => tv.pad[a].includes(i));
+    if (!acts.length) { if (tvPlaying() && !tv.modal) tvShowPanel(); return; }
+    acts.forEach(tvAction);
+}
+function tvPoll() {
+    if (!tv.on) { tv.raf = 0; return; }
+    tv.raf = requestAnimationFrame(tvPoll);
+    const pads = tvPads(), now = performance.now(), seen = {};
+    for (const gp of pads) {
+        if (!gp || !gp.connected) continue;
+        const down = new Set();
+        gp.buttons.forEach((b, i) => { if (b.pressed || b.value > .6) down.add(i); });
+        const ax = gp.axes;
+        if (ax.length >= 2) { if (ax[0] < -.6) down.add(14); if (ax[0] > .6) down.add(15); if (ax[1] < -.6) down.add(12); if (ax[1] > .6) down.add(13); }
+        down.forEach(i => {
+            const key = gp.index + ':' + i; seen[key] = 1;
+            const h = tv.held[key];
+            if (h === undefined) { tv.held[key] = now + 400; tvPadBtn(i); }
+            else if (now >= h) { if (tvRepeats(i)) { tv.held[key] = now + 110; tvPadBtn(i); } else tv.held[key] = Infinity; }
+        });
+    }
+    for (const k in tv.held) if (!seen[k]) delete tv.held[k];
+}
+window.addEventListener('gamepadconnected', () => { if (tv.on) toastMsg('Controller connected'); });
+
+// ── Start up ──
+tvApply();
+tvAfterRender();
+</script>
+
 </body>
 </html>
