@@ -558,6 +558,63 @@
         .tvp-item { display: flex; align-items: center; gap: .7em; padding: .55em .8em; border-radius: .5em; background: rgba(255,255,255,.09); font-size: .95em; cursor: pointer; }
         .tvp-item i { width: 1.2em; text-align: center; }
         .tvp-item.sel { background: #f1f1f1; color: #0f0f0f; }
+        .tvp-cache { font-size: .7em; color: #8fc3ff; min-height: 1.1em; margin: -.4em 0 .5em; }
+        body.tv-mode video::cue { font-size: 1.5em; }
+
+        /* TV home: YouTube-for-TV look */
+        .tv-only { display: none; }
+        body.tv-mode .tv-only { display: flex; }
+        body.tv-mode #yt-header { display: none; }
+        body.tv-mode.tv-search #yt-header { display: flex; position: fixed; top: 0; left: 0; right: 0; z-index: 700; }
+        body.tv-mode #app-body { position: relative; }
+        body.tv-mode #sidebar { position: absolute; left: 0; top: 0; bottom: 0; width: 72px; z-index: 60; display: flex; flex-direction: column; padding: 10px 0; background: #161616; overflow: hidden; transition: width .15s; }
+        body.tv-mode #main-content { margin-left: 72px; }
+        body.tv-mode #sidebar .sidebar-item { font-size: 0; height: 48px; margin: 4px 12px; padding: 0 12px; gap: 22px; border-radius: 24px; white-space: nowrap; flex-shrink: 0; }
+        body.tv-mode #sidebar .sidebar-item i { font-size: 20px; width: 24px; }
+        body.tv-mode #sidebar .sidebar-divider, body.tv-mode #sidebar .sidebar-section-label, body.tv-mode #sidebar > div:last-child { display: none; }
+        body.tv-mode #sidebar .nav-badge { display: none; }
+        body.tv-mode #nav-settings { margin-top: auto; }
+        body.tv-rail-open #sidebar { width: 250px; background: rgba(22,22,22,.98); box-shadow: 8px 0 30px rgba(0,0,0,.6); }
+        body.tv-rail-open #sidebar .sidebar-item { font-size: 15px; }
+        body.tv-rail-open #sidebar .nav-badge { display: inline; }
+        #sidebar .sidebar-item.tv-focus { outline: none !important; background: #f1f1f1; color: #0f0f0f; }
+        .tv-logo { margin: 6px 0 14px 18px; flex-shrink: 0; }
+        .tv-logo .logo-icon { background: #f00; border-radius: 7px; width: 38px; height: 27px; display: flex; align-items: center; justify-content: center; }
+        .tv-logo .logo-icon i { color: #fff; font-size: 12px; }
+        body.tv-home #sidebar { background: #212121; }
+        body.tv-home #main-content { background: #282828; padding: 14px 0 40px 26px; }
+        .tvh-tabs { display: flex; gap: 34px; margin-bottom: 14px; }
+        .tvh-tab { font-size: 13px; font-weight: 500; letter-spacing: .07em; color: #aaa; padding: 7px 4px 5px; border-bottom: 3px solid transparent; cursor: pointer; }
+        .tvh-tab.on { color: #fff; border-bottom-color: #f00; }
+        .tvh-tab.tv-focus { outline: none !important; color: #fff; background: rgba(255,255,255,.14); border-radius: 4px 4px 0 0; }
+        .tvh-title { font-size: 20px; font-weight: 500; margin: 8px 0 0 2px; color: #f1f1f1; }
+        .tvh-row { display: flex; gap: 14px; overflow-x: auto; padding: 18px 0 34px 2px; scrollbar-width: none; }
+        .tvh-row::-webkit-scrollbar { display: none; }
+        .tvh-card { flex: 0 0 300px; min-width: 0; border-radius: 6px; cursor: pointer; transition: transform .12s ease; transform-origin: center top; position: relative; }
+        .tvh-thumb { position: relative; aspect-ratio: 16/9; background: #3a3a3a; border-radius: 6px; overflow: hidden; }
+        .tvh-thumb img { width: 100%; height: 100%; object-fit: cover; display: block; }
+        .tvh-meta { padding: 9px 8px 12px; min-height: 6.2em; border-radius: 0 0 6px 6px; color: #ddd; }
+        .tvh-vt { font-size: 15px; font-weight: 500; line-height: 1.3; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+        .tvh-ch, .tvh-vw { font-size: 12px; color: #aaa; margin-top: 3px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; text-transform: uppercase; }
+        .tvh-card.tv-focus, .tvh-card:hover { outline: none !important; transform: scale(1.07); z-index: 5; box-shadow: 0 10px 30px rgba(0,0,0,.55); }
+        .tvh-card.tv-focus .tvh-meta, .tvh-card:hover .tvh-meta { background: #e8e8e8; color: #0f0f0f; }
+        .tvh-card.tv-focus .tvh-ch, .tvh-card.tv-focus .tvh-vw, .tvh-card:hover .tvh-ch, .tvh-card:hover .tvh-vw { color: #555; }
+        .tvh-skel { flex: 0 0 300px; aspect-ratio: 16/9; border-radius: 6px; }
+        .tvh-note { color: #aaa; font-size: 14px; display: flex; align-items: center; gap: 12px; }
+
+        #tv-comments { position: fixed; top: 0; bottom: 0; right: 0; width: 36em; max-width: 94vw; display: none; flex-direction: column; z-index: 900; color: #f1f1f1;
+            font-size: calc(16px * var(--tv-scale, 1.25));
+            padding: calc(var(--tv-oy, 0) * 1vh + .8em) calc(var(--tv-ox, 0) * 1vw + 1.1em) calc(var(--tv-oy, 0) * 1vh + .8em) 2.4em;
+            background: linear-gradient(to left, rgba(0,0,0,.97) 80%, rgba(0,0,0,0)); }
+        .tvc-head { font-weight: 700; font-size: 1.1em; margin-bottom: .6em; }
+        .tvc-body { flex: 1; overflow: hidden; scroll-behavior: smooth; }
+        .tvc-c { display: flex; gap: .8em; margin-bottom: 1.1em; }
+        .tvc-av { width: 2.4em; height: 2.4em; border-radius: 50%; background: #3f3f3f; flex-shrink: 0; display: flex; align-items: center; justify-content: center; color: #ccc; font-weight: 500; }
+        .tvc-h { font-size: .8em; font-weight: 500; } .tvc-h span { color: #aaa; font-weight: 400; margin-left: .5em; }
+        .tvc-t { font-size: .92em; line-height: 1.4; margin-top: .2em; white-space: pre-wrap; word-break: break-word; }
+        .tvc-l { font-size: .75em; color: #aaa; margin-top: .3em; }
+        .tvc-note { color: #aaa; font-size: .9em; padding: .8em 0; }
+        .tvc-hint { font-size: .7em; color: #888; margin-top: .6em; }
         .tvp-hint { margin-top: .7em; font-size: .7em; color: #888; }
 
         .tv-modal { position: fixed; inset: 0; z-index: 9500; background: rgba(0,0,0,.85); display: flex; align-items: center; justify-content: center; font-size: calc(16px * var(--tv-scale, 1.25)); }
@@ -1698,6 +1755,7 @@ function setupCaptions(d, stillHere) {
             tr.track.mode = 'showing';
         } catch { toastMsg("Couldn't load captions"); btn.classList.remove('cc-on'); current = -1; }
     }
+    window.__tvCaps = { list: caps, choose, get current() { return current; } };
     function closeMenu() { if (menu) { menu.remove(); menu = null; } }
     btn.addEventListener('click', e => {
         e.stopPropagation();
@@ -2085,7 +2143,7 @@ function mkItem(v, fb) {
         id: v.videoId, title: v.title,
         channel: v.author || (fb && fb.author) || '',
         channelId: v.authorId || (fb && fb.id) || '',
-        len: v.lengthSeconds || 0
+        len: v.lengthSeconds || 0, views: v.viewCount || 0, pub: v.publishedText || ''
     };
     itemReg[it.id] = it;
     if (it.channelId) { const av = avatarThumb(v.authorThumbnails); if (av) rememberAvatar(it.channelId, av); }
@@ -3061,14 +3119,14 @@ setTimeout(shortsPump, 2500);   // quietly warm up a few Shorts in the backgroun
 </script>
 <script>
 // ═══ TV Mode ═════════════════════════════════════════════════════════════════
-const TV_ACTIONS = [['up','Up'],['down','Down'],['left','Left (seek back in video)'],['right','Right (seek forward in video)'],['select','Select / OK'],['back','Back'],['menu','Menu (search / toggle controls)'],['playPause','Play / Pause'],['seekBack','Seek back 10s'],['seekFwd','Seek forward 10s'],['volUp','Volume up'],['volDown','Volume down'],['mute','Mute']];
+const TV_ACTIONS = [['up','Up'],['down','Down'],['left','Left (seek back in video)'],['right','Right (seek forward in video)'],['select','Select / OK'],['back','Back'],['menu','Menu (search / toggle controls)'],['playPause','Play / Pause'],['seekBack','Seek back 10s'],['seekFwd','Seek forward 10s'],['volUp','Volume up'],['volDown','Volume down'],['mute','Mute'],['captions','Captions on / off'],['comments','Comments']];
 const TV_DEF = {
     keys: { up:['ArrowUp'], down:['ArrowDown'], left:['ArrowLeft'], right:['ArrowRight'], select:['Enter'], back:['Escape','Backspace','BrowserBack'], menu:['ContextMenu','Tab'],
-            playPause:[' ','MediaPlayPause'], seekBack:['j','MediaTrackPrevious'], seekFwd:['l','MediaTrackNext'], volUp:[']','AudioVolumeUp'], volDown:['[','AudioVolumeDown'], mute:['m','AudioVolumeMute'] },
-    pad:  { up:[12], down:[13], left:[14], right:[15], select:[0], back:[1], menu:[2], playPause:[9], seekBack:[4], seekFwd:[5], volUp:[7], volDown:[6], mute:[3] }
+            playPause:[' ','MediaPlayPause'], seekBack:['j','MediaTrackPrevious'], seekFwd:['l','MediaTrackNext'], volUp:[']','AudioVolumeUp'], volDown:['[','AudioVolumeDown'], mute:['m','AudioVolumeMute'], captions:['c'], comments:['v'] },
+    pad:  { up:[12], down:[13], left:[14], right:[15], select:[0], back:[1], menu:[2], playPause:[9], seekBack:[4], seekFwd:[5], volUp:[7], volDown:[6], mute:[3], captions:[10], comments:[8] }
 };
 const TV_PAD_NAMES = ['A','B','X','Y','LB','RB','LT','RT','Back','Start','L3','R3','D-Up','D-Down','D-Left','D-Right','Home'];
-const TV_SEL = '.video-card,.pl-row,.ch-row,.queue-row,.sidebar-item,.chip,.yt-btn:not([disabled]),.yt-btn-ghost:not([disabled]),.method-option,.save-row:not(.disabled),.hdr-icon-btn:not(:disabled),#search-input,#search-btn,.tag-input,.tag-pill button,.pl-tools button:not(:disabled),.pl-menu-row,#pl-menu input,#pl-menu button,.shorts-nav button,.ytcp-error button';
+const TV_SEL = '.video-card,.pl-row,.ch-row,.queue-row,.sidebar-item,.chip,.yt-btn:not([disabled]),.yt-btn-ghost:not([disabled]),.method-option,.save-row:not(.disabled),.hdr-icon-btn:not(:disabled),#search-input,#search-btn,.tag-input,.tag-pill button,.pl-tools button:not(:disabled),.tvh-card,.tvh-tab,.pl-menu-row,#pl-menu input,#pl-menu button,.shorts-nav button,.ytcp-error button';
 const tvClone = o => JSON.parse(JSON.stringify(o));
 const tvNum = (v, d, lo, hi) => { v = Number(v); return isFinite(v) ? Math.min(hi, Math.max(lo, v)) : d; };
 const tvNk = k => (k && k.length === 1 ? k.toLowerCase() : k);
@@ -3077,7 +3135,7 @@ const tvPadName = i => TV_PAD_NAMES[i] || ('Button ' + i);
 
 function tvLoad() {
     let s = {}; try { s = JSON.parse(localStorage.getItem('yyt_tv') || '{}') || {}; } catch {}
-    const t = { on: !!s.on, ox: tvNum(s.ox, 0, 0, 15), oy: tvNum(s.oy, 0, 0, 15), scale: tvNum(s.scale, 1.25, .75, 2), keys: tvClone(TV_DEF.keys), pad: tvClone(TV_DEF.pad) };
+    const t = { on: !!s.on, ox: tvNum(s.ox, 0, 0, 15), oy: tvNum(s.oy, 0, 0, 15), scale: tvNum(s.scale, 1.25, .75, 2), cacheOn: s.cacheOn !== false, cacheKeep: tvNum(s.cacheKeep, 3, 1, 10), keys: tvClone(TV_DEF.keys), pad: tvClone(TV_DEF.pad) };
     for (const a in t.keys) {
         if (s.keys && Array.isArray(s.keys[a])) t.keys[a] = s.keys[a].map(String);
         if (s.pad && Array.isArray(s.pad[a])) t.pad[a] = s.pad[a].map(Number).filter(Number.isInteger);
@@ -3085,8 +3143,8 @@ function tvLoad() {
     return t;
 }
 const tv = Object.assign(tvLoad(), { cur: null, sigIdx: null, sigKey: null, modal: null, remap: null, panelOpen: false, sel: 0, items: [],
-    panelTimer: 0, progIv: 0, raf: 0, held: {}, fsByUs: false, resume: null, synth: false, hintId: null });
-function tvSave() { try { localStorage.setItem('yyt_tv', JSON.stringify({ on: tv.on, ox: tv.ox, oy: tv.oy, scale: tv.scale, keys: tv.keys, pad: tv.pad })); } catch {} }
+    panelTimer: 0, progIv: 0, raf: 0, held: {}, fsByUs: false, resume: null, synth: false, hintId: null, urls: [], comm: false, commIv: 0, commSig: '', job: null, status: null, sub: null, startT: 0, startAt: 0 });
+function tvSave() { try { localStorage.setItem('yyt_tv', JSON.stringify({ on: tv.on, ox: tv.ox, oy: tv.oy, scale: tv.scale, cacheOn: tv.cacheOn, cacheKeep: tv.cacheKeep, keys: tv.keys, pad: tv.pad })); } catch {} }
 
 const tvPlaying = () => state.view === 'player' || (state.view === 'savedPlayer' && !!state.savedRecord && !state.savedLoading);
 const tvFsEl = () => document.fullscreenElement || document.webkitFullscreenElement;
@@ -3102,7 +3160,7 @@ function tvApply() {
     const r = document.documentElement.style;
     r.setProperty('--tv-scale', tv.scale); r.setProperty('--tv-ox', tv.ox); r.setProperty('--tv-oy', tv.oy);
     document.body.classList.toggle('tv-mode', tv.on);
-    if (!tv.on) { document.body.classList.remove('tv-playing', 'tv-nomouse'); tvHidePanel(); tvClearFocus(); }
+    if (!tv.on) { document.body.classList.remove('tv-playing', 'tv-nomouse', 'tv-home', 'tv-rail-open', 'tv-search'); tvHidePanel(); tvClearFocus(); }
     else if (!tv.raf) tv.raf = requestAnimationFrame(tvPoll);
 }
 function tvToggle() {
@@ -3189,6 +3247,10 @@ function tvSettingsHTML() {
             <div class="settings-sub" style="margin-top:20px">Overscan</div>
             <div class="settings-desc">Current inset: ${tv.ox}% horizontal · ${tv.oy}% vertical.</div>
             <div class="tag-input-row"><button class="yt-btn-ghost" onclick="tvOverscan()">Adjust overscan</button></div>
+            <div class="settings-sub" style="margin-top:20px">Video cache</div>
+            <div class="settings-desc">While a stream plays, a copy downloads in the background; once it finishes, playback switches to the local copy for instant seeking and offline replay. Cached: ${tvcCount()} video(s), ${(tvcSize() / 1048576).toFixed(0)} MB. Direct links aren't cached.</div>
+            <div class="tag-input-row"><button class="yt-btn-ghost" onclick="tvCacheToggle()">Cache while playing: ${tv.cacheOn ? 'On' : 'Off'}</button><button class="yt-btn-ghost" onclick="tvCacheClear()">Clear cache</button></div>
+            <div class="tv-stepper" style="margin-top:10px">Keep last <button class="yt-btn-ghost" onclick="tvKeepStep(-1)">−</button><span>${tv.cacheKeep}</span><button class="yt-btn-ghost" onclick="tvKeepStep(1)">+</button> videos</div>
             <div class="settings-sub" style="margin-top:20px">Controls</div>
             <div class="settings-desc">Pick a button to remap it, then press the new key or controller button. ${tvPadStatus()}</div>
             ${TV_ACTIONS.map(([a, l]) => `<div class="tv-map-row"><span>${l}</span><span class="tv-map-btns">
@@ -3213,12 +3275,13 @@ function tvCands() {
         return r.width > 0 && r.height > 0 && !el.closest('#shorts-holder,#tv-panel');
     });
 }
-const tvFirst = l => l.find(e => e.closest('#main-content')) || l[0];
-function tvClearFocus() { document.querySelectorAll('.tv-focus').forEach(x => x.classList.remove('tv-focus')); tv.cur = null; }
+const tvFirst = l => l.find(e => e.classList.contains('tvh-card')) || l.find(e => e.closest('#main-content')) || l[0];
+function tvClearFocus() { document.querySelectorAll('.tv-focus').forEach(x => x.classList.remove('tv-focus')); tv.cur = null; document.body.classList.remove('tv-rail-open'); }
 function tvFocus(el) {
     if (!el) return;
     document.querySelectorAll('.tv-focus').forEach(x => x.classList.remove('tv-focus'));
     el.classList.add('tv-focus'); tv.cur = el;
+    document.body.classList.toggle('tv-rail-open', !!el.closest('#sidebar'));
     try { el.scrollIntoView({ block: 'nearest', inline: 'nearest' }); } catch {}
     if (tvScope() === document) { tv.sigIdx = tvCands().indexOf(el); tv.sigKey = viewKey(); }
 }
@@ -3257,6 +3320,7 @@ function tvActivate() {
     if (!el || !el.isConnected) { tvRestore(); return; }
     if (el.tagName === 'INPUT' && !['button', 'range', 'checkbox'].includes(el.type)) { el.focus(); return; }
     el.click();
+    if (el.closest('#sidebar') && el.id !== 'nav-search') setTimeout(() => { tvClearFocus(); tvRestore(); }, 60);
 }
 
 // ── Actions ──
@@ -3315,6 +3379,13 @@ function tvVol(d) {
 }
 const tvFmt = s => { s = Math.floor(s || 0); const h = Math.floor(s / 3600), m = Math.floor(s % 3600 / 60), x = s % 60; return (h ? h + ':' + String(m).padStart(2, '0') : m) + ':' + String(x).padStart(2, '0'); };
 function tvBuildItems() {
+    const caps = window.__tvCaps;
+    if (tv.sub === 'caps' && caps) {
+        const done = i => () => { caps.choose(i); tv.sub = null; tv.sel = 6; };
+        return [{ icon: caps.current < 0 ? 'fa-check' : 'fa-closed-captioning', label: 'Captions off', run: done(-1) },
+            ...caps.list.map((c, i) => ({ icon: caps.current === i ? 'fa-check' : 'fa-closed-captioning', label: c.label || c.languageCode, run: done(i) })),
+            { icon: 'fa-arrow-left', label: 'Back', run: () => { tv.sub = null; tv.sel = 6; } }];
+    }
     const icon = document.getElementById('ytcp-play-icon') || document.getElementById('ytsp-play-icon');
     const playing = !!(icon && icon.className.includes('fa-pause'));
     const L = [
@@ -3325,9 +3396,15 @@ function tvBuildItems() {
         { icon: 'fa-volume-low', label: 'Volume down', run: () => tvVol(-.1) },
         { icon: 'fa-volume-high', label: 'Volume up · ' + Math.round((ytMuted ? 0 : ytVolume) * 100) + '%', run: () => tvVol(.1) },
     ];
+    if (caps && caps.list.length) {
+        const cur = caps.current >= 0 ? (caps.list[caps.current].label || caps.list[caps.current].languageCode) : 'Off';
+        L.push({ icon: 'fa-closed-captioning', label: 'Captions: ' + cur, run: () => { tv.sub = 'caps'; tv.sel = caps.current + 1; } });
+    }
     if (state.view === 'player' && state.selectedItem) {
         const it = state.selectedItem, modes = getDirectSources(it.id).length ? ['direct', 'manual', 'pre'] : ['manual', 'pre'];
         const cur = modes.includes(state.ytMethod) ? state.ytMethod : 'manual';
+        const cmx = commentsCache[it.id];
+        L.push({ icon: 'fa-comments', label: 'Comments' + (cmx && cmx.total ? ' · ' + fmtCount(cmx.total) : ''), run: tvOpenComments });
         L.push({ icon: 'fa-gear', label: 'Quality: ' + { direct: 'Direct', manual: '720p', pre: '360p' }[cur] + ' (change)', run: () => {
             const { v } = tvMedia(); tv.resume = { id: it.id, t: v ? v.currentTime : 0 };
             setYTMethod(modes[(modes.indexOf(cur) + 1) % modes.length]);
@@ -3345,6 +3422,7 @@ function tvProgress() {
     const d = isFinite(v.duration) ? v.duration : 0, c = v.currentTime || 0;
     f.style.width = (d ? Math.min(100, c / d * 100) : 0) + '%';
     t.textContent = tvFmt(c) + ' / ' + tvFmt(d);
+    const ce = document.getElementById('tvp-cache'); if (ce) ce.textContent = tvCacheText();
 }
 function tvRenderPanel() {
     let p = document.getElementById('tv-panel');
@@ -3353,13 +3431,14 @@ function tvRenderPanel() {
     tv.items = tvBuildItems();
     tv.sel = Math.max(0, Math.min(tv.sel, tv.items.length - 1));
     p.innerHTML = `<div class="tvp-title">${esc(rec ? rec.title : '')}</div><div class="tvp-ch">${esc(rec ? rec.channel || '' : '')}</div>
-        <div class="tvp-bar"><div class="tvp-fill" id="tvp-fill"></div></div><div class="tvp-time" id="tvp-time"></div>
+        <div class="tvp-bar"><div class="tvp-fill" id="tvp-fill"></div></div><div class="tvp-time" id="tvp-time"></div><div class="tvp-cache" id="tvp-cache"></div>
         ${tv.items.map((it, i) => `<div class="tvp-item ${i === tv.sel ? 'sel' : ''}" onclick="tvPanelRun(${i})"><i class="fa ${it.icon}"></i><span>${esc(it.label)}</span></div>`).join('')}
         <div class="tvp-hint">Back exits the video · press any button to show this menu</div>`;
     p.style.display = 'flex';
     tvProgress();
 }
 function tvShowPanel() {
+    if (tv.comm) return;
     tv.panelOpen = true; tvRenderPanel();
     clearTimeout(tv.panelTimer); tv.panelTimer = setTimeout(tvHidePanel, 5000);
     if (!tv.progIv) tv.progIv = setInterval(tvProgress, 250);
@@ -3376,20 +3455,274 @@ function tvPanelRun(i) {
 }
 function tvExitVideo() { tvHidePanel(); if (navStack.length) goBack(); else goHome(); }
 function tvPlayAction(a) {
+    if (tv.comm) {
+        switch (a) {
+            case 'up': tvCommScroll(-1); return;
+            case 'down': tvCommScroll(1); return;
+            case 'select': tvCommMore(); return;
+            case 'back': case 'menu': case 'comments': tvCloseComments(); return;
+        }
+    }
     const open = tv.panelOpen, n = tv.items.length || 1;
     switch (a) {
         case 'left': case 'seekBack': tvSynthKey('j'); tvShowPanel(); break;
         case 'right': case 'seekFwd': tvSynthKey('l'); tvShowPanel(); break;
         case 'playPause': tvSynthKey(' '); tvShowPanel(); break;
         case 'mute': tvSynthKey('m'); tvShowPanel(); break;
+        case 'captions': tvCycleCaptions(); tvShowPanel(); break;
+        case 'comments': tvOpenComments(); break;
         case 'volUp': tvVol(.1); tvShowPanel(); break;
         case 'volDown': tvVol(-.1); tvShowPanel(); break;
         case 'up': if (open) tv.sel = (tv.sel - 1 + n) % n; tvShowPanel(); break;
         case 'down': if (open) tv.sel = (tv.sel + 1) % n; tvShowPanel(); break;
         case 'select': if (open) tvPanelRun(tv.sel); else tvShowPanel(); break;
         case 'menu': if (open) tvHidePanel(); else tvShowPanel(); break;
-        case 'back': if (open) tvExitVideo(); else tvShowPanel(); break;
+        case 'back': if (open && tv.sub) { tv.sub = null; tv.sel = 0; tvShowPanel(); } else if (open) tvExitVideo(); else tvShowPanel(); break;
     }
+}
+
+// ── Captions helper ──
+function tvCycleCaptions() {
+    const c = window.__tvCaps;
+    if (!c || !c.list.length) { toastMsg('No captions for this video'); return; }
+    let i = c.current + 1; if (i >= c.list.length) i = -1;
+    c.choose(i);
+    toastMsg('Captions: ' + (i < 0 ? 'Off' : (c.list[i].label || c.list[i].languageCode)));
+}
+
+// ── Cache while playing ──
+// The stream plays live from the network. After a few seconds a second download saves a copy to IndexedDB
+// (separate from Saved); when it finishes, playback hops onto the local copy at the same position.
+const TV_CACHE_MAX = 700 * 1048576;
+const tvcKey = (id, q) => 'c_' + id + '_' + q;
+function tvcMeta() { try { const m = JSON.parse(localStorage.getItem('yyt_cache_meta') || '[]'); return Array.isArray(m) ? m : []; } catch { return []; } }
+function tvcSetMeta(m) { try { localStorage.setItem('yyt_cache_meta', JSON.stringify(m)); } catch {} }
+const tvcCount = () => tvcMeta().length;
+const tvcSize = () => tvcMeta().reduce((n, m) => n + (m.size || 0), 0);
+async function tvcEvict() {
+    const m = tvcMeta(), drop = m.splice(tv.cacheKeep);
+    for (const d of drop) { try { await idbDelete(d.key); } catch {} }
+    tvcSetMeta(m);
+}
+async function tvcStore(item, q, vBlob, aBlob) {
+    const key = tvcKey(item.id, q);
+    await idbPut({ key, id: item.id, quality: q, title: item.title, channel: item.channel, videoBlob: vBlob, audioBlob: aBlob, cached: true });
+    tvcSetMeta([{ key, id: item.id, q, size: vBlob.size + (aBlob ? aBlob.size : 0), at: Date.now() }, ...tvcMeta().filter(x => x.key !== key)]);
+    await tvcEvict();
+}
+async function tvCacheClear() {
+    if (tv.job) { tv.job.ctrl.abort(); tv.job = null; }
+    for (const m of tvcMeta()) { try { await idbDelete(m.key); } catch {} }
+    tvcSetMeta([]); toastMsg('Cache cleared');
+    if (state.view === 'settings') keepScrollRender();
+}
+function tvCacheToggle() {
+    tv.cacheOn = !tv.cacheOn;
+    if (!tv.cacheOn && tv.job) { tv.job.ctrl.abort(); tv.job = null; }
+    tvSave(); keepScrollRender();
+}
+function tvKeepStep(d) { tv.cacheKeep = tvNum(tv.cacheKeep + d, 3, 1, 10); tvSave(); tvcEvict().then(() => { if (state.view === 'settings') keepScrollRender(); }); }
+function tvQuality() {
+    if (state.view !== 'player' || !state.selectedItem) return null;
+    if (state.ytMethod === 'direct' && getDirectSources(state.selectedItem.id).length) return null;
+    return state.ytMethod === 'pre' ? '360p' : '720p';
+}
+function tvCacheText() {
+    if (tv.status === 'local') return 'Playing from local copy';
+    const j = tv.job;
+    if (!j || !state.selectedItem || j.id !== state.selectedItem.id) return '';
+    return { caching: 'Caching ' + j.pct + '%', done: 'Cached for offline', error: 'Caching unavailable', big: 'Too large to cache' }[j.state] || '';
+}
+async function tvFetchBlob(id, itag, signal, onP) {
+    let last;
+    for (const base of getMediaInstances()) {
+        if (signal.aborted) throw new Error('aborted');
+        const ctrl = new AbortController(), onAbort = () => ctrl.abort();
+        signal.addEventListener('abort', onAbort);
+        try {
+            const timer = setTimeout(() => ctrl.abort(), 30000);
+            let res; try { res = await fetch(proxiedForFetch(`${base}/latest_version?id=${id}&itag=${itag}&local=true`), { signal: ctrl.signal }); } finally { clearTimeout(timer); }
+            if (!res.ok) throw new Error('HTTP ' + res.status);
+            const len = Number(res.headers.get('content-length')) || 0;
+            if (len > TV_CACHE_MAX) throw new Error('big');
+            const reader = res.body.getReader(), chunks = []; let got = 0;
+            for (;;) {
+                const { done, value } = await reader.read(); if (done) break;
+                chunks.push(value); got += value.length;
+                if (got > TV_CACHE_MAX) { ctrl.abort(); throw new Error('big'); }
+                if (onP) onP(len ? Math.min(1, got / len) : 0.5);
+            }
+            if (got < 1024) throw new Error('empty');
+            return new Blob(chunks);
+        } catch (e) { last = e; if (signal.aborted || e.message === 'big') throw e; }
+        finally { signal.removeEventListener('abort', onAbort); }
+    }
+    throw last || new Error('failed');
+}
+function tvSwapToBlobs(rec) {
+    const { v, a } = tvMedia(); if (!v) return;
+    let t = v.currentTime || 0;
+    if (performance.now() - tv.startAt < 4000) t = Math.max(t, tv.startT || 0);
+    const wasPlaying = !v.paused;
+    const vu = URL.createObjectURL(rec.videoBlob); tv.urls.push(vu);
+    v.addEventListener('loadedmetadata', () => { try { v.currentTime = t; } catch {} }, { once: true });
+    if (a && rec.audioBlob) {
+        const au = URL.createObjectURL(rec.audioBlob); tv.urls.push(au);
+        a.addEventListener('loadedmetadata', () => { try { a.currentTime = t; } catch {} }, { once: true });
+        a.src = au; a.load();
+    } else if (wasPlaying) {
+        v.addEventListener('canplay', () => { if (v.paused) v.play().catch(() => {}); }, { once: true });   // single-stream player doesn't re-kick itself
+    }
+    v.src = vu; v.load();
+}
+async function tvStartCache(item, q) {
+    const job = tv.job = { id: item.id, q, ctrl: new AbortController(), pct: 0, state: 'caching' };
+    const it = SAVE_ITAGS[q], parts = it.audio ? [it.audio, it.video] : [it.video];
+    try {
+        const blobs = [];
+        for (let i = 0; i < parts.length; i++) blobs.push(await tvFetchBlob(item.id, parts[i], job.ctrl.signal, f => { job.pct = Math.round((i + f) / parts.length * 100); }));
+        if (tv.job !== job) return;
+        const vBlob = blobs[blobs.length - 1], aBlob = it.audio ? blobs[0] : null;
+        await tvcStore(item, q, vBlob, aBlob);
+        job.state = 'done'; job.pct = 100;
+        if (tv.on && state.view === 'player' && state.selectedItem && state.selectedItem.id === item.id && tvQuality() === q) { tv.status = 'local'; tvSwapToBlobs({ videoBlob: vBlob, audioBlob: aBlob }); }
+    } catch (e) {
+        if (job.ctrl.signal.aborted && tv.job !== job) return;
+        job.state = e && e.message === 'big' ? 'big' : 'error';
+    }
+}
+async function tvCacheInit() {
+    const item = state.selectedItem, q = tvQuality(); if (!item || !q) return;
+    const id = item.id, same = () => state.view === 'player' && state.selectedItem && state.selectedItem.id === id && tvQuality() === q;
+    if (tv.job && !(tv.job.id === id && tv.job.q === q)) { tv.job.ctrl.abort(); tv.job = null; }
+    let rec = null;
+    try { rec = (await idbGet(id + '_' + q)) || (await idbGet(tvcKey(id, q))); } catch {}
+    if (!same()) return;
+    if (rec && rec.videoBlob) { tv.status = 'local'; tvSwapToBlobs(rec); return; }
+    if (tv.job && tv.job.id === id && tv.job.q === q) return;
+    setTimeout(() => { if (same() && tv.on && tv.cacheOn && !tv.job) tvStartCache(item, q); }, 3000);
+}
+
+// ── Comments viewer ──
+const tvcBox = () => document.getElementById('player-extras');
+function tvCommHTML() {
+    const id = state.selectedItem && state.selectedItem.id, cm = id && commentsCache[id];
+    let body;
+    if (!cm || (cm.busy && !cm.items.length)) body = '<div class="tvc-note"><i class="fa fa-circle-notch fa-spin"></i> Loading comments…</div>';
+    else if (cm.err && !cm.items.length) body = '<div class="tvc-note">Comments are unavailable for this video.<br>Press Select to retry.</div>';
+    else if (!cm.items.length) body = '<div class="tvc-note">No comments.</div>';
+    else body = cm.items.map(c => `<div class="tvc-c"><div class="tvc-av">${esc(((c.author || '?').replace(/^@/, '')[0] || '?').toUpperCase())}</div>
+            <div style="min-width:0"><div class="tvc-h">${c.isPinned ? '<i class="fa fa-thumbtack"></i> ' : ''}${esc(c.author || '')}<span>${esc(c.publishedText || '')}</span></div>
+            <div class="tvc-t">${esc(c.content || '')}</div>
+            <div class="tvc-l"><i class="fa fa-thumbs-up"></i> ${fmtCount(c.likeCount) || ''}${c.replies && c.replies.replyCount ? ' · ' + c.replies.replyCount + ' replies' : ''}</div></div></div>`).join('')
+        + (cm.done ? '' : `<div class="tvc-note">${cm.busy ? 'Loading more…' : 'Keep scrolling or press Select for more'}</div>`);
+    return `<div class="tvc-head"><i class="fa fa-comments"></i> Comments${cm && cm.total ? ' · ' + fmtFull(cm.total) : ''}</div><div class="tvc-body">${body}</div><div class="tvc-hint">↑ ↓ scroll · Select: more · Back: close</div>`;
+}
+function tvCommPaint() {
+    const o = document.getElementById('tv-comments'); if (!o) return;
+    const old = o.querySelector('.tvc-body'), top = old ? old.scrollTop : 0;
+    o.innerHTML = tvCommHTML();
+    const nb = o.querySelector('.tvc-body'); if (nb) { nb.style.scrollBehavior = 'auto'; nb.scrollTop = top; nb.style.scrollBehavior = ''; }
+}
+function tvCommSig() { const id = state.selectedItem && state.selectedItem.id, cm = id && commentsCache[id]; return cm ? cm.items.length + '|' + cm.busy + '|' + cm.err + '|' + cm.done : 'none'; }
+function tvOpenComments() {
+    if (state.view !== 'player' || !state.selectedItem) return;
+    tvHidePanel(); tv.comm = true;
+    let o = document.getElementById('tv-comments');
+    if (!o) { o = document.createElement('div'); o.id = 'tv-comments'; document.body.appendChild(o); }
+    o.style.display = 'flex'; tv.commSig = tvCommSig(); tvCommPaint();
+    clearInterval(tv.commIv);
+    tv.commIv = setInterval(() => { const sg = tvCommSig(); if (sg !== tv.commSig) { tv.commSig = sg; tvCommPaint(); } }, 400);
+    if (!commentsCache[state.selectedItem.id]) tvCommMore();
+}
+function tvCloseComments() {
+    tv.comm = false; clearInterval(tv.commIv);
+    const o = document.getElementById('tv-comments'); if (o) o.style.display = 'none';
+}
+function tvCommMore() {
+    const id = state.selectedItem && state.selectedItem.id, box = tvcBox(); if (!id || !box) return;
+    const cm = commentsCache[id];
+    if (!cm || (cm.err && !cm.items.length) || (!cm.done && !cm.busy)) loadComments(id, !!(cm && cm.items.length), box, () => tvcBox() === box);
+}
+function tvCommScroll(d) {
+    const b = document.querySelector('#tv-comments .tvc-body'); if (!b) return;
+    b.scrollTop += d * Math.round(b.clientHeight * 0.45);
+    setTimeout(() => { if (b.scrollTop + b.clientHeight >= b.scrollHeight - 60) tvCommMore(); }, 400);
+}
+
+// ── YouTube-for-TV home: tabs + shelves ──
+const tvHome = { tab: 0, shelves: {}, running: false, ids: new Map() };
+const tvCap = q => q.charAt(0).toUpperCase() + q.slice(1);
+const tvHomeTabs = () => ['Recommended', ...feedQueries];
+function tvHomeDefs() {
+    const tabs = tvHomeTabs(); if (tvHome.tab >= tabs.length) tvHome.tab = 0;
+    if (tvHome.tab === 0) return [...new Set(['trending', ...feedQueries.map(q => q.toLowerCase())])].slice(0, 5).map(q => ({ key: q + ':1', title: tvCap(q), q, page: 1 }));
+    const q = feedQueries[tvHome.tab - 1];
+    return [1, 2, 3].map(pg => ({ key: 'tab:' + q + ':' + pg, title: pg === 1 ? tvCap(q) : tvCap(q) + ' · more', q, page: pg }));
+}
+const tvShelfId = key => { if (!tvHome.ids.has(key)) tvHome.ids.set(key, 'tvsh' + tvHome.ids.size); return tvHome.ids.get(key); };
+function tvCardHTML(it) {
+    itemReg[it.id] = it;
+    const meta = [fmtCount(it.views) ? fmtCount(it.views) + ' views' : '', it.pub || ''].filter(Boolean).join(' · ');
+    return `<div class="tvh-card" onclick="selectItem(itemReg['${esc(it.id)}'])"><div class="tvh-thumb"><img src="https://img.youtube.com/vi/${esc(it.id)}/mqdefault.jpg" loading="lazy" onerror="this.style.visibility='hidden'">${it.len ? `<span class="thumb-len">${fmtLen(it.len)}</span>` : ''}</div>
+        <div class="tvh-meta"><div class="tvh-vt">${esc(it.title)}</div><div class="tvh-ch">${esc(it.channel || '')}</div><div class="tvh-vw">${esc(meta)}</div></div></div>`;
+}
+function tvRowInner(sh) {
+    if (!sh || sh.state === 'loading') return Array(6).fill('<div class="tvh-skel skeleton"></div>').join('');
+    if (sh.state === 'err' || !sh.items.length) return `<div class="tvh-note">Couldn't load this shelf. <button class="yt-btn" onclick="tvHomeRetry()">Retry</button></div>`;
+    return sh.items.map(tvCardHTML).join('');
+}
+function tvHomeHTML() {
+    const tabs = tvHomeTabs(); tvHomeDefs();
+    return `<div class="tvh"><div class="tvh-tabs">${tabs.map((t, i) => `<div class="tvh-tab ${i === tvHome.tab ? 'on' : ''}" onclick="tvHomeTab(${i})">${esc(t.toUpperCase())}</div>`).join('')}</div>
+        ${tvHomeDefs().map(d => `<div class="tvh-shelf"><div class="tvh-title">${esc(d.title)}</div><div class="tvh-row" id="${tvShelfId(d.key)}">${tvRowInner(tvHome.shelves[d.key])}</div></div>`).join('')}</div>`;
+}
+const _tvRenderHome = renderHome;
+renderHome = function () { return tv.on ? tvHomeHTML() : _tvRenderHome(); };
+const _tvLoadFeed = loadFeed;
+loadFeed = function () { if (tv.on) { tvHomeEnsure(); return Promise.resolve(); } return _tvLoadFeed.apply(this, arguments); };
+function tvHomeTab(i) {
+    if (i === tvHome.tab) tvHomeDefs().forEach(d => delete tvHome.shelves[d.key]);
+    tvHome.tab = i; render();
+}
+function tvHomeRetry() { tvHomeDefs().forEach(d => { if (tvHome.shelves[d.key] && tvHome.shelves[d.key].state !== 'ok') delete tvHome.shelves[d.key]; }); render(); }
+async function tvLoadShelf(d) {
+    let list = null;
+    if (d.q === 'trending' && d.page === 1) { try { const t = await invidiousJSON('/api/v1/trending'); if (Array.isArray(t) && t.length) list = t; } catch {} }
+    if (!list) list = await searchInvidious(d.q, { page: d.page });
+    return list.filter(v => v && v.type === 'video' && v.videoId).map(v => mkItem(v));
+}
+function tvHomeEnsure() {
+    if (!tv.on || state.view !== 'home' || tvHome.running) return;
+    const todo = tvHomeDefs().filter(d => !tvHome.shelves[d.key]);
+    if (!todo.length) return;
+    tvHome.running = true;
+    (async () => {
+        for (const d of todo) {
+            if (!tv.on) break;
+            const sh = tvHome.shelves[d.key] = { items: [], state: 'loading' };
+            try { sh.items = await tvLoadShelf(d); sh.state = sh.items.length ? 'ok' : 'err'; } catch { sh.state = 'err'; }
+            const el = document.getElementById(tvShelfId(d.key));
+            if (el && state.view === 'home') { el.innerHTML = tvRowInner(sh); if (!tv.cur || !tv.cur.isConnected) tvRestore(); }
+        }
+        tvHome.running = false; tvHomeEnsure();
+    })();
+}
+
+// rail: logo + search entry, and the pop-over search bar
+(function () {
+    const sb = document.getElementById('sidebar'); if (!sb) return;
+    const s = document.createElement('div'); s.className = 'sidebar-item tv-only'; s.id = 'nav-search';
+    s.setAttribute('onclick', 'tvOpenSearch()'); s.innerHTML = '<i class="fa fa-search"></i> Search';
+    const l = document.createElement('div'); l.className = 'tv-logo tv-only'; l.innerHTML = '<div class="logo-icon"><i class="fa fa-play"></i></div>';
+    sb.insertBefore(s, sb.firstChild); sb.insertBefore(l, sb.firstChild);
+    const inp = document.getElementById('search-input');
+    if (inp) inp.addEventListener('blur', () => setTimeout(() => { if (document.activeElement !== inp) document.body.classList.remove('tv-search'); }, 200));
+})();
+function tvOpenSearch() {
+    document.body.classList.add('tv-search');
+    const i = document.getElementById('search-input'); if (!i) return;
+    i.value = ''; setTimeout(() => i.focus(), 0);
 }
 
 // ── After every render ──
@@ -3397,12 +3730,14 @@ function tvAfterRender() {
     if (!tv.on) return;
     const playing = tvPlaying();
     document.body.classList.toggle('tv-playing', playing);
-    tvHidePanel(); tv.sel = 0;
+    tvCloseComments(); tvHidePanel(); tv.sel = 0; tv.sub = null; tv.status = null;
+    document.body.classList.toggle('tv-home', state.view === 'home');
+    if (state.view === 'home') tvHomeEnsure();
     if (playing) {
         tvClearFocus();
         tvEnterFs().then(ok => { if (ok) tv.fsByUs = true; });
         if (tv.resume) {
-            const r = tv.resume; tv.resume = null;
+            const r = tv.resume; tv.resume = null; tv.startT = r.t; tv.startAt = performance.now();
             if (state.selectedItem && state.selectedItem.id === r.id) {
                 const { v, a } = tvMedia();
                 if (v) v.addEventListener('loadedmetadata', () => { try { v.currentTime = r.t; if (a) a.currentTime = r.t; } catch {} }, { once: true });
@@ -3410,13 +3745,14 @@ function tvAfterRender() {
         }
         const id = state.selectedItem && state.selectedItem.id;
         if (state.view === 'player' && tv.hintId !== id) { tv.hintId = id; toastMsg('Press any button for controls'); }
+        if (state.view === 'player' && tv.cacheOn) tvCacheInit();
     } else {
         if (tv.fsByUs) { tvExitFs(); tv.fsByUs = false; }
         tvRestore();
     }
 }
 const _tvRender = render;
-render = function () { _tvRender.apply(this, arguments); try { tvAfterRender(); } catch (e) { console.error(e); } };
+render = function () { window.__tvCaps = null; _tvRender.apply(this, arguments); tv.urls.splice(0).forEach(u => URL.revokeObjectURL(u)); try { tvAfterRender(); } catch (e) { console.error(e); } };
 
 // ── Keyboard ──
 const tvActsForKey = k => Object.keys(tv.keys).filter(a => tv.keys[a].map(tvNk).includes(k));
