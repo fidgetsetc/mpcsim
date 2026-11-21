@@ -100,8 +100,10 @@ async function dbClear(){ const db = await dbp; if(!db) return; return new Promi
 const items = new Map();
 function titleOf(u){ try { return decodeURIComponent(u.split('?')[0].split('/').pop()).replace(/\.\w+$/, '') || u; } catch(e){ return u; } }
 const isZip = u => /\.zip(\?|#|$)/i.test(u);
-VIDEOS.filter(u => !isZip(u)).forEach(u => items.set(u, {id:u, src:u, title:titleOf(u)}));
-function addBlob(rec){ items.set(rec.id, {id:rec.id, src:URL.createObjectURL(rec.blob), title:titleOf(rec.name), zip:true}); }
+const isMov = n => /\.mov(\?|#|$)/i.test(n);
+VIDEOS.filter(u => !isZip(u) && !isMov(u)).forEach(u => items.set(u, {id:u, src:u, title:titleOf(u)}));
+function srcOf(blob){ return URL.createObjectURL(blob.type === 'video/quicktime' ? new Blob([blob], {type:'video/mp4'}) : blob); }
+function addBlob(rec){ items.set(rec.id, {id:rec.id, src:srcOf(rec.blob), title:titleOf(rec.name), zip:true}); }
 
 /* ---------- feed ---------- */
 const slides = []; let cur = 0, tab = 'feed', timer;
@@ -215,6 +217,82 @@ function setTab(t){
   else { feed.scrollTop = cur * feed.clientHeight; activate(cur); }
 }
 
+/* ---------- MOV -> MP4/WebM conversion (ffmpeg.wasm, runs in the browser) ---------- */
+const FF = 'https://cdn.jsdelivr.net/npm/@ffmpeg/';
+let ffP = null, convQ = Promise.resolve();
+function loadScript(src){ return new Promise((ok, bad) => { const s = document.createElement('script'); s.src = src; s.onload = ok; s.onerror = () => bad(new Error('script')); document.head.append(s); }); }
+// workers and wasm can't load cross-origin directly, so route them through blob URLs
+async function blobURL(url, type){ const r = await fetch(url); if(!r.ok) throw new Error('fetch'); return URL.createObjectURL(new Blob([await r.arrayBuffer()], {type})); }
+function getFF(){
+  if(ffP) return ffP;
+  ffP = (async () => {
+    await loadScript(FF + 'ffmpeg@0.12.10/dist/umd/ffmpeg.js');
+    const ff = new FFmpegWASM.FFmpeg(), core = FF + 'core@0.12.6/dist/umd/';
+    await ff.load({
+      classWorkerURL: await blobURL(FF + 'ffmpeg@0.12.10/dist/umd/814.ffmpeg.js', 'text/javascript'),
+      coreURL: await blobURL(core + 'ffmpeg-core.js', 'text/javascript'),
+      wasmURL: await blobURL(core + 'ffmpeg-core.wasm', 'application/wasm')
+    });
+    return ff;
+  })();
+  ffP.catch(() => { ffP = null; });
+  return ffP;
+}
+// does this device actually decode the result?
+function playable(blob){
+  return new Promise(res => {
+    const u = URL.createObjectURL(blob), v = document.createElement('video'); let t;
+    const end = ok => { clearTimeout(t); v.removeAttribute('src'); v.load(); URL.revokeObjectURL(u); res(ok); };
+    v.muted = true; v.playsInline = true; v.preload = 'metadata';
+    v.onloadedmetadata = () => end(v.videoWidth > 0);
+    v.onerror = () => end(false);
+    t = setTimeout(() => end(false), 8000);
+    v.src = u;
+  });
+}
+// 1) fast rewrap into MP4 (no re-encode), 2) H.264 MP4 re-encode (HEVC iPhone clips), 3) WebM
+const ATTEMPTS = [
+  ['mp4',  'video/mp4',  ['-c','copy','-movflags','+faststart']],
+  ['mp4',  'video/mp4',  ['-c:v','libx264','-preset','ultrafast','-crf','28','-pix_fmt','yuv420p','-c:a','aac','-movflags','+faststart']],
+  ['webm', 'video/webm', ['-c:v','libvpx','-deadline','realtime','-cpu-used','8','-b:v','1M','-c:a','libopus']]
+];
+async function doConvert(blob, name){
+  const base = name.replace(/\.\w+$/, '');
+  try {
+    const ff = await getFF();
+    for(const [ext, type, args] of ATTEMPTS){
+      const out = 'out.' + ext;
+      try {
+        await ff.writeFile('in.mov', new Uint8Array(await blob.arrayBuffer()));
+        if(await ff.exec(['-i', 'in.mov', ...args, '-y', out]) !== 0) throw 0;
+        const res = new Blob([await ff.readFile(out)], {type});
+        if(await playable(res)) return {blob: res, name: base + '.' + ext};
+      } catch(e){}
+      finally {
+        try { await ff.deleteFile(out); } catch(e){}
+        try { await ff.deleteFile('in.mov'); } catch(e){}
+      }
+    }
+  } catch(e){}
+  // converter unavailable (e.g. offline): keep the clip, but label it MP4 so more browsers try it
+  return {blob: new Blob([blob], {type:'video/mp4'}), name, failed: true};
+}
+function convertMov(blob, name){
+  const job = convQ.then(() => doConvert(blob, name)); // one at a time keeps memory in check
+  convQ = job.catch(() => {});
+  return job;
+}
+// MOVs saved by an older version get converted in the background
+async function convertLegacy(recs){
+  for(const r of recs){
+    toast('Converting ' + titleOf(r.name) + ' for compatibility\u2026');
+    const c = await convertMov(r.blob, r.name);
+    const rec = {id: r.id, name: c.name, blob: c.blob, tried: !!c.failed};
+    await dbPut(rec);
+    const it = items.get(r.id); if(it) it.src = srcOf(c.blob);
+  }
+}
+
 /* ---------- ZIP import ---------- */
 let toastT;
 function toast(m){ const t = $('#toast'); t.textContent = m; t.hidden = false; clearTimeout(toastT); toastT = setTimeout(() => t.hidden = true, 3200); }
@@ -228,8 +306,12 @@ async function addZip(file, auto = true){
     let first = null;
     for(const f of files){
       const ext = f.name.split('.').pop().toLowerCase();
-      const blob = new Blob([await f.async('arraybuffer')], {type: MIME[ext]});
-      const rec = {id: 'zip:' + f.name, name: f.name, blob};
+      let blob = new Blob([await f.async('arraybuffer')], {type: MIME[ext]}), name = f.name, tried = false;
+      if(isMov(name)){
+        toast('Converting ' + titleOf(name) + ' for compatibility\u2026');
+        const c = await convertMov(blob, name); blob = c.blob; name = c.name; tried = !!c.failed;
+      }
+      const rec = {id: 'zip:' + f.name, name, blob, tried}; // id keeps the original name so watch history survives
       await dbPut(rec);
       if(items.has(rec.id)) URL.revokeObjectURL(items.get(rec.id).src);
       addBlob(rec); first = first || rec.id;
@@ -263,9 +345,12 @@ document.addEventListener('visibilitychange', () => { if(document.hidden) slides
 
 /* ---------- start ---------- */
 (async () => {
-  (await dbAll()).forEach(addBlob);
+  const recs = await dbAll();
+  recs.forEach(addBlob);
   startFeed();
-  importZipUrls();
+  await importZipUrls();
+  const legacy = recs.filter(r => isMov(r.name) && !r.tried);
+  if(legacy.length) convertLegacy(legacy);
 })();
 
 function startFeed(){
@@ -276,7 +361,18 @@ function startFeed(){
 /* ZIP URLs from the VIDEOS list: download once, unzip, keep in IndexedDB */
 async function importZipUrls(){
   let done = []; try { done = JSON.parse(localStorage.getItem('vf_zips') || '[]'); } catch(e){}
-  for(const u of VIDEOS.filter(isZip)){
+  for(const u of VIDEOS.filter(u => isZip(u) || isMov(u))){
+    if(isMov(u)){
+      if(items.has(u)) continue;
+      try {
+        toast('Downloading ' + titleOf(u) + '\u2026');
+        const r = await fetch(u); if(!r.ok) throw 0;
+        const c = await convertMov(await r.blob(), titleOf(u) + '.mov');
+        const rec = {id: u, name: c.name, blob: c.blob, tried: !!c.failed};
+        await dbPut(rec); addBlob(rec); startFeed();
+      } catch(e){ toast('Could not download ' + titleOf(u) + '. The host may block cross-site requests.'); }
+      continue;
+    }
     if(done.includes(u) && [...items.values()].some(i => i.zip)) continue;
     try {
       toast('Downloading ' + titleOf(u) + '\u2026');
