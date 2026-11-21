@@ -238,26 +238,43 @@ function getFF(){
   ffP.catch(() => { ffP = null; });
   return ffP;
 }
-// does this device actually decode the result?
+// does this device actually DECODE the result? (metadata alone can load fine while the picture stays blank)
 function playable(blob){
   return new Promise(res => {
-    const u = URL.createObjectURL(blob), v = document.createElement('video'); let t;
-    const end = ok => { clearTimeout(t); v.removeAttribute('src'); v.load(); URL.revokeObjectURL(u); res(ok); };
-    v.muted = true; v.playsInline = true; v.preload = 'metadata';
-    v.onloadedmetadata = () => end(v.videoWidth > 0);
+    const u = URL.createObjectURL(blob), v = document.createElement('video'); let t, iv, done = false;
+    const end = ok => {
+      if(done) return; done = true; clearTimeout(t); clearInterval(iv);
+      v.pause(); v.removeAttribute('src'); v.load(); v.remove(); URL.revokeObjectURL(u); res(ok);
+    };
+    v.muted = true; v.playsInline = true; v.preload = 'auto';
+    v.style.cssText = 'position:fixed;left:-9999px;top:0;width:4px;height:4px;opacity:0;pointer-events:none';
+    document.body.append(v);
     v.onerror = () => end(false);
-    t = setTimeout(() => end(false), 8000);
+    v.onloadedmetadata = () => { if(!v.videoWidth) end(false); };
+    v.onloadeddata = () => {
+      const p = v.play();
+      const watch = () => {
+        if('requestVideoFrameCallback' in v){ v.requestVideoFrameCallback(() => end(true)); return; }
+        iv = setInterval(() => {
+          const q = v.getVideoPlaybackQuality && v.getVideoPlaybackQuality();
+          if((q && q.totalVideoFrames > 0) || v.webkitDecodedFrameCount > 0 || (!q && v.currentTime > 0)) end(true);
+        }, 100);
+      };
+      if(p && p.then) p.then(watch, () => end(v.videoWidth > 0)); else watch();
+    };
+    t = setTimeout(() => end(false), 10000);
     v.src = u;
   });
 }
 // 1) fast rewrap into MP4 (no re-encode), 2) H.264 MP4 re-encode (HEVC iPhone clips), 3) WebM
 const ATTEMPTS = [
   ['mp4',  'video/mp4',  ['-c','copy','-movflags','+faststart']],
-  ['mp4',  'video/mp4',  ['-c:v','libx264','-preset','ultrafast','-crf','28','-pix_fmt','yuv420p','-c:a','aac','-movflags','+faststart']],
+  ['mp4',  'video/mp4',  ['-c:v','libx264','-preset','ultrafast','-crf','28','-vf','scale=trunc(iw/2)*2:trunc(ih/2)*2','-pix_fmt','yuv420p','-c:a','aac','-movflags','+faststart']],
   ['webm', 'video/webm', ['-c:v','libvpx','-deadline','realtime','-cpu-used','8','-b:v','1M','-c:a','libopus']]
 ];
 async function doConvert(blob, name){
   const base = name.replace(/\.\w+$/, '');
+  let why = 'no format played';
   try {
     const ff = await getFF();
     for(const [ext, type, args] of ATTEMPTS){
@@ -267,13 +284,14 @@ async function doConvert(blob, name){
         if(await ff.exec(['-i', 'in.mov', ...args, '-y', out]) !== 0) throw 0;
         const res = new Blob([await ff.readFile(out)], {type});
         if(await playable(res)) return {blob: res, name: base + '.' + ext};
-      } catch(e){}
+      } catch(e){ why = (e && e.message) || why; }
       finally {
         try { await ff.deleteFile(out); } catch(e){}
         try { await ff.deleteFile('in.mov'); } catch(e){}
       }
     }
-  } catch(e){}
+  } catch(e){ why = 'converter failed to load'; console.warn('ffmpeg', e); }
+  toast('Could not convert ' + titleOf(name) + ' (' + why + ')');
   // converter unavailable (e.g. offline): keep the clip, but label it MP4 so more browsers try it
   return {blob: new Blob([blob], {type:'video/mp4'}), name, failed: true};
 }
@@ -287,7 +305,7 @@ async function convertLegacy(recs){
   for(const r of recs){
     toast('Converting ' + titleOf(r.name) + ' for compatibility\u2026');
     const c = await convertMov(r.blob, r.name);
-    const rec = {id: r.id, name: c.name, blob: c.blob, tried: !!c.failed};
+    const rec = {id: r.id, name: c.name, blob: c.blob, conv: !c.failed};
     await dbPut(rec);
     const it = items.get(r.id); if(it) it.src = srcOf(c.blob);
   }
@@ -306,12 +324,12 @@ async function addZip(file, auto = true){
     let first = null;
     for(const f of files){
       const ext = f.name.split('.').pop().toLowerCase();
-      let blob = new Blob([await f.async('arraybuffer')], {type: MIME[ext]}), name = f.name, tried = false;
+      let blob = new Blob([await f.async('arraybuffer')], {type: MIME[ext]}), name = f.name, conv = false;
       if(isMov(name)){
         toast('Converting ' + titleOf(name) + ' for compatibility\u2026');
-        const c = await convertMov(blob, name); blob = c.blob; name = c.name; tried = !!c.failed;
+        const c = await convertMov(blob, name); blob = c.blob; name = c.name; conv = !c.failed;
       }
-      const rec = {id: 'zip:' + f.name, name, blob, tried}; // id keeps the original name so watch history survives
+      const rec = {id: 'zip:' + f.name, name, blob, conv}; // id keeps the original name so watch history survives
       await dbPut(rec);
       if(items.has(rec.id)) URL.revokeObjectURL(items.get(rec.id).src);
       addBlob(rec); first = first || rec.id;
@@ -349,7 +367,7 @@ document.addEventListener('visibilitychange', () => { if(document.hidden) slides
   recs.forEach(addBlob);
   startFeed();
   await importZipUrls();
-  const legacy = recs.filter(r => isMov(r.name) && !r.tried);
+  const legacy = recs.filter(r => isMov(r.name) && !r.conv);
   if(legacy.length) convertLegacy(legacy);
 })();
 
@@ -368,7 +386,7 @@ async function importZipUrls(){
         toast('Downloading ' + titleOf(u) + '\u2026');
         const r = await fetch(u); if(!r.ok) throw 0;
         const c = await convertMov(await r.blob(), titleOf(u) + '.mov');
-        const rec = {id: u, name: c.name, blob: c.blob, tried: !!c.failed};
+        const rec = {id: u, name: c.name, blob: c.blob, conv: !c.failed};
         await dbPut(rec); addBlob(rec); startFeed();
       } catch(e){ toast('Could not download ' + titleOf(u) + '. The host may block cross-site requests.'); }
       continue;
