@@ -1,0 +1,601 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Poppy Playtime Chapter 1 - Huggy Wuggy</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<style>
+  html, body {
+    margin:0; padding:0; width:100vw; height:100vh;
+    overflow:hidden; background:#000; color:#fff;
+    font-family:sans-serif;
+    -webkit-user-select:none; user-select:none;
+    -webkit-tap-highlight-color:rgba(0,0,0,0);
+  }
+  canvas:focus { outline:none; }
+  #unity-canvas {
+    width:100vw; height:100vh; display:block;
+    position:absolute; left:0; top:0; background:#000; outline:none;
+  }
+  #loader {
+    position:fixed; inset:0; z-index:9999;
+    display:flex; flex-direction:column; align-items:center; justify-content:center;
+    background:#000; color:#fff;
+    transition:opacity .4s ease;
+  }
+  #loader .spinner {
+    width:50px; height:50px; border-radius:50%;
+    border:4px solid rgba(255,255,255,0.1);
+    border-left-color:#09f;
+    animation:spin 1s linear infinite;
+  }
+  @keyframes spin { to { transform:rotate(360deg); } }
+  #loader .status {
+    margin-top:16px; font-size:14px; opacity:0.85;
+    min-height:18px; text-align:center; padding:0 20px;
+  }
+  #loader .bar-wrap {
+    margin-top:20px;
+    width:260px; height:8px;
+    background:rgba(255,255,255,0.1);
+    border-radius:4px; overflow:hidden;
+  }
+  #loader .bar {
+    height:100%; width:0%; background:#09f;
+    transition:width .15s linear;
+  }
+  #loader .mb {
+    margin-top:6px; font-size:12px; opacity:0.5;
+    font-variant-numeric:tabular-nums;
+  }
+  #warning-banner {
+    position:absolute; bottom:8px; left:8px; right:8px;
+    z-index:10000; pointer-events:none;
+  }
+  #warning-banner div {
+    background:#f80; color:#000; padding:8px; margin-top:4px;
+    border-radius:4px; font-size:13px; pointer-events:auto;
+  }
+</style>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+</head>
+<body>
+<canvas id="unity-canvas" tabindex="-1"></canvas>
+<div id="warning-banner"></div>
+<div id="loader">
+  <div class="spinner"></div>
+  <div class="status" id="loaderStatus">Preparing…</div>
+  <div class="bar-wrap"><div class="bar" id="loaderBar"></div></div>
+  <div class="mb" id="loaderMB"></div>
+</div>
+<script>
+'use strict';
+
+var canvas = document.getElementById('unity-canvas');
+var myGameInstance = null;
+var ysdk = null;
+var player = null;
+
+function FocusGame() { try { window.focus(); canvas.focus(); } catch(e){} }
+
+function unityShowBanner(msg, type) {
+    var banner = document.getElementById('warning-banner');
+    if (!banner) return;
+    var div = document.createElement('div');
+    div.innerHTML = msg;
+    if (type === 'error') div.style.background = '#d32f2f';
+    else if (type === 'warning') div.style.background = '#ffc107';
+    banner.appendChild(div);
+    setTimeout(function () { if (div.parentNode) div.parentNode.removeChild(div); }, 5000);
+}
+
+function installYandexStub() {
+    var dataStore = {}, listeners = {};
+
+    var stubPlayer = {
+        getUniqueID: function () { return 'ripped-player'; },
+        getName: function () { return 'Player'; },
+        getPhoto: function () { return ''; },
+        getPhotos: function () { return Promise.resolve({}); },
+        getMode: function () { return 'lite'; },
+        isAuthorized: function () { return false; },
+        getPayingStatus: function () { return 'unknown'; },
+        getSignature: function () { return Promise.resolve(''); },
+        getData: function () { return Promise.resolve({ data: {}, signature: '' }); },
+        setData: function (d) { if (d) Object.assign(dataStore, d); return Promise.resolve(); },
+        getStats: function () { return Promise.resolve({}); },
+        setStats: function () { return Promise.resolve(); },
+        incrementStats: function () { return Promise.resolve(); }
+    };
+    var stubAdv = {
+        showFullscreenAdv: function (o) {
+            setTimeout(function () {
+                try { if (o && o.callbacks && o.callbacks.onOpen) o.callbacks.onOpen(); } catch (e) {}
+                try { if (o && o.callbacks && o.callbacks.onClose) o.callbacks.onClose(false); } catch (e) {}
+            }, 50);
+        },
+        showRewardedVideo: function (o) {
+            setTimeout(function () {
+                try { if (o && o.callbacks && o.callbacks.onError) o.callbacks.onError(new Error('no ads')); } catch (e) {}
+            }, 50);
+        },
+        getBannerAdvStatus: function () { return Promise.resolve({ stickyAdvIsShowing: false, reason: '' }); },
+        showBannerAdv: function () { return Promise.resolve(); },
+        hideBannerAdv: function () { return Promise.resolve(); }
+    };
+
+    var stubGamesAPI = {
+        getAllGames: function () { return Promise.resolve({ games: [], developerURL: '' }); },
+        getAllGamesWithDevGames: function () { return Promise.resolve({ games: [], developerURL: '' }); },
+        getDevGames: function () { return Promise.resolve({ games: [], developerURL: '' }); },
+        getGameByGameId: function (id) {
+            return Promise.resolve({
+                appID: id || 'ripped-game',
+                title: 'Poppy Playtime Chapter 1',
+                url: '',
+                image: '',
+                description: '',
+                isAuthorized: false
+            });
+        },
+        isAvailableMethod: function () { return true; }
+    };
+
+    var stubSdk = {
+        environment: {
+            i18n: { lang: 'en', tld: 'com', langFamily: 'en' },
+            app: { id: 'ripped', isOnline: true },
+            browser: { lang: 'en', isMobile: false, userAgent: navigator.userAgent },
+            payload: '',
+            clientFeatures: []
+        },
+        deviceInfo: {
+            type: 'desktop',
+            isMobile: function () { return false; },
+            isDesktop: function () { return true; },
+            isTablet: function () { return false; },
+            isTV: function () { return false; }
+        },
+        screen: {
+            fullscreen: {
+                status: 'off',
+                request: function () { return Promise.resolve(); },
+                exit: function () { return Promise.resolve(); }
+            },
+            exitFullscreen: function () { return Promise.resolve(); }
+        },
+        adv: stubAdv,
+        feedback: {
+            canReview: function () { return Promise.resolve({ value: false, reason: 'NO_AUTH' }); },
+            requestReview: function () { return Promise.resolve({ feedbackSent: false }); }
+        },
+        shortcut: {
+            canShowPrompt: function () { return Promise.resolve({ canShow: false }); },
+            showPrompt: function () { return Promise.resolve({ outcome: 'rejected' }); }
+        },
+        auth: { openAuthDialog: function () { return Promise.resolve(); } },
+        getPlayer: function () { return Promise.resolve(stubPlayer); },
+        getLeaderboards: function () {
+            return Promise.resolve({
+                setLeaderboardScore: function () { return Promise.resolve(); },
+                getLeaderboardEntries: function () { return Promise.resolve({ entries: [] }); },
+                getLeaderboardDescription: function () {
+                    return Promise.resolve({
+                        default: false,
+                        description: { invert_sort_order: false, score_format: { options: { decimal_offset: 0 } }, type: 'numeric' }
+                    });
+                }
+            });
+        },
+        getPayments: function () {
+            return Promise.resolve({
+                getCatalog: function () { return Promise.resolve([]); },
+                getPurchases: function () { return Promise.resolve([]); },
+                purchase: function () { return Promise.resolve(); },
+                consumePurchase: function () { return Promise.resolve(); }
+            });
+        },
+        getFlags: function () { return Promise.resolve({}); },
+        features: {
+            LoadingAPI: {
+                ready: function () {},
+                start: function () {},
+                gameplayStart: function () {},
+                gameplayStop: function () {}
+            },
+            GameplayAPI: {
+                start: function () {},
+                stop: function () {}
+            },
+            GamesAPI: stubGamesAPI
+        },
+        storage: {
+            getItem: function () { return Promise.resolve(null); },
+            setItem: function () { return Promise.resolve(); },
+            removeItem: function () { return Promise.resolve(); },
+            clear: function () { return Promise.resolve(); }
+        },
+        on: function (ev, cb) { if (!listeners[ev]) listeners[ev] = []; listeners[ev].push(cb); },
+        off: function (ev, cb) { if (listeners[ev]) { var i = listeners[ev].indexOf(cb); if (i >= 0) listeners[ev].splice(i, 1); } },
+        serverTime: function () { return Promise.resolve(Date.now()); }
+    };
+    window.YaGames = {
+        init: function () { return Promise.resolve(stubSdk); },
+        auth: { openAuthDialog: function () { return Promise.resolve(); } }
+    };
+}
+
+function hideLoader() {
+    var el = document.getElementById('loader');
+    if (!el) return;
+    el.style.opacity = '0';
+    el.style.pointerEvents = 'none';
+    setTimeout(function () { if (el.parentNode) el.parentNode.removeChild(el); }, 500);
+}
+
+function setStatus(t) { var el = document.getElementById('loaderStatus'); if (el) el.textContent = t; }
+function setProgress(f) { var el = document.getElementById('loaderBar'); if (el) el.style.width = Math.max(0, Math.min(100, f * 100)) + '%'; }
+function fmtMB(b) { return (b / 1048576).toFixed(1) + ' MB'; }
+
+var MIME = {
+    js: 'application/javascript', mjs: 'application/javascript', json: 'application/json',
+    wasm: 'application/wasm', data: 'application/octet-stream', zip: 'application/zip',
+    png: 'image/png', jpg: 'image/jpeg', jpeg: 'image/jpeg', webp: 'image/webp',
+    gif: 'image/gif', svg: 'image/svg+xml', ico: 'image/x-icon',
+    mp3: 'audio/mpeg', ogg: 'audio/ogg', wav: 'audio/wav', opus: 'audio/opus',
+    webm: 'video/webm', mp4: 'video/mp4',
+    ttf: 'font/ttf', otf: 'font/otf', woff: 'font/woff', woff2: 'font/woff2',
+    css: 'text/css', html: 'text/html', txt: 'text/plain', unityweb: 'application/octet-stream'
+};
+function mimeFor(n) {
+    var d = n.lastIndexOf('.');
+    return d < 0 ? 'application/octet-stream' : (MIME[n.substring(d + 1).toLowerCase()] || 'application/octet-stream');
+}
+function mimeForBuild(n) {
+    if (/\.data(\.br|\.unityweb)?$/i.test(n)) return 'application/octet-stream';
+    if (/\.wasm(\.br|\.unityweb)?$/i.test(n)) return 'application/wasm';
+    if (/\.(framework\.)?js(\.br|\.unityweb)?$/i.test(n)) return 'application/javascript';
+    return 'application/octet-stream';
+}
+
+var fileMap = new Map();
+
+function cleanPath(u) {
+    if (!u) return '';
+    var s = String(u).trim();
+    if (s.startsWith('blob:')) s = s.substring(5);
+    if (s.indexOf('://') !== -1) { try { s = new URL(s).pathname; } catch (e) {} }
+    s = s.split('?')[0].split('#')[0];
+    while (s.startsWith('../')) s = s.substring(3);
+    while (s.startsWith('./')) s = s.substring(2);
+    s = s.replace(/^\/+/, '');
+    return s.toLowerCase();
+}
+
+function findFileBlob(target) {
+    if (!target || typeof target !== 'string') return null;
+    if (target.startsWith('data:')) return null;
+    var clean = cleanPath(target);
+    if (!clean) return null;
+    if (fileMap.has(clean)) return fileMap.get(clean);
+    var name = clean.split('/').pop();
+    if (!name) return null;
+    var it = fileMap.entries(), e;
+    while (!(e = it.next()).done) {
+        var k = e.value[0], b = e.value[1];
+        if (k === name || k.endsWith('/' + name)) return b;
+    }
+    return null;
+}
+
+function findBuildFile(pattern) {
+    var it = fileMap.entries(), e;
+    while (!(e = it.next()).done) {
+        var k = e.value[0], b = e.value[1];
+        if (pattern.test(k)) return { path: k, blob: b };
+    }
+    return null;
+}
+
+function startsWithBytes(bytes, pattern) {
+    if (bytes.length < pattern.length) return false;
+    for (var i = 0; i < pattern.length; i++) if (bytes[i] !== pattern[i]) return false;
+    return true;
+}
+function startsWithAscii(bytes, str) {
+    if (bytes.length < str.length) return false;
+    for (var i = 0; i < str.length; i++) if (bytes[i] !== str.charCodeAt(i)) return false;
+    return true;
+}
+function hexDump(bytes, len) {
+    var n = Math.min(len || 32, bytes.length), parts = [];
+    for (var i = 0; i < n; i++) parts.push(bytes[i].toString(16).padStart(2, '0'));
+    return parts.join(' ');
+}
+function looksAlreadyDecompressed(bytes, filename) {
+    if (!bytes || bytes.length < 4) return false;
+    if (/\.data(\.br)?$/i.test(filename)) {
+        if (startsWithAscii(bytes, 'UnityWebData')) return true;
+    }
+    if (/\.wasm(\.br)?$/i.test(filename)) {
+        if (startsWithBytes(bytes, [0x00, 0x61, 0x73, 0x6D])) return true;
+    }
+    if (/\.(framework\.)?js(\.br)?$/i.test(filename)) {
+        var b0 = bytes[0], b1 = bytes[1];
+        if (b0 === 0x2F && b1 === 0x2A) return true;
+        if (b0 === 0x28) return true;
+        if (b0 === 0x21) return true;
+        if (b0 === 0x76 && b1 === 0x61) return true;
+        if (b0 === 0x3B) return true;
+        if (b0 === 0x0A || b0 === 0x0D) return true;
+        if ((b0 === 0x22 || b0 === 0x27) && bytes.length > 4) return true;
+        if (startsWithAscii(bytes, 'var ') || startsWithAscii(bytes, 'const ') || startsWithAscii(bytes, 'let ')) return true;
+        if (startsWithAscii(bytes, 'import ') || startsWithAscii(bytes, 'export ')) return true;
+    }
+    return false;
+}
+
+async function decompressBytes(bytes, filename) {
+    if (looksAlreadyDecompressed(bytes, filename)) return bytes;
+    if (bytes.length >= 2 && bytes[0] === 0x1F && bytes[1] === 0x8B) {
+        if (typeof DecompressionStream !== 'undefined') {
+            try {
+                var dsG = new DecompressionStream('gzip');
+                var sG = new Blob([bytes]).stream().pipeThrough(dsG);
+                return new Uint8Array(await new Response(sG).arrayBuffer());
+            } catch (e) {}
+        }
+    }
+    if (typeof DecompressionStream !== 'undefined') {
+        try {
+            var ds = new DecompressionStream('br');
+            var stream = new Blob([bytes]).stream().pipeThrough(ds);
+            return new Uint8Array(await new Response(stream).arrayBuffer());
+        } catch (e) {}
+    }
+    throw new Error('Cannot decompress ' + filename + '. First bytes: ' + hexDump(bytes, 32));
+}
+
+(async function () {
+    try {
+        installYandexStub();
+
+        setStatus('Initializing SDK…');
+        try {
+            ysdk = await window.YaGames.init();
+            window.ysdk = ysdk;
+            player = await ysdk.getPlayer({ scopes: false });
+            window.player = player;
+        } catch (e) {
+            console.warn('SDK init failed:', e);
+        }
+
+        setStatus('Downloading game…');
+        var ZIP_URL = 'https://quizizz.com/_media/uploadedFiles/9dd2bde8-cc12-45c4-abd6-b8097e988f37-v2';
+        var resp = await fetch(ZIP_URL);
+        if (!resp.ok) throw new Error('HTTP ' + resp.status);
+        var total = parseInt(resp.headers.get('Content-Length') || '0', 10);
+        var reader = resp.body.getReader();
+        var chunks = [], received = 0;
+        while (true) {
+            var r = await reader.read();
+            if (r.done) break;
+            chunks.push(r.value);
+            received += r.value.length;
+            if (total > 0) {
+                setProgress((received / total) * 0.5);
+                document.getElementById('loaderMB').textContent = fmtMB(received) + ' / ' + fmtMB(total);
+            } else {
+                document.getElementById('loaderMB').textContent = fmtMB(received);
+            }
+        }
+        var buf = new Uint8Array(received);
+        var off = 0;
+        for (var i = 0; i < chunks.length; i++) { buf.set(chunks[i], off); off += chunks[i].length; }
+        chunks.length = 0;
+
+        setStatus('Extracting…');
+        var zip = await JSZip.loadAsync(buf.buffer);
+        var names = Object.keys(zip.files);
+
+        var prefix = '';
+        var probe = names.find(function (n) { return /Build\/[a-f0-9]+\.loader\.js$/i.test(n); });
+        if (probe) {
+            var m = probe.match(/^(.*\/)Build\/[a-f0-9]+\.loader\.js$/i);
+            if (m) prefix = m[1];
+        }
+
+        var entries = [];
+        for (var n = 0; n < names.length; n++) {
+            var nm = names[n];
+            var ent = zip.files[nm];
+            if (ent.dir) continue;
+            var p = nm;
+            if (prefix && p.indexOf(prefix) === 0) p = p.substring(prefix.length);
+            p = p.replace(/^\/+/, '').toLowerCase();
+            if (p) entries.push({ path: p, entry: ent });
+        }
+
+        var done = 0;
+        for (var ei = 0; ei < entries.length; ei++) {
+            var it = entries[ei];
+            var b = await it.entry.async('blob');
+            var isCompressed = /\.br$/i.test(it.path);
+            var typed;
+            if (isCompressed) {
+                setStatus('Processing ' + it.path.split('/').pop() + '…');
+                try {
+                    var dec = await decompressBytes(new Uint8Array(await b.arrayBuffer()), it.path);
+                    typed = new Blob([dec], { type: mimeForBuild(it.path) });
+                } catch (err) {
+                    throw new Error('Failed to process ' + it.path + ': ' + err.message);
+                }
+            } else {
+                typed = new Blob([b], { type: mimeFor(it.path) });
+            }
+            fileMap.set(it.path, typed);
+            done++;
+            setProgress(0.5 + (done / entries.length) * 0.2);
+            document.getElementById('loaderMB').textContent = done + ' / ' + entries.length + ' files';
+        }
+
+        var loaderEntry = findBuildFile(/build\/[a-f0-9]+\.loader\.js$/i);
+        var dataEntry = findBuildFile(/build\/[a-f0-9]+\.data(\.br|\.unityweb)?$/i);
+        var frameworkEntry = findBuildFile(/build\/[a-f0-9]+\.framework\.js(\.br|\.unityweb)?$/i);
+        var wasmEntry = findBuildFile(/build\/[a-f0-9]+\.wasm(\.br|\.unityweb)?$/i);
+
+        if (!loaderEntry || !dataEntry || !frameworkEntry || !wasmEntry) {
+            console.log('[debug] fileMap keys:', Array.from(fileMap.keys()));
+            throw new Error(
+                'Missing build files in ZIP: ' +
+                'loader=' + !!loaderEntry +
+                ' data=' + !!dataEntry +
+                ' framework=' + !!frameworkEntry +
+                ' wasm=' + !!wasmEntry
+            );
+        }
+
+        if (dataEntry.blob.size < 1024) {
+            throw new Error('Build .data is only ' + dataEntry.blob.size + ' bytes. ZIP entry looks corrupt — re-rip the game.');
+        }
+
+        console.log('[extract] build files:');
+        console.log('  loader:    ' + loaderEntry.path + ' (' + fmtMB(loaderEntry.blob.size) + ')');
+        console.log('  data:      ' + dataEntry.path + ' (' + fmtMB(dataEntry.blob.size) + ')');
+        console.log('  framework: ' + frameworkEntry.path + ' (' + fmtMB(frameworkEntry.blob.size) + ')');
+        console.log('  wasm:      ' + wasmEntry.path + ' (' + fmtMB(wasmEntry.blob.size) + ')');
+
+        var nativeFetch = window.fetch;
+        window.fetch = async function (input, init) {
+            var urlStr = typeof input === 'string' ? input : (input && input.url ? input.url : '');
+            if (urlStr && !urlStr.startsWith('blob:') && !urlStr.startsWith('data:')) {
+                var blob = findFileBlob(urlStr);
+                if (blob) {
+                    return new Response(blob, {
+                        status: 200,
+                        headers: { 'Content-Type': blob.type || 'application/octet-stream', 'Content-Length': String(blob.size) }
+                    });
+                }
+            }
+            return nativeFetch.apply(this, arguments);
+        };
+
+        var nativeXhrOpen = XMLHttpRequest.prototype.open;
+        XMLHttpRequest.prototype.open = function (method, url) {
+            if (typeof url === 'string' && !url.startsWith('blob:') && !url.startsWith('data:')) {
+                var blob = findFileBlob(url);
+                if (blob) {
+                    var args = Array.prototype.slice.call(arguments);
+                    args[1] = URL.createObjectURL(blob);
+                    return nativeXhrOpen.apply(this, args);
+                }
+            }
+            return nativeXhrOpen.apply(this, arguments);
+        };
+
+        var patchSrc = function (proto) {
+            var d = Object.getOwnPropertyDescriptor(proto, 'src');
+            if (!d || !d.set) return;
+            Object.defineProperty(proto, 'src', {
+                configurable: true, enumerable: d.enumerable,
+                get: function () { return this.__overrideSrc || (d.get ? d.get.call(this) : ''); },
+                set: function (v) {
+                    if (typeof v === 'string' && !v.startsWith('blob:') && !v.startsWith('data:')) {
+                        var bl = findFileBlob(v);
+                        if (bl) { d.set.call(this, URL.createObjectURL(bl)); return; }
+                    }
+                    d.set.call(this, v);
+                }
+            });
+        };
+        patchSrc(HTMLImageElement.prototype);
+        patchSrc(HTMLMediaElement.prototype);
+        patchSrc(HTMLSourceElement.prototype);
+        patchSrc(HTMLScriptElement.prototype);
+
+        var nativeSetAttribute = Element.prototype.setAttribute;
+        Element.prototype.setAttribute = function (name, value) {
+            if (name && String(name).toLowerCase() === 'src' && typeof value === 'string' && !value.startsWith('blob:') && !value.startsWith('data:')) {
+                var bl = findFileBlob(value);
+                if (bl) value = URL.createObjectURL(bl);
+            }
+            return nativeSetAttribute.call(this, name, value);
+        };
+
+        var NativeWorker = window.Worker;
+        window.Worker = function (url, options) {
+            var urlStr = (url && typeof url.href === 'string') ? url.href : String(url);
+            if (urlStr && !urlStr.startsWith('blob:')) {
+                var bl = findFileBlob(urlStr);
+                if (bl) url = URL.createObjectURL(new Blob([bl], { type: 'application/javascript' }));
+            }
+            return new NativeWorker(url, options);
+        };
+        window.Worker.prototype = NativeWorker.prototype;
+
+        var oRequestPointerLock = Element.prototype.requestPointerLock;
+        if (oRequestPointerLock) {
+            Element.prototype.requestPointerLock = function () {
+                var args = Array.prototype.slice.call(arguments);
+                try { (args[0] = args[0] || {}).unadjustedMovement = true; } catch (e) {}
+                return oRequestPointerLock.apply(this, args);
+            };
+        }
+
+        setStatus('Loading engine…');
+        var loaderText = await loaderEntry.blob.text();
+        var loaderUrl = URL.createObjectURL(new Blob([loaderText], { type: 'application/javascript' }));
+        await new Promise(function (resolve, reject) {
+            var s = document.createElement('script');
+            s.__overrideSrc = 'https://game.local/Build/' + loaderEntry.path.split('/').pop();
+            s.src = loaderUrl;
+            s.onload = resolve;
+            s.onerror = function () { reject(new Error('Failed to load Build loader.js')); };
+            document.head.appendChild(s);
+        });
+
+        if (typeof createUnityInstance !== 'function') {
+            throw new Error('createUnityInstance undefined after loader');
+        }
+
+        setStatus('Starting game…');
+        var dataUrl = URL.createObjectURL(dataEntry.blob);
+        var frameworkUrl = URL.createObjectURL(frameworkEntry.blob);
+        var codeUrl = URL.createObjectURL(wasmEntry.blob);
+        var totalBuildBytes = dataEntry.blob.size + frameworkEntry.blob.size + wasmEntry.blob.size;
+
+        var config = {
+            dataUrl: dataUrl,
+            frameworkUrl: frameworkUrl,
+            codeUrl: codeUrl,
+            streamingAssetsUrl: 'StreamingAssets',
+            companyName: 'Games Place',
+            productName: 'Poppy Playtime Chapter 1 - Huggy Wuggy',
+            productVersion: '1.0',
+            showBanner: unityShowBanner
+        };
+
+        var instance = await createUnityInstance(canvas, config, function (progress) {
+            setProgress(0.7 + progress * 0.28);
+            document.getElementById('loaderMB').textContent = fmtMB(progress * totalBuildBytes) + ' / ' + fmtMB(totalBuildBytes);
+        });
+
+        myGameInstance = instance;
+        window.myGameInstance = instance;
+
+        setProgress(1);
+        setStatus('Ready');
+        hideLoader();
+
+    } catch (err) {
+        console.error(err);
+        setStatus('Error: ' + (err && err.message ? err.message : String(err)));
+    }
+})();
+
+document.addEventListener('contextmenu', function (e) { e.preventDefault(); });
+window.addEventListener('pointerdown', function () { FocusGame(); });
+window.addEventListener('touchstart', function () { FocusGame(); });
+</script>
+</body>
+</html>

@@ -21,16 +21,29 @@ h1{font-size:42px;font-weight:200;letter-spacing:-1px;line-height:1}
 .t{position:relative;width:var(--tw);height:var(--th);flex:none;background-color:#000;background-size:cover;background-position:center;background-repeat:no-repeat;cursor:pointer;overflow:hidden;border:2px solid transparent;transition:transform .1s}
 .t:hover{border-color:rgba(255,255,255,.55)}
 .t:active{transform:scale(.97)}
-.t .n{position:absolute;left:0;right:0;bottom:0;padding:20px 10px 6px;font-size:12px;font-weight:400;background:linear-gradient(transparent,rgba(0,0,0,.65));pointer-events:none}
+.t .n{position:absolute;left:0;right:0;bottom:0;padding:20px 10px 6px;font-size:12px;font-weight:400;background:linear-gradient(transparent,rgba(0,0,0,.65));pointer-events:none;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .t.on{border-color:#fff}
 .chips{position:absolute;top:0;right:0;display:flex;pointer-events:none}
 .chips b{background:var(--accent);color:#fff;font-size:10px;font-weight:600;padding:3px 7px;letter-spacing:.5px;text-transform:uppercase}
+/* import tile */
+.t.add{background:rgba(255,255,255,.05);border:2px dashed rgba(255,255,255,.3);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;color:rgba(255,255,255,.75);font-size:13px;font-weight:300;text-align:center;padding:0 12px}
+.t.add:hover{border-color:#fff;background:rgba(255,255,255,.1);color:#fff}
+.t.add .plus{font-size:44px;font-weight:200;line-height:1}
+.t.add small{font-size:11px;color:rgba(255,255,255,.5)}
+/* remove button on custom tiles */
+.rm{position:absolute;top:0;left:0;width:26px;height:26px;border:none;background:rgba(0,0,0,.65);color:#fff;font-size:16px;line-height:26px;cursor:pointer;opacity:0;transition:opacity .15s}
+.t:hover .rm{opacity:1}
+.rm:hover{background:#c0392b}
+/* drag & drop overlay */
+#drop{position:fixed;inset:10px;display:none;align-items:center;justify-content:center;background:rgba(142,68,173,.3);border:3px dashed #fff;font-size:28px;font-weight:200;z-index:10;pointer-events:none}
+body.dragging #drop{display:flex}
 footer{flex-shrink:0;height:50px;display:flex;align-items:center;gap:6px;padding:0 48px;background:#111114;border-top:1px solid rgba(255,255,255,.08)}
 footer .lbl{font-size:12px;color:rgba(255,255,255,.55);margin-right:8px}
 footer button{background:none;border:none;color:rgba(255,255,255,.7);font:inherit;font-size:13px;padding:8px 14px;cursor:pointer;border-bottom:2px solid transparent}
 footer button:hover{color:#fff;background:rgba(255,255,255,.08)}
 footer button[hidden]{display:none}
 footer button.on{color:#fff;border-bottom-color:var(--accent)}
+footer .sep{width:1px;height:20px;background:rgba(255,255,255,.15);margin:0 8px}
 #msg{margin-left:auto;font-size:12px;color:rgba(255,255,255,.7);opacity:0;transition:opacity .25s}
 #msg.show{opacity:1}
 </style>
@@ -38,7 +51,7 @@ footer button.on{color:#fff;border-bottom-color:var(--accent)}
 <body>
 <header>
   <h1>extra wallpapers</h1>
-  <div class="sub" id="hint">Click a tile to set it as your wallpaper. These wallpapers are here for any extra wallpapers specific to things!</div>
+  <div class="sub" id="hint">Click a tile to set it as your wallpaper. These wallpapers are here for any extra wallpapers specific to things, outside of the regular built in ones.</div>
 </header>
 <div id="scroller"></div>
 <footer>
@@ -46,8 +59,12 @@ footer button.on{color:#fff;border-bottom-color:var(--accent)}
   <button data-m="desktop" class="on">Desktop</button>
   <button data-m="start" hidden>Start screen</button>
   <button data-m="both" hidden>Both</button>
+  <span class="sep"></span>
+  <button id="imp">Import image…</button>
   <span id="msg"></span>
 </footer>
+<div id="drop">Drop an image to use it as your wallpaper</div>
+<input type="file" id="file" accept="image/*" multiple hidden>
 <script>
 /* ═══ EDIT THIS LIST ═══
    Every wallpaper is the same kind of entry: {name, group, url}
@@ -70,48 +87,139 @@ const WALLPAPERS=[
 
 let mode='desktop',cur={desktop:'',start:'',startSupported:false};
 const thumb=u=>u.startsWith('./')?'.'+u:u;   // this page lives one folder below index.html
-const scroller=document.getElementById('scroller'),msg=document.getElementById('msg'),tiles=[],groups={};
-WALLPAPERS.forEach((w,i)=>{
-  const gname=w.group||'Wallpapers';
+const scroller=document.getElementById('scroller'),msg=document.getElementById('msg'),fileInput=document.getElementById('file');
+const items=[],groups={};   // items: [{w, el, custom}]
+const STORE_KEY='extrawp:custom';
+
+function getGroup(gname){
   if(!groups[gname]){
     const g=document.createElement('div');g.className='group';
     g.innerHTML='<h2></h2><div class="grid"></div>';
     g.querySelector('h2').textContent=gname;
     scroller.appendChild(g);groups[gname]=g.querySelector('.grid');
   }
+  return groups[gname];
+}
+
+function addTile(w,custom){
   const t=document.createElement('div');t.className='t';
   t.style.backgroundImage='url("'+thumb(w.url)+'")';
   t.innerHTML='<span class="n"></span><div class="chips"></div>';
   t.querySelector('.n').textContent=w.name;
-  t.onclick=e=>setWall(i,e.shiftKey&&cur.startSupported?'both':mode);
-  groups[gname].appendChild(t);tiles.push(t);
+  const item={w,el:t,custom:!!custom};
+  if(custom){
+    const x=document.createElement('button');x.className='rm';x.textContent='×';x.title='Remove';
+    x.onclick=e=>{e.stopPropagation();removeItem(item)};
+    t.appendChild(x);
+  }
+  t.onclick=e=>setWall(w,e.shiftKey&&cur.startSupported?'both':mode);
+  getGroup(w.group||'Wallpapers').appendChild(t);
+  items.push(item);
+  return item;
+}
+
+/* ── Custom group (always first) with the import tile ── */
+const customGrid=getGroup('My wallpapers');
+const addTileEl=document.createElement('div');
+addTileEl.className='t add';
+addTileEl.innerHTML='<span class="plus">+</span><span>Import from your files</span><small>or drag &amp; drop an image anywhere</small>';
+addTileEl.onclick=()=>fileInput.click();
+customGrid.appendChild(addTileEl);
+
+/* Built-in wallpapers */
+WALLPAPERS.forEach(w=>addTile(w,false));
+
+/* ── Persistence of custom wallpapers (best effort) ── */
+function saveCustom(){
+  try{
+    localStorage.setItem(STORE_KEY,JSON.stringify(items.filter(x=>x.custom).map(x=>({name:x.w.name,url:x.w.url,group:'My wallpapers'}))));
+    return true;
+  }catch(e){return false}
+}
+function loadCustom(){
+  try{(JSON.parse(localStorage.getItem(STORE_KEY)||'[]')||[]).forEach(w=>{if(w&&w.url)addTile({name:w.name||'Custom',group:'My wallpapers',url:w.url},true)})}catch(e){}
+}
+function removeItem(item){
+  const i=items.indexOf(item);if(i<0)return;
+  items.splice(i,1);item.el.remove();saveCustom();mark();
+  toast('Removed '+item.w.name);
+}
+
+/* ── Importing ── */
+function fileToDataUrl(file){
+  return new Promise((res,rej)=>{
+    const src=URL.createObjectURL(file),img=new Image();
+    img.onload=()=>{
+      const iw=img.naturalWidth||1920,ih=img.naturalHeight||1080;
+      const s=Math.min(1,2560/Math.max(iw,ih));          // cap longest side at 2560px to keep it light
+      const c=document.createElement('canvas');c.width=Math.round(iw*s);c.height=Math.round(ih*s);
+      c.getContext('2d').drawImage(img,0,0,c.width,c.height);
+      URL.revokeObjectURL(src);
+      res(c.toDataURL('image/jpeg',.9));
+    };
+    img.onerror=()=>{URL.revokeObjectURL(src);rej(new Error('bad image'))};
+    img.src=src;
+  });
+}
+async function importFiles(fileList){
+  const files=[...fileList].filter(f=>f.type.startsWith('image/'));
+  if(!files.length){toast("That doesn't look like an image");return}
+  const added=[];
+  for(const f of files){
+    try{
+      const url=await fileToDataUrl(f);
+      const name=f.name.replace(/\.[^.]+$/,'')||'Custom wallpaper';
+      added.push(addTile({name,group:'My wallpapers',url},true).w);
+    }catch(e){toast('Could not read '+f.name)}
+  }
+  if(!added.length)return;
+  const saved=saveCustom();
+  scroller.scrollLeft=0;
+  if(added.length===1){setWall(added[0],mode)}                 // single import: apply straight away
+  else toast(added.length+' wallpapers imported');
+  if(!saved)setTimeout(()=>toast('Imported (too large to remember after closing)'),2300);
+}
+fileInput.onchange=()=>{importFiles(fileInput.files);fileInput.value=''};
+document.getElementById('imp').onclick=()=>fileInput.click();
+
+/* Drag & drop anywhere on the page */
+const hasFiles=e=>e.dataTransfer&&[...e.dataTransfer.types].includes('Files');
+window.addEventListener('dragenter',e=>{if(hasFiles(e)){e.preventDefault();document.body.classList.add('dragging')}});
+window.addEventListener('dragover',e=>{if(hasFiles(e)){e.preventDefault();e.dataTransfer.dropEffect='copy';document.body.classList.add('dragging')}});
+window.addEventListener('dragleave',e=>{if(!e.relatedTarget)document.body.classList.remove('dragging')});
+window.addEventListener('drop',e=>{
+  if(!hasFiles(e))return;
+  e.preventDefault();document.body.classList.remove('dragging');
+  importFiles(e.dataTransfer.files);
 });
 
 function setMode(m){
   mode=m;
-  document.querySelectorAll('footer button').forEach(x=>x.classList.toggle('on',x.dataset.m===m));
+  document.querySelectorAll('footer button[data-m]').forEach(x=>x.classList.toggle('on',x.dataset.m===m));
 }
 function mark(){
   const sp=!!cur.startSupported;
   document.querySelectorAll('footer button[data-m="start"],footer button[data-m="both"]').forEach(b=>b.hidden=!sp);
   if(!sp&&mode!=='desktop')setMode('desktop');
   document.getElementById('hint').textContent=sp?'Click a tile to set it. Shift+click sets Desktop & Start screen.':'Click a tile to set it as your desktop wallpaper.';
-  tiles.forEach((t,i)=>{
-    const d=WALLPAPERS[i].url===cur.desktop,s=sp&&WALLPAPERS[i].url===cur.start;
-    t.classList.toggle('on',d||s);
-    t.querySelector('.chips').innerHTML=(d?'<b>Desktop</b>':'')+(s?'<b>Start</b>':'');
+  items.forEach(({w,el})=>{
+    const d=w.url===cur.desktop,s=sp&&w.url===cur.start;
+    el.classList.toggle('on',d||s);
+    el.querySelector('.chips').innerHTML=(d?'<b>Desktop</b>':'')+(s?'<b>Start</b>':'');
   });
 }
 function toast(s){msg.textContent=s;msg.classList.add('show');clearTimeout(toast.t);toast.t=setTimeout(()=>msg.classList.remove('show'),2200)}
-function setWall(i,target){
+function setWall(w,target){
   if(window.parent===window){toast('Open this inside mpcsim to apply wallpapers');return}
   if(!cur.startSupported)target='desktop';
-  parent.postMessage({type:'extrawp:set',url:WALLPAPERS[i].url,target,name:WALLPAPERS[i].name},'*');
-  toast(WALLPAPERS[i].name+' set');
+  parent.postMessage({type:'extrawp:set',url:w.url,target,name:w.name},'*');
+  toast(w.name+' set');
 }
-document.querySelectorAll('footer button').forEach(b=>b.onclick=()=>setMode(b.dataset.m));
+document.querySelectorAll('footer button[data-m]').forEach(b=>b.onclick=()=>setMode(b.dataset.m));
 scroller.addEventListener('wheel',e=>{if(Math.abs(e.deltaY)>Math.abs(e.deltaX)){scroller.scrollLeft+=e.deltaY;e.preventDefault()}},{passive:false});
 window.addEventListener('message',e=>{const d=e.data;if(d&&d.type==='extrawp:state'){cur=d;mark()}});
+
+loadCustom();
 if(window.parent!==window)parent.postMessage({type:'extrawp:hello'},'*');
 </script>
 </body>

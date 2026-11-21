@@ -462,6 +462,15 @@ const DEFAULT_APPS = [
 
   /* ── Games from gplay-tmp ── */
   {
+    id: 'app-sb',
+    name: 'Soccer Bros',
+    url: './sb/index.html',
+    icon: 'gamepad',
+    cat: 'Games',
+    iconUrl: './sb/index.png',
+    resolution: 100
+  },
+  {
     id: 'app-baseb',
     name: 'Baseball Bros',
     url: './gplay-tmp/html/baseb/index.html',
@@ -796,7 +805,7 @@ const DEFAULT_APPS = [
     name: 'OSC OC Creator',
     url: './oscocc/index.html',
     icon: 'gear',
-    cat: 'Games',
+    cat: 'Tools',
     iconUrl: './oscocc/index.png',
     resolution: 100
   },
@@ -816,6 +825,78 @@ const DEFAULT_APPS = [
     icon: 'gamepad',
     cat: 'Tools',
     iconUrl: './linux/index.jpg',
+    resolution: 100
+  },
+  {
+    id: 'app-tok',
+    name: 'WatchTok',
+    url: './watchtok/index.html',
+    icon: 'gamepad',
+    cat: 'Entertainment',
+    iconUrl: './watchtok/index.png',
+    resolution: 100
+  },
+  {
+    id: 'app-fnaf1',
+    name: 'FNAF',
+    url: './fnaf/1.html',
+    icon: 'gamepad',
+    cat: 'Games',
+    iconUrl: './fnaf/index.jpg',
+    resolution: 100
+  },
+  {
+    id: 'app-fnaf2',
+    name: 'FNAF 2',
+    url: './fnaf/2.html',
+    icon: 'gamepad',
+    cat: 'Games',
+    iconUrl: './fnaf/index.jpg',
+    resolution: 100
+  },
+  {
+    id: 'app-fnaf3',
+    name: 'FNAF 3',
+    url: './fnaf/3.html',
+    icon: 'gamepad',
+    cat: 'Games',
+    iconUrl: './fnaf/index.jpg',
+    resolution: 100
+  },
+  {
+    id: 'app-fnaf4',
+    name: 'FNAF 4',
+    url: './fnaf/4.html',
+    icon: 'gamepad',
+    cat: 'Games',
+    iconUrl: './fnaf/index.jpg',
+    resolution: 100
+  },
+  {
+    id: 'app-rblx',
+    name: 'RОblox',
+    url: './roblox/index.html',
+    icon: 'gamepad',
+    cat: 'Games',
+    iconUrl: './roblox/index.png',
+    resolution: 100
+  },
+  {
+    id: 'app-l2f2',
+    name: 'Learn 2 Fly 2',
+    url: './gplay-tmp/duckget#/class/learn-2-fly-2',
+    icon: 'gamepad',
+    cat: 'Games',
+    iconUrl: 'https://duckmath.com/lessons/learntofly2.webp',
+    resolution: 100
+  },
+  {
+    id: 'app-popplay',
+    name: 'Poppy Playtime',
+    url: './popplay/index.html',
+    icon: 'gamepad',
+    cat: 'Games',
+    iconUrl: './popplay/index.png',
     resolution: 100
   },
 ];
