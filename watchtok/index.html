@@ -1,0 +1,293 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Reel Room</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+<style>
+:root{--bg:#15121c;--ink:#f4eee6;--dim:#a79fb3;--acc:#a9b8ff;--glass:rgba(30,26,40,.62)}
+*{box-sizing:border-box;margin:0}
+[hidden]{display:none!important}
+html,body{height:100%;background:#000;color:var(--ink);font-family:"Avenir Next","Segoe UI",system-ui,sans-serif;overflow:hidden}
+.app{position:relative;height:100%;max-width:600px;margin:0 auto;background:var(--bg)}
+.feed{height:100%;overflow-y:scroll;scroll-snap-type:y mandatory;scrollbar-width:none;overscroll-behavior:contain}
+.feed::-webkit-scrollbar{display:none}
+.slide{position:relative;height:100%;scroll-snap-align:start;scroll-snap-stop:always;background:#000}
+.slide video{width:100%;height:100%;object-fit:contain;display:block}
+.info{position:absolute;left:0;right:76px;bottom:0;padding:24px 16px calc(24px + env(safe-area-inset-bottom,0px));background:linear-gradient(transparent,rgba(0,0,0,.7));pointer-events:none}
+.info b{display:block;font-size:17px;font-weight:650;overflow-wrap:anywhere}
+.info span{font-size:13px;color:var(--dim)}
+.paused{position:absolute;inset:0;display:grid;place-items:center;font-size:56px;opacity:0;pointer-events:none;transition:opacity .15s}
+.slide.is-paused .paused{opacity:.85}
+.top{position:absolute;top:0;left:0;right:0;z-index:5;display:flex;align-items:center;justify-content:center;gap:6px;padding:calc(10px + env(safe-area-inset-top,0px)) 12px 10px;background:linear-gradient(rgba(0,0,0,.55),transparent)}
+.tab{background:none;border:0;color:var(--dim);font:inherit;font-size:16px;font-weight:600;padding:8px 14px;border-bottom:2px solid transparent;cursor:pointer}
+.tab[aria-selected=true]{color:var(--ink);border-color:var(--ink)}
+.add{position:absolute;right:12px;top:calc(10px + env(safe-area-inset-top,0px));width:38px;height:38px;border-radius:50%;border:0;background:var(--glass);color:var(--ink);font-size:22px;cursor:pointer}
+.side{position:absolute;right:12px;top:50%;transform:translateY(-50%);z-index:5;display:flex;flex-direction:column;gap:14px}
+.side button{width:52px;height:52px;border-radius:50%;border:0;background:var(--glass);backdrop-filter:blur(8px);color:var(--ink);font-size:22px;cursor:pointer}
+button:focus-visible{outline:2px solid var(--acc);outline-offset:2px}
+button:active{transform:scale(.94)}
+.hist{height:100%;overflow-y:auto;padding:calc(64px + env(safe-area-inset-top,0px)) 14px 24px}
+.hist header{display:flex;align-items:baseline;justify-content:space-between;margin-bottom:14px}
+.hist h2{font-size:20px}
+.hist header button{background:none;border:1px solid var(--dim);color:var(--dim);border-radius:8px;padding:6px 10px;font:inherit;font-size:13px;cursor:pointer}
+.row{display:flex;gap:12px;align-items:center;width:100%;padding:8px;margin-bottom:8px;border-radius:12px;background:#201b2b;border:0;color:inherit;font:inherit;text-align:left;cursor:pointer}
+.row video{width:64px;height:88px;object-fit:cover;border-radius:8px;background:#000;flex:none;pointer-events:none}
+.row b{display:block;font-size:15px;overflow-wrap:anywhere}
+.row span{font-size:13px;color:var(--dim)}
+.count{margin-left:auto;font-size:20px;font-weight:700;color:var(--acc);padding-right:6px}
+.empty{color:var(--dim);line-height:1.5;padding:30px 4px}
+.empty-feed{position:absolute;inset:0;display:grid;place-items:center;text-align:center;padding:30px;color:var(--dim);line-height:1.5;pointer-events:none}
+.toast{position:absolute;left:50%;bottom:calc(90px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);z-index:9;background:#000c;padding:10px 16px;border-radius:20px;font-size:14px;max-width:90%;text-align:center}
+.drop{position:fixed;inset:0;z-index:20;display:grid;place-items:center;background:#000b;font-size:22px}
+</style>
+</head>
+<body>
+<div class="app">
+  <nav class="top" role="tablist">
+    <button class="tab" role="tab" id="tab-feed" aria-selected="true">Feed</button>
+    <button class="tab" role="tab" id="tab-hist" aria-selected="false">Watch history</button>
+    <button class="tab" role="tab" id="tab-hist" aria-selected="false">Click anywhere for sound</button>
+  </nav>
+  <button class="add" id="add" title="Add a ZIP of videos" aria-label="Add a ZIP of videos">+</button>
+  <input type="file" id="zipin" accept=".zip,application/zip" hidden>
+  <main class="feed" id="feed"></main>
+  <p class="empty-feed" id="empty">Please wait while videos load. You may see repeats, and there are a limited amount of videos, but more are added in future updates.</p>
+  <section class="hist" id="hist" hidden></section>
+  <div class="side" id="side">
+    <button id="up" aria-label="Previous video">&#9650;</button>
+    <button id="down" aria-label="Next video">&#9660;</button>
+  </div>
+  <div class="toast" id="toast" hidden></div>
+</div>
+<div class="drop" id="drop" hidden>Drop a ZIP to add videos</div>
+
+<script>
+/* ===== Edit this list: just URLs. A URL ending in .zip is downloaded, unzipped and stored for offline watching. ===== */
+const VIDEOS = [
+  "https://files.catbox.moe/zl3czl.zip",
+  "https://files.catbox.moe/tyjmsc.zip",
+  "https://files.catbox.moe/g14epo.zip",
+];
+const PRELOAD_AHEAD = 5; // how many upcoming videos buffer in the background
+const WATCH_SECONDS = 2; // time on a video before it counts as watched
+
+const $ = s => document.querySelector(s);
+const feed = $('#feed'), hist = $('#hist');
+const MIME = {mp4:'video/mp4', m4v:'video/mp4', mov:'video/quicktime', webm:'video/webm', ogv:'video/ogg'};
+
+/* ---------- storage ---------- */
+let stats = {}, total = 0;
+try { stats = JSON.parse(localStorage.getItem('vf_stats') || '{}'); total = +localStorage.getItem('vf_total') || 0; } catch(e){}
+function save(){ try { localStorage.setItem('vf_stats', JSON.stringify(stats)); localStorage.setItem('vf_total', total); } catch(e){} }
+const count = id => (stats[id] && stats[id].count) || 0;
+
+const dbp = new Promise(res => {
+  try {
+    const r = indexedDB.open('vf-db', 1);
+    r.onupgradeneeded = () => r.result.createObjectStore('videos', {keyPath:'id'});
+    r.onsuccess = () => res(r.result);
+    r.onerror = () => res(null);
+  } catch(e){ res(null); }
+});
+async function dbPut(rec){ const db = await dbp; if(!db) return; return new Promise(r => { const t = db.transaction('videos','readwrite'); t.objectStore('videos').put(rec); t.oncomplete = t.onerror = () => r(); }); }
+async function dbAll(){ const db = await dbp; if(!db) return []; return new Promise(r => { const q = db.transaction('videos').objectStore('videos').getAll(); q.onsuccess = () => r(q.result); q.onerror = () => r([]); }); }
+async function dbClear(){ const db = await dbp; if(!db) return; return new Promise(r => { const t = db.transaction('videos','readwrite'); t.objectStore('videos').clear(); t.oncomplete = t.onerror = () => r(); }); }
+
+/* ---------- items ---------- */
+const items = new Map();
+function titleOf(u){ try { return decodeURIComponent(u.split('?')[0].split('/').pop()).replace(/\.\w+$/, '') || u; } catch(e){ return u; } }
+const isZip = u => /\.zip(\?|#|$)/i.test(u);
+VIDEOS.filter(u => !isZip(u)).forEach(u => items.set(u, {id:u, src:u, title:titleOf(u)}));
+function addBlob(rec){ items.set(rec.id, {id:rec.id, src:URL.createObjectURL(rec.blob), title:titleOf(rec.name), zip:true}); }
+
+/* ---------- feed ---------- */
+const slides = []; let cur = 0, tab = 'feed', timer;
+
+function round(){
+  const ids = [...items.keys()];
+  if(!ids.length) return [];
+  // the more a video was watched, the lower its chance to be included in a round
+  let pick = ids.filter(id => Math.random() < Math.max(.15, 1 / (1 + count(id))));
+  if(!pick.length) pick = [ids[Math.random() * ids.length | 0]];
+  pick = pick.map(id => ({id, k: Math.pow(Math.random(), Math.pow(1 + count(id), 2))}))
+             .sort((a,b) => b.k - a.k).map(o => o.id);
+  const last = slides.length ? slides[slides.length-1].id : null;
+  if(pick.length > 1 && pick[0] === last) pick.push(pick.shift());
+  return pick;
+}
+function label(id){ const c = count(id); return c ? 'Watched ' + c + (c === 1 ? ' time' : ' times') : 'New to you'; }
+
+function makeSlide(id){
+  const el = document.createElement('section'); el.className = 'slide';
+  const v = document.createElement('video');
+  v.loop = true; v.muted = muted; v.playsInline = true; v.preload = 'none';
+  const info = document.createElement('div'); info.className = 'info';
+  const b = document.createElement('b'); b.textContent = items.get(id).title;
+  const s = document.createElement('span'); s.textContent = label(id);
+  info.append(b, s);
+  const p = document.createElement('div'); p.className = 'paused'; p.textContent = '\u23F8';
+  el.append(v, info, p);
+  v.addEventListener('error', () => { if(v.dataset.on) s.textContent = 'This video could not be loaded'; });
+  el.addEventListener('click', () => { if(v.paused){ v.play().catch(()=>{}); el.classList.remove('is-paused'); } else { v.pause(); el.classList.add('is-paused'); } });
+  io.observe(el);
+  return {id, el, v, s};
+}
+function appendRound(){ round().forEach(id => { const sl = makeSlide(id); slides.push(sl); feed.append(sl.el); }); }
+
+function bump(id){
+  const t = items.get(id);
+  stats[id] = {count: count(id) + 1, last: Date.now(), title: t ? t.title : id};
+  total++; save();
+  slides.forEach(s => { if(s.id === id) s.s.textContent = label(id); });
+  if(tab === 'hist') renderHist();
+}
+
+let muted = true;
+function activate(i){
+  cur = i;
+  while(items.size && slides.length < i + PRELOAD_AHEAD + 1) appendRound();
+  slides.forEach((s, j) => {
+    const near = j >= i - 1 && j <= i + PRELOAD_AHEAD;
+    if(near && !s.v.dataset.on){ s.v.dataset.on = 1; s.v.preload = 'auto'; s.v.src = items.get(s.id).src; }
+    if(!near && s.v.dataset.on){ s.v.pause(); s.v.removeAttribute('src'); s.v.load(); delete s.v.dataset.on; }
+    if(j !== i){ s.v.pause(); }
+  });
+  const a = slides[i]; if(!a) return;
+  a.el.classList.remove('is-paused');
+  a.v.muted = muted; a.v.currentTime = 0;
+  if(tab === 'feed') a.v.play().catch(()=>{});
+  clearTimeout(timer);
+  timer = setTimeout(() => { if(cur === i && tab === 'feed' && !document.hidden) bump(a.id); }, WATCH_SECONDS * 1000);
+}
+const io = new IntersectionObserver(es => es.forEach(e => {
+  if(e.isIntersecting && e.intersectionRatio >= .6){
+    const i = slides.findIndex(s => s.el === e.target);
+    if(i >= 0 && i !== cur) activate(i);
+  }
+}), {root: feed, threshold: .6});
+
+function go(i){
+  if(i < 0) return;
+  while(i >= slides.length) appendRound();
+  feed.scrollTo({top: i * feed.clientHeight, behavior: 'smooth'});
+}
+function playNext(id){
+  setTab('feed');
+  const at = slides.findIndex((s, j) => j >= cur && s.id === id && j <= cur + 1);
+  if(at >= 0){ go(at); return; }
+  const sl = makeSlide(id); slides.splice(cur + 1, 0, sl);
+  slides[cur].el.after(sl.el);
+  go(cur + 1);
+}
+
+/* ---------- history ---------- */
+function renderHist(){
+  const rows = Object.entries(stats).filter(([id, s]) => items.has(id) && s.count).sort((a, b) => b[1].last - a[1].last);
+  hist.textContent = '';
+  const h = document.createElement('header');
+  const t = document.createElement('h2'); t.textContent = 'Watched ' + total + (total === 1 ? ' time' : ' times') + ' in total';
+  const c = document.createElement('button'); c.textContent = 'Clear history';
+  c.onclick = () => { if(confirm('Reset all watch counts?')){ stats = {}; total = 0; save(); slides.forEach(s => s.s.textContent = label(s.id)); renderHist(); } };
+  h.append(t, c); hist.append(h);
+  if(!rows.length){ const e = document.createElement('p'); e.className = 'empty'; e.textContent = 'Nothing here yet. Stay on a video in the Feed for ' + WATCH_SECONDS + ' seconds and it will be listed here.'; hist.append(e); return; }
+  rows.forEach(([id, s]) => {
+    const r = document.createElement('button'); r.className = 'row';
+    const v = document.createElement('video'); v.muted = true; v.preload = 'metadata'; v.src = items.get(id).src + (items.get(id).zip ? '' : '#t=0.5');
+    const d = document.createElement('div');
+    const b = document.createElement('b'); b.textContent = items.get(id).title;
+    const sp = document.createElement('span'); sp.textContent = 'Last watched ' + new Date(s.last).toLocaleString([], {dateStyle:'medium', timeStyle:'short'});
+    d.append(b, sp);
+    const n = document.createElement('div'); n.className = 'count'; n.textContent = s.count + '\u00D7';
+    r.append(v, d, n); r.onclick = () => playNext(id); hist.append(r);
+  });
+}
+
+function setTab(t){
+  if(t === tab) return; tab = t;
+  $('#tab-feed').setAttribute('aria-selected', t === 'feed');
+  $('#tab-hist').setAttribute('aria-selected', t === 'hist');
+  feed.hidden = t !== 'feed'; $('#side').hidden = t !== 'feed'; hist.hidden = t !== 'hist';
+  $('#empty').hidden = t !== 'feed' || slides.length > 0;
+  if(t === 'hist'){ slides.forEach(s => s.v.pause()); clearTimeout(timer); renderHist(); }
+  else { feed.scrollTop = cur * feed.clientHeight; activate(cur); }
+}
+
+/* ---------- ZIP import ---------- */
+let toastT;
+function toast(m){ const t = $('#toast'); t.textContent = m; t.hidden = false; clearTimeout(toastT); toastT = setTimeout(() => t.hidden = true, 3200); }
+async function addZip(file, auto = true){
+  if(!window.JSZip){ toast('ZIP support needs an internet connection to load JSZip.'); return; }
+  try {
+    toast('Unzipping ' + (file.name || 'ZIP') + '\u2026');
+    const zip = await JSZip.loadAsync(file);
+    const files = Object.values(zip.files).filter(f => !f.dir && !f.name.includes('__MACOSX') && /\.(mp4|m4v|mov|webm|ogv)$/i.test(f.name));
+    if(!files.length){ toast('No video files found in that ZIP.'); return false; }
+    let first = null;
+    for(const f of files){
+      const ext = f.name.split('.').pop().toLowerCase();
+      const blob = new Blob([await f.async('arraybuffer')], {type: MIME[ext]});
+      const rec = {id: 'zip:' + f.name, name: f.name, blob};
+      await dbPut(rec);
+      if(items.has(rec.id)) URL.revokeObjectURL(items.get(rec.id).src);
+      addBlob(rec); first = first || rec.id;
+    }
+    startFeed();
+    toast('New videos! Close and open back up WatchTok to see them: Added ' + files.length + (files.length === 1 ? ' video' : ' videos'));
+    if(auto) playNext(first);
+    return true;
+  } catch(e){ toast('That ZIP could not be read.'); return false; }
+}
+$('#add').onclick = () => $('#zipin').click();
+$('#zipin').onchange = e => { if(e.target.files[0]) addZip(e.target.files[0]); e.target.value = ''; };
+addEventListener('dragover', e => { e.preventDefault(); $('#drop').hidden = false; });
+addEventListener('dragleave', e => { if(!e.relatedTarget) $('#drop').hidden = true; });
+addEventListener('drop', e => { e.preventDefault(); $('#drop').hidden = true; const f = e.dataTransfer.files[0]; if(f) addZip(f); });
+
+/* ---------- controls ---------- */
+$('#up').onclick = () => go(cur - 1);
+$('#down').onclick = () => go(cur + 1);
+$('#tab-feed').onclick = () => setTab('feed');
+$('#tab-hist').onclick = () => setTab('hist');
+addEventListener('keydown', e => {
+  if(tab !== 'feed') return;
+  if(e.key === 'ArrowDown'){ e.preventDefault(); go(cur + 1); }
+  else if(e.key === 'ArrowUp'){ e.preventDefault(); go(cur - 1); }
+});
+// browsers block sound until the first interaction, so unmute then
+function unmute(){ muted = false; if(slides[cur]) slides[cur].v.muted = false; slides.forEach(s => s.v.muted = false); removeEventListener('pointerdown', unmute); removeEventListener('keydown', unmute); }
+addEventListener('pointerdown', unmute); addEventListener('keydown', unmute);
+document.addEventListener('visibilitychange', () => { if(document.hidden) slides.forEach(s => s.v.pause()); else if(tab === 'feed' && slides[cur]) slides[cur].v.play().catch(()=>{}); });
+
+/* ---------- start ---------- */
+(async () => {
+  (await dbAll()).forEach(addBlob);
+  startFeed();
+  importZipUrls();
+})();
+
+function startFeed(){
+  if(!slides.length && items.size){ appendRound(); appendRound(); activate(0); }
+  $('#empty').hidden = slides.length > 0;
+}
+
+/* ZIP URLs from the VIDEOS list: download once, unzip, keep in IndexedDB */
+async function importZipUrls(){
+  let done = []; try { done = JSON.parse(localStorage.getItem('vf_zips') || '[]'); } catch(e){}
+  for(const u of VIDEOS.filter(isZip)){
+    if(done.includes(u) && [...items.values()].some(i => i.zip)) continue;
+    try {
+      toast('Downloading ' + titleOf(u) + '\u2026');
+      const r = await fetch(u);
+      if(!r.ok) throw 0;
+      const blob = await r.blob(); blob.name = titleOf(u) + '.zip';
+      if(await addZip(blob, false)){
+        done.push(u); try { localStorage.setItem('vf_zips', JSON.stringify(done)); } catch(e){}
+      }
+    } catch(e){ toast('Could not download ' + titleOf(u) + '. The host may block cross-site requests.'); }
+  }
+}
+</script>
+</body>
+</html>
