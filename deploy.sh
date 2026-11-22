@@ -20,7 +20,8 @@ if [ ! -f "domains.txt" ]; then
     echo "❌ Error: big.txt not found in $TARGET_DIR"
     exit 1
 fi
-
+echo "Starting Surge for any potential updates"
+npx surge@latest
 echo "🚀 Starting deployment to Surge domains..."
 
 # Loop through each line in big.txt

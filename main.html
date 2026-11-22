@@ -196,6 +196,19 @@ body.win-interacting .win-frame{pointer-events:none}
 .wp-swatch span{position:absolute;left:0;right:0;bottom:0;background:rgba(0,0,0,.6);color:#fff;font-size:9px;padding:2px 4px;text-align:center;letter-spacing:.3px;text-overflow:ellipsis;overflow:hidden;white-space:nowrap}
 .wp-none{display:flex;align-items:center;justify-content:center;color:#888;font-size:10px;background:#1a1a1a}
 .wp-hint{font-size:10px;color:#777;margin-top:5px;letter-spacing:.2px}
+/* cursor picker (Personalize) */
+.cur-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(92px,1fr));gap:7px;margin-top:6px}
+.cur-opt{display:flex;flex-direction:column;align-items:center;gap:5px;padding:5px 5px 6px;cursor:pointer;border:2px solid var(--ui-bd,#444);background:var(--ui-inp,#1a1a1a);color:var(--ui-sub,#aaa);font-size:10px;text-align:center;transition:border-color .1s}
+.cur-opt:hover{border-color:var(--accent,#0078d4);color:var(--ui-fg,#eee)}
+.cur-opt.sel{border-color:var(--accent,#0078d4);color:var(--ui-fg,#eee);box-shadow:0 0 0 1px var(--accent,#0078d4)}
+.cur-pv{width:100%;height:58px;display:flex;align-items:center;justify-content:center;gap:10px;background:linear-gradient(135deg,#b4bdca,#6f7b8b)}
+.cur-pv img{display:block;pointer-events:none;user-select:none}
+.hue-wrap{position:relative;height:16px;margin-top:8px;border-radius:8px;background:linear-gradient(90deg,hsl(0,100%,50%),hsl(60,100%,50%),hsl(120,100%,50%),hsl(180,100%,50%),hsl(240,100%,50%),hsl(300,100%,50%),hsl(360,100%,50%))}
+.hue-wrap input{position:absolute;left:0;top:0;width:100%;height:100%;margin:0;padding:0;background:transparent;-webkit-appearance:none;appearance:none;cursor:pointer}
+.hue-wrap input::-webkit-slider-runnable-track{background:transparent;height:16px}
+.hue-wrap input::-webkit-slider-thumb{-webkit-appearance:none;width:8px;height:20px;margin-top:-2px;background:#fff;border:2px solid #000;border-radius:3px}
+.hue-wrap input::-moz-range-track{background:transparent;height:16px}
+.hue-wrap input::-moz-range-thumb{width:6px;height:18px;background:#fff;border:2px solid #000;border-radius:3px}
 
 /* ── Task Manager (built-in app, url "__taskmgr__") ── */
 .tm-body{flex:1;position:relative;background:#1b1b1b;color:#eee;font:13px 'Segoe UI',system-ui,sans-serif;display:flex;flex-direction:column;overflow:hidden}
@@ -425,6 +438,9 @@ body[data-theme="gnome"] #start-bottom button:not(.btn-power),body[data-theme="c
 .lg-empty{grid-column:1/-1;color:rgba(255,255,255,.6);font-size:14px;padding:30px;text-align:center}
 #gn-dock{display:none}
 body[data-theme="gnome"] #gn-dock{display:flex;position:absolute;left:50%;bottom:16px;transform:translateX(-50%);z-index:6;gap:6px;padding:8px 10px;background:rgba(36,36,36,.92);border-radius:24px;box-shadow:0 4px 24px rgba(0,0,0,.55);align-items:center;max-width:calc(100% - 32px)}
+#gn-dock-live{display:none}
+body[data-theme="gnome"].gnome-dock-on #gn-dock-live{display:flex;position:absolute;left:50%;bottom:16px;transform:translateX(-50%);z-index:99998;gap:6px;padding:8px 10px;background:rgba(36,36,36,.92);border-radius:24px;box-shadow:0 4px 24px rgba(0,0,0,.55);align-items:center;max-width:calc(100% - 32px)}
+body.svc-nopanel #gn-dock-live{display:none!important}
 .gn-di{position:relative;width:58px;height:58px;border-radius:14px;display:flex;align-items:center;justify-content:center;cursor:pointer;flex-shrink:0}
 .gn-di:hover{background:rgba(255,255,255,.12)}
 .gn-di .w11-pin-icon{width:44px;height:44px;border-radius:12px;pointer-events:none}
@@ -587,7 +603,7 @@ body[data-theme="mac"] #desktop-icons-area{margin-top:24px}
 #menubar span:hover{background:rgba(255,255,255,.22)}
 #menubar .mb-app{font-weight:700}
 #menubar .mb-apple{font-size:15px;cursor:pointer}
-#menubar #mb-clock{margin-left:auto}
+#menubar .mb-st{font-size:12px}
 body[data-theme="mac"]{--tb-h:84px}
 body[data-theme="mac"] #taskbar{position:absolute;left:50%;bottom:8px;transform:translateX(-50%);height:var(--tb-h);width:auto;border-radius:20px;padding:0 10px;gap:6px;background:rgba(255,255,255,.22);backdrop-filter:blur(24px) saturate(1.6);border:1px solid rgba(255,255,255,.4);box-shadow:0 8px 30px rgba(0,0,0,.35)}
 body[data-theme="mac"] #start-orb{width:calc(var(--tb-h) - 16px);height:calc(var(--tb-h) - 16px);border-radius:14px;background:linear-gradient(#cfd4dc,#7f8794);font-size:calc((var(--tb-h) - 16px)*.48)}
@@ -595,7 +611,8 @@ body[data-theme="mac"] #tb-apps{flex:0 1 auto;gap:6px;overflow:visible;padding:0
 body[data-theme="mac"] #tb-right{padding:0;gap:0}
 body[data-theme="mac"] #tb-clock{display:none}
 body[data-theme="mac"] .tb-btn{position:relative;overflow:visible;width:calc(var(--tb-h) - 16px);height:calc(var(--tb-h) - 16px);min-width:calc(var(--tb-h) - 16px);padding:0;border:0;border-radius:12px;background:rgba(255,255,255,.28);animation:none;transition:transform .15s}
-body[data-theme="mac"] .tb-btn:hover{transform:translateY(-10px) scale(1.2)}
+body[data-theme="mac"] .tb-btn{transform-origin:50% 100%;transition:transform .18s cubic-bezier(.3,.8,.3,1)}
+body[data-theme="mac"] #start-orb{transform-origin:50% 100%;transition:transform .18s cubic-bezier(.3,.8,.3,1)}
 body[data-theme="mac"] .tb-btn.active::after{content:'';position:absolute;bottom:-8px;left:50%;width:4px;height:4px;border-radius:50%;background:#fff;transform:translateX(-50%)}
 body[data-theme="mac"] .tb-btn .tbi{font-size:calc((var(--tb-h) - 16px)*.52)!important}
 body[data-theme="mac"] .tb-btn img.tbi{width:calc((var(--tb-h) - 16px)*.68)!important;height:calc((var(--tb-h) - 16px)*.68)!important}
@@ -614,7 +631,7 @@ body[data-theme="gnome"]{--tb-h:26px;--font:'Cantarell','Adwaita Sans','Ubuntu',
   --ui-bg:#242424;--ui-head:#303030;--ui-hbd:#1b1b1b;--ui-fg:#fff;--ui-sub:#c0bfbc;--ui-inp:#303030;--ui-bd:#1b1b1b;--ui-hov:#3d3d3d;--ui-sb:#3d3d3d;--ui-sbf:#fff;--ui-sbb:#1b1b1b;--ui-r:12px;--ui-ir:8px;--ui-br:8px;--ui-bt:0px;--ui-btc:transparent;--ui-border:1px solid #1b1b1b;--ui-sh:0 10px 40px rgba(0,0,0,.6);
   --ctx-bg:#303030;--ctx-fg:#fff;--ctx-hov:rgba(255,255,255,.1);--ctx-hfg:#fff;--ctx-r:12px;--ctx-pad:6px;--ctx-ip:8px 12px;--ctx-ir:8px;--ctx-fs:14px;--ctx-sep:rgba(255,255,255,.12);--ctx-bd:1px solid #1b1b1b;--ctx-bt:1px;--ctx-btc:#1b1b1b;--ctx-sh:0 6px 24px rgba(0,0,0,.5);
   --nt-bg:#303030;--nt-fg:#fff;--nt-r:14px;--nt-bl:0px;
-  --st-bg:rgba(18,18,18,.82);--st-blur:8px;--ap-bg:rgba(18,18,18,.9)}
+  --st-bg:rgba(54,54,54,.88);--st-blur:8px;--ap-bg:rgba(48,48,48,.92)}
 body[data-theme="gnome"] #notifs{bottom:auto;top:calc(var(--tb-h) + 8px);right:50%;transform:translateX(50%)}
 body[data-theme="gnome"] #taskbar{order:-1;height:var(--tb-h);background:#000;padding:0 4px}
 body[data-theme="gnome"] #start-orb{width:auto;height:calc(var(--tb-h) - 6px);padding:0 14px;border-radius:12px;font-size:13px;gap:6px;margin:0 6px}
@@ -951,6 +968,169 @@ body[data-color-mode="light"] #grub .g-box{border-color:#c0c0c0}
 body[data-color-mode="light"] #grub .g-row{color:#424242}
 body[data-color-mode="light"] #grub .g-row.sel{background:#c0c0c0;color:#fff}
 body[data-color-mode="light"] #grub .g-help{color:#616161}
+
+/* ═══ Light mode: per-theme fixes (come after the generic light block so they win) ═══ */
+/* Default (new): panel, Menu / All apps text, taskbar */
+body[data-color-mode="light"]{--dn-menu-fg:#212121}
+body[data-color-mode="light"][data-theme="defaultnew"]{--dn-panel:#f5f5f5;--dn-bar:#f5f5f5;--dn-win:#f5f5f5}
+body[data-color-mode="light"] #dn-menu,body[data-color-mode="light"] #dn-all{color:var(--ui-fg)}
+body[data-color-mode="light"] .dn-all-head{color:var(--ui-fg)}
+body[data-color-mode="light"] #dn-all p{color:var(--ui-sub)}
+body[data-color-mode="light"] .dn-btn.dn-off{background:#c40000;border-color:#ff6b6b;color:#fff}
+body[data-color-mode="light"] .dn-btn.dn-off:hover{background:#e00000}
+body[data-color-mode="light"][data-theme="defaultnew"] #taskbar{background:var(--dn-bar);border:0;box-shadow:0 0 0 1px rgba(0,0,0,.18)}
+body[data-color-mode="light"][data-theme="defaultnew"] #start-orb,
+body[data-color-mode="light"][data-theme="defaultnew"] #start-orb i{color:#222}
+body[data-color-mode="light"][data-theme="defaultnew"] #start-orb:hover{background:#e2e2e2}
+body[data-color-mode="light"][data-theme="defaultnew"] .win-tb{background:#000}
+body[data-color-mode="light"][data-theme="defaultnew"] .win-title{color:#fff}
+body[data-color-mode="light"][data-theme="defaultnew"] .win-ctrl:hover{background:#4d4d4d}
+
+/* Taskbar / shelf: dark icons + Start button on a light bar */
+body[data-color-mode="light"] #start-orb{color:#212121}
+body[data-color-mode="light"] .tb-btn i.tbi{color:#333!important}
+body[data-color-mode="light"][data-theme="chromeos"] #tb-right{background:rgba(0,0,0,.07)}
+/* themes whose bar is glass / always dark keep their original look */
+body[data-color-mode="light"][data-theme="gnome"] #start-orb,
+body[data-color-mode="light"][data-theme="mac"] #start-orb,
+body[data-color-mode="light"][data-theme="win7"] #start-orb{color:#fff}
+body[data-color-mode="light"][data-theme="gnome"] .tb-btn i.tbi,
+body[data-color-mode="light"][data-theme="mac"] .tb-btn i.tbi,
+body[data-color-mode="light"][data-theme="win7"] .tb-btn i.tbi{color:#fff!important}
+body[data-color-mode="light"][data-theme="gnome"] #tb-clock,
+body[data-color-mode="light"][data-theme="win7"] #tb-clock{color:#fff}
+body[data-color-mode="light"][data-theme="gnome"] #taskbar{background:#000;border-top:0}
+body[data-color-mode="light"][data-theme="gnome"] .tb-btn{color:#ddd;background:transparent}
+body[data-color-mode="light"][data-theme="gnome"] .tb-btn:hover{background:rgba(255,255,255,.15)}
+body[data-color-mode="light"][data-theme="gnome"] .tb-btn.active{background:rgba(255,255,255,.22)}
+body[data-color-mode="light"][data-theme="mac"] #taskbar{background:rgba(255,255,255,.22);border:1px solid rgba(255,255,255,.4)}
+body[data-color-mode="light"][data-theme="mac"] .tb-btn,
+body[data-color-mode="light"][data-theme="mac"] .tb-btn:hover,
+body[data-color-mode="light"][data-theme="mac"] .tb-btn.active{background:rgba(255,255,255,.28);color:#ddd}
+body[data-color-mode="light"][data-theme="win7"] #taskbar{background:linear-gradient(to bottom,rgba(200,225,245,.5),rgba(70,110,160,.72) 50%,rgba(40,75,125,.85));border-top:1px solid rgba(255,255,255,.5)}
+body[data-color-mode="light"][data-theme="win7"] .tb-btn{color:#ddd;background:linear-gradient(rgba(255,255,255,.25),rgba(255,255,255,.05))}
+body[data-color-mode="light"][data-theme="win7"] .tb-btn:hover{background:linear-gradient(rgba(255,255,255,.45),rgba(255,255,255,.15))}
+body[data-color-mode="light"][data-theme="win7"] .tb-btn.active{background:linear-gradient(rgba(255,255,255,.55),rgba(255,255,255,.2))}
+
+/* Window title bars */
+body[data-color-mode="light"] .win-title{color:var(--ui-fg)}
+body[data-color-mode="light"] .win-ico-wrap i{color:var(--ui-sub)}
+body[data-color-mode="light"][data-theme="gnome"] .win-ctrl{background:rgba(0,0,0,.07)}
+body[data-color-mode="light"][data-theme="gnome"] .win-ctrl:hover{background:rgba(0,0,0,.14)}
+body[data-color-mode="light"][data-theme="win7"] .win-tb{background:transparent}
+body[data-color-mode="light"][data-theme="win7"] .win-ctrl,
+body[data-color-mode="light"][data-theme="win7"] .win-ctrl:hover{background:linear-gradient(rgba(255,255,255,.7),rgba(180,205,230,.6) 50%,rgba(120,160,205,.7));color:#000}
+body[data-color-mode="light"][data-theme="win7"] .win-ctrl.wc-close,
+body[data-color-mode="light"][data-theme="win7"] .win-ctrl.wc-close:hover{background:linear-gradient(#e8a090,#c8402a 50%,#a82010);color:#fff}
+
+/* Dialogs */
+body[data-color-mode="light"] .modal-body{background:var(--ui-bg)}
+body[data-color-mode="light"] .btn-p:not([style]){background:var(--accent,#0078d4)!important;color:#fff!important;border-color:transparent!important}
+body[data-color-mode="light"] .btn-p:not([style]):hover{background:var(--accent,#0078d4)!important;filter:brightness(1.1)}
+body[data-color-mode="light"][data-theme="win7"] .modal-head{background:linear-gradient(to right,#0a246a,#4a90e2)!important}
+body[data-color-mode="light"][data-theme="win7"] .btn-p:not([style]){background:linear-gradient(to bottom,#f0f0f0,#e0e0e0)!important;color:#000!important;border-color:#fff #808080 #808080 #fff!important}
+
+/* Start screen / launchers */
+body[data-color-mode="light"] #start-logo,
+body[data-color-mode="light"] #start-username{color:#212121}
+body[data-color-mode="light"][data-theme="default"] #start-topbar{background:rgba(0,0,0,.06)}
+body[data-color-mode="light"] #start-search::placeholder{color:rgba(0,0,0,.5)}
+body[data-color-mode="light"] #start-search:focus{border-color:#212121}
+body[data-color-mode="light"] #apps-btn,
+body[data-color-mode="light"] #start-bottom button{color:#212121}
+body[data-color-mode="light"] #apps-btn:hover,
+body[data-color-mode="light"] #start-bottom button:hover{background:rgba(0,0,0,.1)}
+body[data-color-mode="light"] .tile-group-name{color:rgba(0,0,0,.7)}
+body[data-color-mode="light"] #start-tiles-scroll::-webkit-scrollbar-thumb,
+body[data-color-mode="light"] #apps-grid::-webkit-scrollbar-thumb{background:rgba(0,0,0,.25)}
+body[data-color-mode="light"] .w11-pin-head,
+body[data-color-mode="light"] .w11-all-btn{color:#424242}
+body[data-color-mode="light"] .w11-all-btn:hover{background:rgba(0,0,0,.08);color:#000}
+body[data-color-mode="light"][data-theme="gnome"] .w11-all-btn{background:rgba(0,0,0,.08)}
+body[data-color-mode="light"] .w11-pin-name,
+body[data-color-mode="light"] .w11-recent-chip{color:#212121}
+body[data-color-mode="light"] .w11-recent-chip:hover{background:rgba(0,0,0,.06)}
+body[data-color-mode="light"] .lg-empty{color:#555}
+body[data-color-mode="light"] .w11-pin-item.lg-over{background:rgba(0,0,0,.1);outline-color:rgba(0,0,0,.3)}
+body[data-color-mode="light"].menu-panel{--mn-bd:1px solid rgba(0,0,0,.18)}
+/* Windows 7 keeps its blue Aero Start menu in both modes */
+body[data-color-mode="light"][data-theme="win7"]{--st-bg:linear-gradient(rgba(130,175,225,.95),rgba(40,70,120,.98));--ap-bg:linear-gradient(rgba(60,100,155,.99),rgba(25,45,85,.99));--mn-bd:1px solid rgba(255,255,255,.55)}
+body[data-color-mode="light"][data-theme="win7"] #start{background:none}
+body[data-color-mode="light"][data-theme="win7"] #apps-btn,
+body[data-color-mode="light"][data-theme="win7"] #start-bottom button{color:#fff}
+body[data-color-mode="light"][data-theme="win7"] #start-bottom button:hover{background:rgba(255,255,255,.2)}
+
+/* All apps screen (classic theme) */
+body[data-color-mode="light"] .app-entry .ae-name{color:#212121}
+body[data-color-mode="light"] .app-entry .ae-cat{color:rgba(0,0,0,.5)}
+body[data-color-mode="light"] #apps-topbar{background:rgba(0,0,0,.06)}
+body[data-color-mode="light"] #apps-topbar h2,
+body[data-color-mode="light"] #apps-close-btn{color:#212121!important}
+body[data-color-mode="light"] #apps-topbar [onclick^="addAppDialog"]{color:#212121!important;background:rgba(0,0,0,.06)!important;border-bottom-color:rgba(0,0,0,.3)!important}
+body[data-color-mode="light"] #apps-close-btn:hover{background:rgba(0,0,0,.08)}
+body[data-color-mode="light"] #apps-search-inp{color:#212121;background:rgba(0,0,0,.06);border-bottom-color:rgba(0,0,0,.35)}
+body[data-color-mode="light"] #apps-search-inp::placeholder{color:rgba(0,0,0,.45)}
+
+/* Desktop: icons and credit sit on the wallpaper, so they follow the wallpaper, not the UI mode */
+body[data-color-mode="light"] .desktop-icon{color:#fff}
+body[data-color-mode="light"] .desktop-icon:hover{background:rgba(255,255,255,.14)}
+body[data-color-mode="light"] .desktop-icon.selected{background:rgba(255,255,255,.22)}
+body[data-color-mode="light"] .di-label{color:#fff;text-shadow:1px 1px 3px rgba(0,0,0,.9)}
+body[data-color-mode="light"] .di-icon-wrap:has(img){background:transparent!important}
+body[data-color-mode="light"] #desktop-credit{color:#fff;text-shadow:0 1px 4px rgba(0,0,0,.8)}
+body[data-color-mode="light"] #desktop-credit.credit-dark{color:#000;text-shadow:0 1px 4px rgba(255,255,255,.8)}
+
+/* ═══ macOS Launchpad (loaded last so it wins over the generic launcher / light-mode rules) ═══ */
+body[data-theme="mac"]{--st-bg:rgba(26,24,60,.2);--st-blur:30px;--lp-icon:clamp(40px,min(calc(var(--vw,100vw)*.056),calc(var(--vh,100vh)*.086)),116px)}
+body[data-color-mode="light"][data-theme="mac"]{--st-bg:rgba(26,24,60,.2);--st-blur:30px}
+body[data-theme="mac"] #start{transform-origin:center}
+body[data-color-mode="light"][data-theme="mac"] #start{background:none}
+body[data-theme="mac"] #start.start-entering{animation:lp-in .26s cubic-bezier(.2,.8,.3,1) both}
+body[data-theme="mac"] #start.start-leaving{animation:lp-out .2s ease both}
+@keyframes lp-in{from{opacity:0;transform:scale(1.1)}to{opacity:1;transform:none}}
+@keyframes lp-out{from{opacity:1;transform:none}to{opacity:0;transform:scale(1.1)}}
+body[data-theme="mac"] #start #start-bg-layer{backdrop-filter:blur(30px) saturate(1.35);-webkit-backdrop-filter:blur(30px) saturate(1.35)}
+body[data-theme="mac"] #start #start-bottom,body[data-theme="mac"] #start #apps-btn{display:none}
+/* search pill */
+body[data-theme="mac"] #start #start-topbar{height:calc(var(--vh,100vh)*.125);min-height:84px;padding:calc(24px + var(--vh,100vh)*.012) 0 0;justify-content:center;align-items:flex-start;flex-shrink:0}
+body[data-theme="mac"] #start #start-search{width:clamp(260px,24vw,360px);height:38px;padding:0 44px 0 42px;font-size:15px;color:#fff;border:1px solid rgba(255,255,255,.2);border-radius:19px;background-color:rgba(255,255,255,.13);background-repeat:no-repeat;background-position:14px 50%,calc(100% - 12px) 50%;background-size:16px 16px,20px 20px;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16' fill='none' stroke='%23fff' stroke-opacity='.85' stroke-width='1.6' stroke-linecap='round'%3E%3Ccircle cx='6.5' cy='6.5' r='4.6'/%3E%3Cpath d='M10 10l4.2 4.2'/%3E%3C/svg%3E"),url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 20 20' fill='none' stroke='%23fff' stroke-opacity='.6' stroke-width='1.3'%3E%3Ccircle cx='10' cy='10' r='8.6'/%3E%3Ccircle cx='6.2' cy='10' r='.9' fill='%23fff' stroke='none'/%3E%3Ccircle cx='10' cy='10' r='.9' fill='%23fff' stroke='none'/%3E%3Ccircle cx='13.8' cy='10' r='.9' fill='%23fff' stroke='none'/%3E%3C/svg%3E")}
+body[data-theme="mac"] #start #start-search::placeholder{color:rgba(255,255,255,.55)}
+body[data-theme="mac"] #start #start-search:focus{border-color:rgba(255,255,255,.45);background-color:rgba(255,255,255,.2)}
+/* icon grid */
+body[data-theme="mac"] #start-tiles-scroll{overflow:hidden;align-items:stretch;justify-content:center;padding:0 0 calc(var(--vh,100vh)*.135) 0;min-height:0}
+body[data-theme="mac"] .w11-pin-panel{width:min(1240px,calc(var(--vw,100vw)*.82));max-width:none;margin:0 auto;display:flex;flex-direction:column;align-items:center;min-height:0;height:100%}
+body[data-theme="mac"] .w11-pin-grid{width:100%;flex:1;min-height:0;grid-template-columns:repeat(8,1fr);grid-template-rows:repeat(5,minmax(0,1fr));gap:0;align-items:center}
+@media (max-width:700px){body[data-theme="mac"] .w11-pin-grid{grid-template-columns:repeat(4,1fr)}}
+body[data-theme="mac"] .w11-pin-item,body[data-theme="mac"] .w11-pin-item:hover{padding:6px 2px;gap:8px;border-radius:12px;background:none;transition:transform .12s}
+body[data-theme="mac"] .w11-pin-item:active{transform:scale(.94)}
+body[data-theme="mac"] .w11-pin-item.lg-over{background:rgba(255,255,255,.18)}
+body[data-theme="mac"] .w11-pin-icon{width:var(--lp-icon);height:var(--lp-icon);border-radius:22.5%}
+body[data-theme="mac"] .w11-pin-icon img{width:100%!important;height:100%!important;object-fit:contain!important}
+body[data-theme="mac"] .w11-pin-icon i{font-size:calc(var(--lp-icon)*.5)!important}
+body[data-theme="mac"] .w11-pin-icon:has(i){background-image:linear-gradient(rgba(255,255,255,.3),rgba(255,255,255,0) 55%)!important;box-shadow:0 2px 8px rgba(0,0,0,.3)}
+body[data-theme="mac"] .w11-pin-name,body[data-color-mode="light"][data-theme="mac"] .w11-pin-name{font-size:13px;color:#fff;max-width:calc(var(--lp-icon)*1.6);text-shadow:0 1px 3px rgba(0,0,0,.45)}
+body[data-theme="mac"] .lp-dots{display:flex;gap:14px;height:28px;align-items:center;flex-shrink:0}
+body[data-theme="mac"] .lp-dots button{width:8px;height:8px;padding:0;border:0;border-radius:50%;background:rgba(255,255,255,.4);cursor:pointer}
+body[data-theme="mac"] .lp-dots button.on{background:#fff}
+body[data-color-mode="light"][data-theme="mac"] #start #start-search{color:#fff}
+body[data-color-mode="light"][data-theme="mac"] #start #start-search::placeholder{color:rgba(255,255,255,.55)}
+/* dock */
+body[data-theme="mac"] #taskbar,body[data-color-mode="light"][data-theme="mac"] #taskbar{border-radius:26px;background:rgba(255,255,255,.22);box-shadow:0 8px 30px rgba(0,0,0,.35),inset 0 0 0 1px rgba(255,255,255,.12)}
+body[data-theme="mac"][data-color-mode] .tb-btn{border-radius:22.5%}
+body[data-theme="mac"][data-color-mode] .tb-btn:has(img.tbi),body[data-theme="mac"][data-color-mode] .tb-btn:has(img.tbi):hover,body[data-theme="mac"][data-color-mode] .tb-btn:has(img.tbi).active{background:transparent}
+body[data-theme="mac"][data-color-mode] .tb-btn:has(i.tbi),body[data-theme="mac"][data-color-mode] .tb-btn:has(i.tbi):hover,body[data-theme="mac"][data-color-mode] .tb-btn:has(i.tbi).active{background:var(--accent,#0078d4)}
+body[data-theme="mac"][data-color-mode] #start-orb{background:
+  radial-gradient(circle 5px at 22% 22%,#ff5f57 85%,transparent),radial-gradient(circle 5px at 50% 22%,#ff9f0a 85%,transparent),radial-gradient(circle 5px at 78% 22%,#ffd60a 85%,transparent),
+  radial-gradient(circle 5px at 22% 50%,#30d158 85%,transparent),radial-gradient(circle 5px at 50% 50%,#64d2ff 85%,transparent),radial-gradient(circle 5px at 78% 50%,#0a84ff 85%,transparent),
+  radial-gradient(circle 5px at 22% 78%,#bf5af2 85%,transparent),radial-gradient(circle 5px at 50% 78%,#ff375f 85%,transparent),radial-gradient(circle 5px at 78% 78%,#8e8e93 85%,transparent),
+  linear-gradient(#f4f4f7,#d6d6dc);border-radius:22.5%;box-shadow:0 1px 4px rgba(0,0,0,.25)}
+body[data-theme="mac"] #start-orb i{display:none}
+/* dock auto-hide while an app is maximized */
+body[data-theme="mac"] #taskbar{transition:transform .25s cubic-bezier(.3,.8,.3,1),padding .18s cubic-bezier(.3,.8,.3,1)}
+#dock-hot{display:none;position:fixed;left:20%;right:20%;bottom:0;height:10px;z-index:100000}
+body[data-theme="mac"].mac-fs #dock-hot{display:block}
+body[data-theme="mac"].mac-fs #taskbar{transform:translate(-50%,calc(100% + 24px))}
+body[data-theme="mac"].mac-fs #dock-hot:hover+#taskbar,body[data-theme="mac"].mac-fs #taskbar:hover{transform:translateX(-50%)}
 
 /* ── Setup wizard ── */
 #setup{position:fixed;inset:0;z-index:10003;display:none;background:#000;color:#fff;font-family:'Segoe UI',sans-serif;--sa:#0078d4;overflow:hidden}
@@ -1343,6 +1523,9 @@ body.lite .pv img.pv-b{animation-duration:6s!important;animation-timing-function
     <span class="mb-apple" onclick="mbApple(event)"><i class="fa-brands fa-apple"></i></span>
     <span class="mb-app" id="mb-app">Finder</span>
     <span>File</span><span>Edit</span><span>View</span><span>Go</span><span>Window</span><span>Help</span>
+    <span class="mb-st" style="margin-left:auto"><i class="fa-solid fa-wifi"></i></span>
+    <span class="mb-st"><i class="fa-solid fa-magnifying-glass"></i></span>
+    <span class="mb-st"><i class="fa-solid fa-sliders"></i></span>
     <span id="mb-clock"></span>
   </div>
   <!-- Default (new) theme: All apps panel + Menu panel -->
@@ -1358,6 +1541,8 @@ body.lite .pv img.pv-b{animation-duration:6s!important;animation-timing-function
       <button class="dn-btn dn-off" id="dn-power-btn" onclick="dnPowerMenu(event)">Power</button>
     </div>
   </div>
+  <div id="dock-hot"></div>
+  <div id="gn-dock-live"></div>
   <div id="taskbar">
     <div id="start-orb" onclick="toggleStart()" title="Menu"><i class="fa-solid fa-grip"></i></div>
     <div id="tb-apps"></div>
@@ -1387,8 +1572,13 @@ body.lite .pv img.pv-b{animation-duration:6s!important;animation-timing-function
       <span class="f-label">Start pattern</span>
       <div class="pat-grid" id="g-pattern"></div>
       <span class="f-label">Theme</span>
-      <select class="f-sel" id="s-theme"></select>
+      <select class="f-sel" id="s-theme" onchange="document.getElementById('gnome-dock-row').style.display=this.value==='gnome'?'block':'none'"></select>
       <div class="wp-hint">Independent of wallpaper. Restyles the taskbar, Start menu, windows, menus, dialogs and notifications.</div>
+      <div id="gnome-dock-row" style="display:none">
+        <label class="f-label" style="display:flex;align-items:center;gap:8px;cursor:pointer;">
+          <input type="checkbox" id="s-gnome-dock" style="width:auto;"> Show the dock on the desktop (like the Dash to Dock extension)
+        </label>
+      </div>
       <span class="f-label">Preset wallpapers</span>
       <div class="wp-hint">If these do not suffice, go into Extra Wallpapers, there you can find more wallpapers(suggest extra wallpapers in Suggest), and import your own if your extra wallpaper suggestion was rejected.</div>
       <div class="wp-grid" id="g-wallpaper-presets"></div>
@@ -1454,6 +1644,16 @@ body.lite .pv img.pv-b{animation-duration:6s!important;animation-timing-function
       <input class="f-inp" type="number" id="s-menu-w" placeholder="600" min="0" max="2000" style="width:120px">
       <span class="f-label">Menu panel height (px, 0 = theme default)</span>
       <input class="f-inp" type="number" id="s-menu-h" placeholder="413" min="0" max="2000" style="width:120px">
+      <span class="f-label">Cursor</span>
+      <div class="cur-grid" id="g-cursor"></div>
+      <div class="wp-hint cursor-miss" id="cursor-miss" style="display:none;color:#e0a030"></div>
+      <div id="cursor-hue-row" class="cursor-hue-row">
+        <span class="f-label">Cursor color shift <span class="cursor-hue-val" id="s-cursor-hue-val">0</span>°</span>
+        <div class="hue-wrap"><input type="range" class="no-sfx cursor-hue-slider" id="s-cursor-hue" min="0" max="359" value="0" oninput="cursorHueInput(this.value)"></div>
+      </div>
+      <span class="f-label">Cursor size <span class="cursor-size-val" id="s-cursor-size-val">32</span>px</span>
+      <input class="f-inp no-sfx cursor-size-slider" type="range" id="s-cursor-size" min="16" max="96" step="2" value="32" oninput="cursorSizeInput(this.value)">
+      <div class="wp-hint">The colored cursors start out red; the color shift rotates them around the color wheel. Applies when you press Apply. Apps loaded from other websites keep the system cursor inside their windows.</div>
       <span class="f-label">Color mode</span>
       <select class="f-sel" id="s-color-mode">
         <option value="dark">Dark</option>
@@ -1900,9 +2100,9 @@ try{ // default boot options chosen in the boot menu for future boots
   if(_bd&&typeof _bd==='object'){BOOT.plugins=_bd.plugins!==false;BOOT.guest=!!_bd.guest;BOOT.oneApp=typeof _bd.oneApp==='string'?_bd.oneApp:null;BOOT.quick=!!_bd.quick;BOOT.quickVideo=typeof _bd.quickVideo==='boolean'?_bd.quickVideo:null;}
 }catch(e){}
 let S = {
-  accent:'#0078d4', startBgColor:'#0d1f3c', startBgImage:'', desktopBgImage:WALLPAPER_PRESETS[0].url,
+  accent:'#0078d4', startBgColor:'#0d1f3c', startBgImage:'', desktopBgImage:WALLPAPER_PRESETS[0].url, gnomeDock:false,
   pattern:1, username:'User', profilePic:'', showCredit:true, wobbly:false, wobbleAmt:40, wobbleMode:'compiz', theme:'defaultnew', clock24:false, viewport:'auto', lite:false,
-  titlebarHeight:32, panelSize:0,
+  titlebarHeight:32, panelSize:0, cursor:'default', cursorHue:0, cursorSize:32,
   menuW:0, menuH:0, colorMode:'dark',
   apps: JSON.parse(JSON.stringify(DEFAULT_APPS)),
   tiles: JSON.parse(JSON.stringify(DEFAULT_TILES)),
@@ -2074,11 +2274,245 @@ window.SFX=SFX;
 /* ══════════════════════════════════
    PERSIST
 ══════════════════════════════════ */
+/* ══════════════════════════════════
+   CURSOR SYSTEM
+   SVGs live in ./cursor/ (name.svg for the arrow, nameclick.svg for the click / hand variant). Both are drawn at the same scale.
+   The arrow's tip is the top-left corner of its image; the click variant's hotspot is its fingertip (CURSOR_CLICK_HOT).
+   "Color" cursors are red in the file; the user's color shift rotates the hue of their fill.
+   The cursor is set on <html> (inherited), so text carets, the hand on links and the page's own
+   resize / move cursors keep working. Same-origin iframes get the same style.
+══════════════════════════════════ */
+const CURSOR_DIR='./cursor/';
+const CURSOR_ASPECT=162.06757/299.81836;
+const CURSOR_ARROW_H=299.81836;                 // height of the arrow drawings in their own units: the size setting is applied to this
+const CURSOR_CLICK_HOT={x:57/148,y:0};          // click (hand) hotspot: middle of the index finger's top edge, as a fraction of the image
+/* `file` is the arrow, `click` lists the file name(s) tried for the click (hand) variant.
+   If no click file loads, that cursor just uses its arrow for clicking too. */
+const CURSORS=[
+  {id:'default',     name:'Default',        file:'default.svg',      click:['defaultclick.svg'],                      fill:'#212121',stroke:'#000000'},
+  {id:'fullyblack',  name:'Fully black',    file:'fullyblack.svg',   click:['fullyblackclick.svg'],                   fill:'#000000',stroke:'#000000'},
+  {id:'unixlike',    name:'Unix-like',      file:'unixlike.svg',     click:['unixlikeclick.svg'],                     fill:'#000000',stroke:'#ffffff'},
+  {id:'winlike',     name:'Windows-like',   file:'winlike.svg',      click:['winlikeclick.svg'],                      fill:'#ffffff',stroke:'#000000'},
+  {id:'fullcolor',   name:'Color',          file:'fullcolor.svg',    click:['fullcolorclick.svg'],                    fill:'#ff0000',stroke:'#000000',tint:true},
+  {id:'darkishcolor',name:'Dark-ish color', file:'darkishcolor.svg', click:['darkishclick.svg','darkishcolorclick.svg'],fill:'#800000',stroke:'#000000',tint:true},
+  {id:'darkcolor',   name:'Dark color',     file:'darkcolor.svg',    click:['darkcolorclick.svg'],                    fill:'#210000',stroke:'#000000',tint:true},
+  {id:'system',      name:'System cursor',  system:true},   // no custom cursor: the browser / OS cursor
+];
+const CURSOR_SRC=new Map(),CURSOR_PEND=new Set();   // key = id or id+'-click'
+const CURP={id:'default',hue:0,size:32};   // pending choice while Personalize is open
+let CURSOR_CSS='';
+function cursorDef(id){return CURSORS.find(c=>c.id===id)||CURSORS[0];}
+function cursorFallbackSVG(d){   // arrow used if its file cannot be fetched (for example when opened from file://)
+  return `<svg version="1.1" xmlns="http://www.w3.org/2000/svg" width="162.06757" height="299.81836" viewBox="0,0,162.06757,299.81836"><g transform="translate(-237.69443,-177.39093)"><g fill="${d.fill}" stroke="${d.stroke}" stroke-width="14" stroke-linecap="round" stroke-miterlimit="10"><path d="M337.69443,398.15623l20,53l-45,17l-20,-55l-48,18v-233l143,188z"/></g></g></svg>`;
+}
+function loadCursorSVG(d){
+  if(d.system)return;
+  cursorLoad(d,false);
+  if(d.click)cursorLoad(d,true);
+}
+function cursorLoad(d,click){
+  const key=d.id+(click?'-click':'');
+  if(CURSOR_SRC.has(key)||CURSOR_PEND.has(key))return;
+  CURSOR_PEND.add(key);
+  const files=click?d.click:[d.file];
+  const attempt=i=>{
+    if(i>=files.length)return Promise.resolve(null);
+    return fetch(CURSOR_DIR+files[i])
+      .then(r=>r.ok?r.text():Promise.reject(new Error('HTTP '+r.status)))
+      .then(t=>{if(!/<svg[\s>]/i.test(t))throw new Error('not an svg');return t;})
+      .catch(()=>attempt(i+1));
+  };
+  attempt(0).then(t=>{
+    if(!t&&!click)t=cursorFallbackSVG(d);
+    CURSOR_SRC.set(key,t||null);   // null = no click file: the arrow is used for clicking too
+    if(!t&&click)console.warn('Click cursor not found in '+CURSOR_DIR+': '+files.join(' or ')+' (the arrow is used for clicking)');
+    CURSOR_PEND.delete(key);
+    applyCursor();cursorRefreshPreviews();
+  });
+}
+function cursorTintHex(hex,shift){   // hue-rotate a hex color by `shift` degrees, keeping saturation and lightness
+  const c=hexToRgb(hex),r=c.r/255,g=c.g/255,b=c.b/255;
+  const mx=Math.max(r,g,b),mn=Math.min(r,g,b),l=(mx+mn)/2,dl=mx-mn;
+  let h=0,s=0;
+  if(dl>0){
+    s=dl/(1-Math.abs(2*l-1));
+    if(mx===r)h=((g-b)/dl)%6;else if(mx===g)h=(b-r)/dl+2;else h=(r-g)/dl+4;
+    h*=60;
+  }
+  h=(((h+shift)%360)+360)%360;
+  const a=s*Math.min(l,1-l);
+  const f=n=>{const k=(n+h/30)%12;return Math.round(255*(l-a*Math.max(-1,Math.min(k-3,9-k,1)))).toString(16).padStart(2,'0');};
+  return '#'+f(0)+f(8)+f(4);
+}
+function cursorUnits(svg){   // drawing size in its own units, from its viewBox or size attributes
+  const vb=(svg.getAttribute('viewBox')||'').trim().split(/[\s,]+/).map(parseFloat);
+  if(vb.length===4&&vb[2]>0&&vb[3]>0)return {w:vb[2],h:vb[3]};
+  const w=parseFloat(svg.getAttribute('width')),h=parseFloat(svg.getAttribute('height'));
+  return (w>0&&h>0)?{w,h}:{w:CURSOR_ARROW_H*CURSOR_ASPECT,h:CURSOR_ARROW_H};
+}
+function cursorBuild(txt,d,h,hue){   // scales an svg so the arrow would be h px tall (the hand uses the same px per unit); hue-shifts color cursors
+  let svg=null;
+  try{
+    const doc=new DOMParser().parseFromString(txt,'image/svg+xml');
+    svg=doc.documentElement;
+    if(!svg||svg.nodeName.toLowerCase()!=='svg'||svg.querySelector('parsererror'))svg=null;
+  }catch(e){}
+  if(!svg)svg=new DOMParser().parseFromString(cursorFallbackSVG(d),'image/svg+xml').documentElement;
+  const u=cursorUnits(svg),k=h/CURSOR_ARROW_H;
+  const hh=Math.max(1,Math.round(u.h*k)),ww=Math.max(1,Math.round(u.w*k));
+  if(!svg.getAttribute('viewBox')){   // keep the drawing scalable even if the file had no viewBox
+    const ow=parseFloat(svg.getAttribute('width')),oh=parseFloat(svg.getAttribute('height'));
+    if(ow>0&&oh>0)svg.setAttribute('viewBox','0 0 '+ow+' '+oh);
+  }
+  svg.setAttribute('height',String(hh));svg.setAttribute('width',String(ww));
+  if(d.tint&&hue){
+    svg.querySelectorAll('[fill]').forEach(el=>{
+      const f=el.getAttribute('fill');
+      if(/^#([0-9a-f]{3}|[0-9a-f]{6})$/i.test(f))el.setAttribute('fill',cursorTintHex(f,hue));
+    });
+  }
+  return {uri:'data:image/svg+xml,'+encodeURIComponent(new XMLSerializer().serializeToString(svg)),w:ww,h:hh};
+}
+/* The arrow or click image of a cursor at height h, with its hotspot. Returns null if the click image is missing. */
+function cursorImage(id,hue,h,click){
+  const d=cursorDef(id),key=id+(click?'-click':'');
+  let txt=CURSOR_SRC.get(key);
+  if(txt===undefined){loadCursorSVG(d);if(click)return null;txt=cursorFallbackSVG(d);}
+  if(!txt)return null;
+  const o=cursorBuild(txt,d,h,hue);
+  if(click){const t=CURSOR_CLICK_HOT;o.hx=Math.max(0,Math.min(o.w-1,Math.round(t.x*o.w)));o.hy=Math.max(0,Math.min(o.h-1,Math.round(t.y*o.h)));}
+  else{o.hx=0;o.hy=0;}   // the arrow's tip is the top-left corner of its image
+  return o;
+}
+/* The click (hand) cursor: every rule in the page's own stylesheets that sets cursor:pointer gets a matching
+   rule that uses the custom cursor instead, plus links, <summary> and inline cursor:pointer styles. */
+function cursorPointerSelectors(doc){
+  const out=[];
+  const walk=rules=>{
+    for(const r of rules){
+      if(r.selectorText){if(r.style&&r.style.cursor==='pointer')out.push(r.selectorText);}
+      else if(r.cssRules){try{walk(r.cssRules);}catch(e){}}
+    }
+  };
+  try{for(const sh of doc.styleSheets){try{walk(sh.cssRules);}catch(e){/* cross-origin stylesheet */}}}catch(e){}
+  return out;
+}
+function cursorCSSFor(doc){
+  if(!CURSOR_CSS)return '';
+  const sel=[...cursorPointerSelectors(doc),'a[href]','area[href]','summary','[style*="cursor:pointer"]','[style*="cursor: pointer"]'];
+  return CURSOR_CSS+sel.join(',')+'{cursor:var(--mpc-cursor-pointer)!important}';
+}
+function cursorInjectFrame(f){
+  try{
+    const dc=f.contentDocument;if(!dc)return;
+    cursorInjectDoc(dc);
+  }catch(e){/* cross-origin frame: keeps the system cursor */}
+}
+/* Injects the cursor style into a document and, recursively, into every nested iframe/frame inside it.
+   Each document also listens (once) for its child frames loading or navigating, so nested frames stay covered. */
+function cursorInjectDoc(dc){
+  try{
+    if(dc.head){
+      let s=dc.getElementById('mpc-cursor-style');
+      if(!s){s=dc.createElement('style');s.id='mpc-cursor-style';dc.head.appendChild(s);}
+      s.textContent='';   // so its own rules are not scanned
+      s.textContent=cursorCSSFor(dc);
+    }
+    if(!dc.__mpcCursorHooked){
+      dc.__mpcCursorHooked=true;
+      dc.addEventListener('load',e=>{
+        const t=e.target;
+        if(t&&(t.tagName==='IFRAME'||t.tagName==='FRAME'))cursorInjectFrame(t);
+      },true);
+    }
+    dc.querySelectorAll('iframe,frame').forEach(cursorInjectFrame);
+  }catch(e){/* cross-origin: keeps the system cursor */}
+}
+function applyCursor(){
+  const d=cursorDef(S.cursor);
+  const size=Math.max(16,Math.min(96,parseInt(S.cursorSize)||32));
+  const hue=(((parseInt(S.cursorHue)||0)%360)+360)%360;
+  if(d.system){   // back to the system cursor: remove our rule everywhere
+    CURSOR_CSS='';
+    const old=document.getElementById('mpc-cursor-style');if(old)old.textContent='';
+    document.querySelectorAll('iframe').forEach(cursorInjectFrame);
+    return;
+  }
+  loadCursorSVG(d);
+  const arrow=cursorImage(d.id,hue,size,false),hand=cursorImage(d.id,hue,size,true);
+  const v=`url("${arrow.uri}") ${arrow.hx} ${arrow.hy},default`;
+  const vp=hand?`url("${hand.uri}") ${hand.hx} ${hand.hy},pointer`:v;   // no click image: clicking uses the arrow
+  const cur='var(--mpc-cursor)';
+  CURSOR_CSS=`:root{--mpc-cursor:${v};--mpc-cursor-pointer:${vp}}html{cursor:${cur}}button,select,input[type=range],input[type=checkbox],input[type=radio],input[type=color],input[type=file],input[type=button],input[type=submit]{cursor:${cur}}`;
+  let st=document.getElementById('mpc-cursor-style');
+  if(!st){st=document.createElement('style');st.id='mpc-cursor-style';document.head.appendChild(st);}
+  st.textContent=CURSOR_CSS;
+  st.textContent=cursorCSSFor(document);
+  document.querySelectorAll('iframe').forEach(cursorInjectFrame);
+}
+document.addEventListener('load',e=>{if(e.target&&e.target.tagName==='IFRAME')cursorInjectFrame(e.target);},true);
+/* Personalize UI */
+function cursorSyncRows(){
+  const d=cursorDef(CURP.id);
+  document.querySelectorAll('.cursor-hue-row').forEach(row=>row.style.opacity=d.tint?'1':'.4');
+  document.querySelectorAll('.cursor-hue-slider').forEach(sl=>sl.disabled=!d.tint);
+  document.querySelectorAll('.cursor-size-slider').forEach(sz=>{sz.disabled=!!d.system;sz.style.opacity=d.system?'.4':'1';});
+}
+function cursorRender(){
+  const grids=document.querySelectorAll('.cur-grid');if(!grids.length)return;
+  grids.forEach(g=>{
+    g.innerHTML='';
+    CURSORS.forEach(d=>{
+      const o=document.createElement('div');o.className='cur-opt'+(d.id===CURP.id?' sel':'');o.title=d.name;
+      const pv=document.createElement('div');pv.className='cur-pv';
+      if(d.system){
+        const ic=document.createElement('i');ic.className='fa-solid fa-arrow-pointer';
+        ic.style.cssText='font-size:30px;color:#fff;filter:drop-shadow(0 0 1px #000) drop-shadow(0 0 1px #000);pointer-events:none';
+        pv.appendChild(ic);
+      }else{
+        [false,true].forEach(click=>{
+          const o2=cursorImage(d.id,d.tint?CURP.hue:0,40,click);if(!o2)return;
+          const im=document.createElement('img');im.alt='';im.draggable=false;im.src=o2.uri;
+          pv.appendChild(im);
+        });
+      }
+      const lb=document.createElement('span');lb.textContent=d.name;
+      o.appendChild(pv);o.appendChild(lb);
+      o.onclick=()=>{CURP.id=d.id;if(SETUP.running)S.cursor=d.id;cursorRender();};
+      g.appendChild(o);
+    });
+  });
+  const miss=CURSORS.filter(d=>d.click&&CURSOR_SRC.get(d.id+'-click')===null).map(d=>d.click[0]);
+  document.querySelectorAll('.cursor-miss').forEach(mh=>{mh.style.display=miss.length?'block':'none';mh.textContent=miss.length?'Click cursor files not found in '+CURSOR_DIR+' (those cursors use the arrow for clicking): '+miss.join(', '):'';});
+  cursorSyncRows();
+}
+function cursorRefreshPreviews(){if(document.querySelector('.cur-grid'))cursorRender();}
+function cursorHueInput(v){
+  CURP.hue=parseInt(v)||0;if(SETUP.running)S.cursorHue=CURP.hue;
+  document.querySelectorAll('.cursor-hue-val').forEach(e=>e.textContent=CURP.hue);
+  cursorRender();
+}
+function cursorSizeInput(v){
+  CURP.size=parseInt(v)||32;if(SETUP.running)S.cursorSize=CURP.size;
+  document.querySelectorAll('.cursor-size-val').forEach(e=>e.textContent=CURP.size);
+}
+function cursorPopulate(){
+  CURP.id=cursorDef(S.cursor).id;
+  CURP.hue=(((parseInt(S.cursorHue)||0)%360)+360)%360;
+  CURP.size=Math.max(16,Math.min(96,parseInt(S.cursorSize)||32));
+  CURSORS.forEach(loadCursorSVG);
+  document.querySelectorAll('.cursor-hue-slider').forEach(sl=>sl.value=CURP.hue);
+  document.querySelectorAll('.cursor-hue-val').forEach(e=>e.textContent=CURP.hue);
+  document.querySelectorAll('.cursor-size-slider').forEach(sl=>sl.value=CURP.size);
+  document.querySelectorAll('.cursor-size-val').forEach(e=>e.textContent=CURP.size);
+  cursorRender();
+}
+
 function loadS(){
   try{
     const d=localStorage.getItem('win81');
     if(d){const p=JSON.parse(d);
-      ['accent','startBgColor','startBgImage','desktopBgImage','pattern','username','profilePic','showCredit','wobbly','wobbleAmt','wobbleMode','theme','clock24','viewport','menuW','menuH','colorMode','lite'].forEach(k=>{if(p[k]!==undefined)S[k]=p[k];});
+      ['accent','startBgColor','startBgImage','desktopBgImage','pattern','username','profilePic','showCredit','wobbly','wobbleAmt','wobbleMode','theme','clock24','viewport','menuW','menuH','colorMode','lite','cursor','cursorHue','cursorSize','gnomeDock'].forEach(k=>{if(p[k]!==undefined)S[k]=p[k];});
       if(p.tiles&&p.tiles.length)S.tiles=p.tiles;
       if(p.dicons&&p.dicons.length)S.dicons=p.dicons;
       if(p.groups&&p.groups.length)S.groups=p.groups;
@@ -2125,6 +2559,17 @@ function uiOff(){
   const cs=getComputedStyle(document.body);
   return {top:parseInt(cs.getPropertyValue('--off-top'))||0,bot:parseInt(cs.getPropertyValue('--off-bot'))||0};
 }
+/* macOS: the dock hides while an app is maximized (reveal it by hovering the bottom edge); Launchpad keeps it visible */
+function updateDockHide(){
+  const st=document.getElementById('start');
+  const lp=st&&st.style.display==='flex'&&!st.classList.contains('start-leaving');
+  const fs=S.theme==='mac'&&S.openWins.some(w=>{
+    if(w.minimized)return false;
+    const e=document.getElementById(w.id);
+    return !!e&&e.classList.contains('win-fs')&&!e.classList.contains('win-closing');
+  });
+  document.body.classList.toggle('mac-fs',fs&&!lp);
+}
 function updateMenubar(){
   const el=document.getElementById('mb-app');if(!el)return;
   let top=null,z=-1;
@@ -2156,12 +2601,18 @@ function applyThemeLook(){
   _lastTheme=th;
   document.body.dataset.theme=th;
   document.body.classList.toggle('menu-panel',!!cfg.panel);
+  document.body.classList.toggle('gnome-dock-on',th==='gnome'&&!!S.gnomeDock);
   // Light / dark mode: a separate layer on top of themes so themes still apply their own look
   let cm=S.colorMode||'dark';
   if(cm==='system'){
     cm=window.matchMedia&&window.matchMedia('(prefers-color-scheme: light)').matches?'light':'dark';
   }
   document.body.dataset.colorMode=cm;
+  {const st=document.getElementById('start'),dk=document.getElementById('desktop');
+   if(th==='mac'){if(st.parentNode!==dk)dk.insertBefore(st,document.getElementById('menubar'));}
+   else if(st.parentNode===dk)document.body.insertBefore(st,document.getElementById('apps-screen'));
+   const sp=document.getElementById('start-search');if(sp)sp.placeholder=th==='mac'?'Search Applications':'Search everything…';}
+  updateDockHide();if(th!=='mac')dockZoomReset();
   if(themeChanged)dnSetMenu(false);
   const o=document.getElementById('start-orb');if(o)o.innerHTML=`<i class="${cfg.orb}"></i>`;
   const l=document.getElementById('start-logo');if(l)l.innerHTML=`<i class="${cfg.orb}"></i>`;
@@ -2238,6 +2689,7 @@ function applyTheme(){
     ?'project created by @scrappy73_fr on tiktok. change the wallpaper in settings.'
     :'project created by @scrappy73_fr on tiktok.';
   credit.classList.toggle('credit-dark',isLightBackground());
+  applyCursor();
   drawPattern();
 }
 
@@ -2489,9 +2941,9 @@ function showStart(){
     document.getElementById('start-topbar').style.display='flex';
   }
   
-  if(S.theme==='gnome'||S.theme==='chromeos'){document.getElementById('start-search').value='';renderLauncherGrid();}
+  if(S.theme==='gnome'||S.theme==='chromeos'||S.theme==='mac'){document.getElementById('start-search').value='';LP.page=0;renderLauncherGrid();}
   setTimeout(()=>s.classList.remove('start-entering'),230);
-  hideApps();
+  hideApps();updateDockHide();
 }
 function goDesktop(){
   currentView='desktop';
@@ -2506,7 +2958,7 @@ function goDesktop(){
   const wasHidden=d.style.display!=='flex';
   d.style.display='flex';
   if(wasHidden){d.classList.add('desk-entering');setTimeout(()=>d.classList.remove('desk-entering'),220);}
-  hideApps();
+  hideApps();updateDockHide();
 }
 function toggleStart(){
   if(S.theme==='defaultnew'){dnSetMenu(!document.body.classList.contains('dn-open'));return;}
@@ -2586,7 +3038,7 @@ function hideAppsWin7(){
 const GRID_LAUNCHER_THEMES=['win11','chromeos','gnome'];
 function renderTiles(){
   if(S.theme==='defaultnew'){renderDnMenu();return;}
-  if(S.theme==='gnome'||S.theme==='chromeos'){renderLauncherGrid();return;}
+  if(S.theme==='gnome'||S.theme==='chromeos'||S.theme==='mac'){renderLauncherGrid();return;}
   if(GRID_LAUNCHER_THEMES.includes(S.theme)){renderPinnedGrid();return;}
   _tileIdx=0;
   const area=document.getElementById('start-tiles-scroll');
@@ -2686,6 +3138,7 @@ function renderDnMenu(){
 /* GNOME overview / ChromeOS launcher: every app in a rearrangeable grid.
    GNOME hides dock-pinned apps from the grid and shows them in a bottom dock; ChromeOS keeps shelf apps in the grid. */
 let _lgDrag=null;
+const LP={page:0},LP_PER=40;   // macOS Launchpad paging (8 x 5 icons per page)
 function lgFullOrder(){
   const ids=S.apps.map(a=>a.id);
   const o=(S.gridOrder||[]).filter((i,n,arr)=>ids.includes(i)&&arr.indexOf(i)===n);
@@ -2744,7 +3197,11 @@ function renderLauncherGrid(){
   const wrap=document.createElement('div');wrap.className='w11-pin-panel';
   const grid=document.createElement('div');grid.className='w11-pin-grid';
   let idx=0;
-  lgFullOrder().map(getApp).filter(a=>a&&(!gnome||!S.tbPins.includes(a.id))&&(!q||a.name.toLowerCase().includes(q))).forEach(app=>{
+  const mac=S.theme==='mac';
+  const list=lgFullOrder().map(getApp).filter(a=>a&&(!gnome||!S.tbPins.includes(a.id))&&(!q||a.name.toLowerCase().includes(q)));
+  let pages=1,shown=list;
+  if(mac&&!q){pages=Math.max(1,Math.ceil(list.length/LP_PER));LP.page=Math.max(0,Math.min(LP.page,pages-1));shown=list.slice(LP.page*LP_PER,(LP.page+1)*LP_PER);}
+  shown.forEach(app=>{
     const el=document.createElement('div');el.className='w11-pin-item';el.title=app.name;
     el.style.animation=`tile-pop .2s cubic-bezier(.2,.8,.4,1) ${Math.min(idx*18,300)}ms both`;idx++;
     const nm=document.createElement('div');nm.className='w11-pin-name';nm.textContent=app.name;
@@ -2763,34 +3220,93 @@ function renderLauncherGrid(){
   // dropping on empty space: dock items are unpinned, grid items move to the end
   grid.addEventListener('dragover',e=>{if(_lgDrag)e.preventDefault();});
   grid.addEventListener('drop',e=>{e.preventDefault();const d=_lgDrag;_lgDrag=null;if(!d)return;if(d.from==='dock')S.tbPins=S.tbPins.filter(i=>i!==d.id);lgMove(d.id,null);lgRefresh();});
-  wrap.appendChild(grid);area.appendChild(wrap);
+  wrap.appendChild(grid);
+  if(mac&&pages>1){
+    const dots=document.createElement('div');dots.className='lp-dots';
+    for(let i=0;i<pages;i++){const b=document.createElement('button');b.className=i===LP.page?'on':'';b.title='Page '+(i+1);b.onclick=()=>{LP.page=i;renderLauncherGrid();};dots.appendChild(b);}
+    wrap.appendChild(dots);
+  }
+  area.appendChild(wrap);
   renderGnomeDock();
 }
+/* macOS dock magnification: icons grow with a smooth fisheye falloff around the pointer, neighbours pushed apart */
+function dockItems(){return [document.getElementById('start-orb'),...document.querySelectorAll('#tb-apps .tb-btn')].filter(Boolean);}
+function dockZoomReset(){
+  dockItems().forEach(el=>{el.style.transition='';el.style.transform='';el.style.zIndex='';});
+  const t=document.getElementById('taskbar');t.style.transition='';t.style.paddingLeft=t.style.paddingRight='';
+}
+(function(){
+  const MAXS=1.7,tb=document.getElementById('taskbar');
+  tb.addEventListener('mousemove',e=>{
+    if(S.theme!=='mac'||document.body.classList.contains('mac-fs')&&!tb.matches(':hover'))return;
+    const items=dockItems();if(!items.length)return;
+    const x=(e.clientX-tb.getBoundingClientRect().left)/vsx();
+    const w=items[0].offsetWidth||68,sigma=w*1.35;
+    const sc=items.map(el=>{const c=el.offsetLeft+el.offsetWidth/2,d=(x-c)/sigma;return 1+(MAXS-1)*Math.exp(-d*d);});
+    const ex=items.map((el,i)=>el.offsetWidth*(sc[i]-1));
+    const total=ex.reduce((a,b)=>a+b,0);
+    let acc=0;
+    items.forEach((el,i)=>{
+      const shift=acc+ex[i]/2-total/2;acc+=ex[i];
+      el.style.transition='none';
+      el.style.transform=`translateX(${shift.toFixed(1)}px) scale(${sc[i].toFixed(3)})`;
+      el.style.zIndex=Math.round(sc[i]*10);
+    });
+    tb.style.transition='none';   // the dock itself widens so the enlarged icons stay inside it
+    tb.style.paddingLeft=tb.style.paddingRight=(10+total/2).toFixed(1)+'px';
+  });
+  tb.addEventListener('mouseleave',()=>{
+    dockZoomReset();
+  });
+})();
+function lpGo(d){
+  const pages=Math.max(1,Math.ceil(lgFullOrder().length/LP_PER));
+  const n=Math.max(0,Math.min(pages-1,LP.page+d));
+  if(n!==LP.page){LP.page=n;renderLauncherGrid();}
+}
+(function(){
+  let last=0;
+  document.getElementById('start-tiles-scroll').addEventListener('wheel',e=>{
+    if(S.theme!=='mac'||document.getElementById('start-search').value)return;
+    const d=Math.abs(e.deltaX)>Math.abs(e.deltaY)?e.deltaX:e.deltaY;
+    const now=Date.now();if(Math.abs(d)<10||now-last<350)return;
+    last=now;lpGo(d>0?1:-1);
+  },{passive:true});
+  document.addEventListener('keydown',e=>{
+    if(S.theme!=='mac'||document.getElementById('start').style.display!=='flex'||e.target.tagName==='INPUT'&&e.target.value)return;
+    if(e.key==='ArrowRight')lpGo(1);else if(e.key==='ArrowLeft')lpGo(-1);
+  });
+})();
 function renderGnomeDock(){
-  const dock=document.getElementById('gn-dock');if(!dock)return;
-  dock.innerHTML='';
+  const dock=document.getElementById('gn-dock'),live=document.getElementById('gn-dock-live');
+  if(dock)dock.innerHTML='';
+  if(live)live.innerHTML='';
   if(S.theme!=='gnome')return;
+  const targets=[dock,S.gnomeDock?live:null].filter(Boolean);
+  if(!targets.length)return;
   const running=new Set(S.openWins.map(w=>w.appId).filter(Boolean));
   const ids=[...S.tbPins];
   S.openWins.forEach(w=>{if(w.appId&&!ids.includes(w.appId))ids.push(w.appId);});
-  ids.forEach(id=>{
-    const app=getApp(id);if(!app)return;
-    const el=document.createElement('div');el.className='gn-di'+(running.has(id)?' running':'');el.title=app.name;
-    el.appendChild(lgIcon(app));
-    el.onclick=()=>lgOpen(app);
-    el.oncontextmenu=e=>lgCtx(e,app);
-    lgDropTarget(el,d=>{lgDockMove(d.id,id);lgRefresh();});
-    if(S.tbPins.includes(id))lgDragSrc(el,app,'dock');
-    dock.appendChild(el);
+  targets.forEach(dk=>{
+    ids.forEach(id=>{
+      const app=getApp(id);if(!app)return;
+      const el=document.createElement('div');el.className='gn-di'+(running.has(id)?' running':'');el.title=app.name;
+      el.appendChild(lgIcon(app));
+      el.onclick=()=>lgOpen(app);
+      el.oncontextmenu=e=>lgCtx(e,app);
+      lgDropTarget(el,d=>{lgDockMove(d.id,id);lgRefresh();});
+      if(S.tbPins.includes(id))lgDragSrc(el,app,'dock');
+      dk.appendChild(el);
+    });
+    if(ids.length){const sp=document.createElement('div');sp.className='gn-sep';dk.appendChild(sp);}
+    const sa=document.createElement('div');sa.className='gn-di gn-showapps';sa.title='Show Applications';
+    sa.innerHTML='<i class="fa-solid fa-grip"></i>';sa.onclick=goDesktop;
+    dk.appendChild(sa);
+    dk.ondragover=e=>{if(_lgDrag)e.preventDefault();};
+    dk.ondrop=e=>{e.preventDefault();const d=_lgDrag;_lgDrag=null;if(!d)return;lgDockMove(d.id,null);lgRefresh();};
   });
-  if(ids.length){const sp=document.createElement('div');sp.className='gn-sep';dock.appendChild(sp);}
-  const sa=document.createElement('div');sa.className='gn-di gn-showapps';sa.title='Show Applications';
-  sa.innerHTML='<i class="fa-solid fa-grip"></i>';sa.onclick=goDesktop;
-  dock.appendChild(sa);
-  dock.ondragover=e=>{if(_lgDrag)e.preventDefault();};
-  dock.ondrop=e=>{e.preventDefault();const d=_lgDrag;_lgDrag=null;if(!d)return;lgDockMove(d.id,null);lgRefresh();};
 }
-document.getElementById('start-search').addEventListener('input',()=>{if(S.theme==='gnome'||S.theme==='chromeos')renderLauncherGrid();});
+document.getElementById('start-search').addEventListener('input',()=>{if(S.theme==='gnome'||S.theme==='chromeos'||S.theme==='mac'){LP.page=0;renderLauncherGrid();}});
 
 /* Windows 11 style: flat centered "Pinned" icon grid instead of live tiles */
 function renderPinnedGrid(){
@@ -3184,6 +3700,7 @@ function renderTaskbar(){
   });
   renderGnomeDock();
   updateMenubar();
+  updateDockHide();
 }
 
 /* ══════════════════════════════════
@@ -3674,10 +4191,10 @@ function minWin(id){
   el.classList.remove('win-settled');wobbleKill(el);el.classList.add('win-minimizing');
   setTimeout(()=>{el.classList.remove('win-minimizing');w.minimized=true;el.classList.add('win-min');renderTaskbar();},170);
 }
-function maxWin(id){const el=document.getElementById(id);if(!el)return;const fs=el.classList.toggle('win-fs');SFX.play(fs?'windowMaximize':'windowRestore');if(!fs){const r=winRect(0);el.style.left=r.left+'px';el.style.top=r.top+'px';el.style.width=r.width+'px';el.style.height=r.height+'px';}}
+function maxWin(id){const el=document.getElementById(id);if(!el)return;const fs=el.classList.toggle('win-fs');SFX.play(fs?'windowMaximize':'windowRestore');updateDockHide();if(!fs){const r=winRect(0);el.style.left=r.left+'px';el.style.top=r.top+'px';el.style.width=r.width+'px';el.style.height=r.height+'px';}}
 function closeWin(id){
   const el=document.getElementById(id);if(!el)return;
-  SFX.play('windowClose');el.classList.remove('win-settled');wobbleKill(el);el.classList.add('win-closing');
+  SFX.play('windowClose');el.classList.remove('win-settled');wobbleKill(el);el.classList.add('win-closing');updateDockHide();
   crashBodies=crashBodies.filter(b=>b.el!==el);
   setTimeout(()=>{el.remove();S.openWins=S.openWins.filter(w=>w.id!==id);renderTaskbar();if(BOOT.oneApp&&!S.openWins.length)shutDown();},160);
 }
@@ -3768,12 +4285,14 @@ document.addEventListener('mousedown',e=>{
   if(s.style.display!=='flex'||s.classList.contains('start-leaving'))return;
   if(THEMES[S.theme].panel){
     if(!e.target.closest('#start,#start-win7-layout,#apps-screen,#start-orb,#ctx,#overlay,#notifs'))goDesktop();
-  }else if(['start','start-bg-layer','start-tiles-scroll','start-pattern-canvas'].includes(e.target.id)){
+  }else if(['start','start-bg-layer','start-tiles-scroll','start-pattern-canvas'].includes(e.target.id)
+    ||(S.theme==='mac'&&e.target.closest('.w11-pin-panel')&&!e.target.closest('.w11-pin-item,.lp-dots'))){
     goDesktop();
   }
 });
 document.getElementById('desktop').addEventListener('contextmenu',e=>{
   if(BOOT.oneApp){e.preventDefault();return;}
+  if(e.target.closest('#start')){e.preventDefault();return;}
   if(e.target.closest('.desktop-icon')||e.target.closest('#taskbar'))return;
   if(e.target.closest('#dn-menu,#dn-all')){e.preventDefault();return;}
   e.preventDefault();
@@ -3970,7 +4489,7 @@ function performReset(){
     S.theme='defaultnew';
     S.clock24=false;
     S.viewport='auto';
-    S.menuW=0;S.menuH=0;S.colorMode='dark';
+    S.menuW=0;S.menuH=0;S.colorMode='dark';S.cursor='default';S.cursorHue=0;S.cursorSize=32;
     S.tiles=JSON.parse(JSON.stringify(DEFAULT_TILES));
     S.dicons=JSON.parse(JSON.stringify(DEFAULT_DICONS));
     S.groups=[...DEFAULT_GROUPS];
@@ -3982,7 +4501,7 @@ function performReset(){
     S.startBgImage='';
     S.pattern=1;
     S.theme='defaultnew';
-    S.menuW=0;S.menuH=0;S.colorMode='dark';
+    S.menuW=0;S.menuH=0;S.colorMode='dark';S.cursor='default';S.cursorHue=0;S.cursorSize=32;
     notify('Theme and colors reset');
   }else if(scope==='tiles'){
     S.tiles=JSON.parse(JSON.stringify(DEFAULT_TILES));
@@ -4066,6 +4585,8 @@ function renderWallpaperPresets(){
 function populateSettingsModal(){
   const ts=document.getElementById('s-theme');ts.innerHTML='';
   Object.keys(THEMES).forEach(k=>{const o=document.createElement('option');o.value=k;o.textContent=THEMES[k].name;o.selected=k===S.theme;ts.appendChild(o);});
+  document.getElementById('s-gnome-dock').checked=!!S.gnomeDock;
+  document.getElementById('gnome-dock-row').style.display=S.theme==='gnome'?'block':'none';
   renderColorGrid('g-accent',ACCENT_COLORS,S.accent);
   renderColorGrid('g-startbg',BG_COLORS,S.startBgColor);
   const pg=document.getElementById('g-pattern');pg.innerHTML='';
@@ -4081,6 +4602,7 @@ function populateSettingsModal(){
   {const mw=document.getElementById('s-menu-w');mw.value=S.menuW||'';}
   {const mh=document.getElementById('s-menu-h');mh.value=S.menuH||'';}
   {const cm=document.getElementById('s-color-mode');cm.value=S.colorMode||'dark';}
+  cursorPopulate();
   document.getElementById('s-user').value=S.username||'User';
   document.getElementById('s-profile-pic').value=S.profilePic||'';
   updateProfilePicPreview();
@@ -4099,6 +4621,7 @@ function populateSettingsModal(){
 }
 function saveSettings(){
   S.theme=document.getElementById('s-theme').value||'default';
+  S.gnomeDock=document.getElementById('s-gnome-dock').checked;
   S.accent=document.querySelector('#g-accent .sel')?.dataset.color||S.accent;
   S.startBgColor=document.querySelector('#g-startbg .sel')?.dataset.color||S.startBgColor;
   S.pattern=parseInt(document.querySelector('#g-pattern .sel')?.dataset.idx??S.pattern);
@@ -4120,6 +4643,7 @@ function saveSettings(){
   {const mw=parseInt(document.getElementById('s-menu-w').value||'');S.menuW=isNaN(mw)?0:mw;}
   {const mh=parseInt(document.getElementById('s-menu-h').value||'');S.menuH=isNaN(mh)?0:mh;}
   S.colorMode=document.getElementById('s-color-mode').value||'dark';
+  S.cursor=CURP.id;S.cursorHue=CURP.hue;S.cursorSize=CURP.size;
   saveS();applyViewport();applyTheme();tickClock();renderTiles();renderDesktopIcons();renderTaskbar();renderWin7StartMenu();closeModal();notify('Personalization applied!');
 }
 
@@ -5037,7 +5561,7 @@ function setupImportFile(f){
     try{
       const d=JSON.parse(e.target.result);
       if(!d||typeof d!=='object'||Array.isArray(d))throw new Error('bad');
-      ['accent','startBgColor','startBgImage','desktopBgImage','pattern','username','profilePic','showCredit','wobbly','wobbleAmt','wobbleMode','theme','clock24','viewport','menuW','menuH','colorMode','titlebarHeight','panelSize','lite'].forEach(k=>{if(d[k]!==undefined)S[k]=d[k];});
+      ['accent','startBgColor','startBgImage','desktopBgImage','pattern','username','profilePic','showCredit','wobbly','wobbleAmt','wobbleMode','theme','clock24','viewport','menuW','menuH','colorMode','titlebarHeight','panelSize','lite','cursor','cursorHue','cursorSize','gnomeDock'].forEach(k=>{if(d[k]!==undefined)S[k]=d[k];});
       ['tiles','dicons','groups','tbPins'].forEach(k=>{if(Array.isArray(d[k])&&d[k].length)S[k]=d[k];});
       if(Array.isArray(d.apps)&&d.apps.length)S.apps=d.apps;
       setupPaintBg();
@@ -5216,6 +5740,17 @@ function setupPreviewHTML(k){
   }
 }
 SETUP_R.theme=function(body){
+  const dockRow=sEl('div','s-gnome-dock-row');
+  dockRow.style.cssText='display:'+(S.theme==='gnome'?'flex':'none')+';align-items:center;gap:8px;margin-bottom:14px;';
+  const dockLbl=sEl('label','f-label');
+  dockLbl.style.cssText='display:flex;align-items:center;gap:8px;cursor:pointer;';
+  const dockCb=document.createElement('input');dockCb.type='checkbox';dockCb.style.width='auto';
+  dockCb.checked=!!S.gnomeDock;
+  dockCb.onchange=()=>{S.gnomeDock=dockCb.checked;};
+  dockLbl.appendChild(dockCb);
+  dockLbl.appendChild(document.createTextNode('Show the dock on the desktop (like the Dash to Dock extension)'));
+  dockRow.appendChild(dockLbl);
+  body.appendChild(dockRow);
   const grid=sEl('div','sth-grid');
   Object.keys(THEMES).forEach(k=>{
     const b=sEl('button','sth'+(S.theme===k?' sel':''));
@@ -5243,7 +5778,7 @@ SETUP_R.theme=function(body){
       pv.appendChild(im);
     });
     b.appendChild(pv);b.appendChild(sEl('span',null,THEMES[k].name));
-    b.onclick=()=>{S.theme=k;grid.querySelectorAll('.sth').forEach(x=>x.classList.remove('sel'));b.classList.add('sel');};
+    b.onclick=()=>{S.theme=k;grid.querySelectorAll('.sth').forEach(x=>x.classList.remove('sel'));b.classList.add('sel');dockRow.style.display=k==='gnome'?'flex':'none';};
     grid.appendChild(b);
   });
   body.appendChild(grid);
@@ -5284,6 +5819,26 @@ SETUP_R.accent=function(body){
     });
     body.appendChild(pg);drawPats();
   }
+  body.appendChild(sEl('div','s-lbl','Cursor'));
+  body.appendChild(sEl('div','cur-grid'));
+  body.appendChild(sEl('div','wp-hint cursor-miss'));
+  {const row=sEl('div','cursor-hue-row');
+   const lbl=sEl('span','f-label');lbl.appendChild(document.createTextNode('Cursor color shift '));
+   lbl.appendChild(sEl('span','cursor-hue-val','0'));lbl.appendChild(document.createTextNode('°'));
+   row.appendChild(lbl);
+   const wrap=sEl('div','hue-wrap');
+   const sl=document.createElement('input');sl.type='range';sl.className='no-sfx cursor-hue-slider';sl.min=0;sl.max=359;sl.value=0;
+   sl.oninput=function(){cursorHueInput(this.value);};
+   wrap.appendChild(sl);row.appendChild(wrap);
+   body.appendChild(row);}
+  {const lbl=sEl('span','f-label');lbl.appendChild(document.createTextNode('Cursor size '));
+   lbl.appendChild(sEl('span','cursor-size-val','32'));lbl.appendChild(document.createTextNode('px'));
+   body.appendChild(lbl);
+   const sl=document.createElement('input');sl.type='range';sl.className='f-inp no-sfx cursor-size-slider';sl.min=16;sl.max=96;sl.step=2;sl.value=32;
+   sl.oninput=function(){cursorSizeInput(this.value);};
+   body.appendChild(sl);}
+  body.appendChild(sEl('div','wp-hint','The colored cursors start out red; the color shift rotates them around the color wheel. Apps loaded from other websites keep the system cursor inside their windows.'));
+  cursorPopulate();
 };
 
 /* 6: Plugins (the Plugins app, shown right here) */
