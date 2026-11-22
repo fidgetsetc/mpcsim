@@ -307,7 +307,7 @@ function makeIconEl(app,cls,dark){
 
 /* ── state ── */
 const GONE_IDS=new Set(['app-xwp','app-plug']);                 // apps that depended on removed features
-const GONE_URLS=new Set(['__terminal__','__physics__']);
+const GONE_URLS=new Set(['__terminal__','__physics__','__taskmgr__']);
 const S={
   accent:'#0078d4',clock24:false,desktopBgImage:WALLPAPER_PRESETS&&WALLPAPER_PRESETS[0]?WALLPAPER_PRESETS[0].url:'',
   apps:clone(DEFAULT_APPS).filter(a=>!GONE_IDS.has(a.id)&&!GONE_URLS.has(a.url)),

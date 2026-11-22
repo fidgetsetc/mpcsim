@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Centered Responsive Scaling Iframe Wrapper</title>
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        html, body {
+            width: 100vw;
+            height: 100vh;
+            background-color: #0f0f11;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            overflow: hidden;
+        }
+
+        .wrapper {
+            position: relative;
+            width: 1532px;
+            height: 707px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        iframe {
+            width: 1532px;
+            height: 707px;
+            border: none;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+            background-color: #ffffff;
+            transform-origin: center center;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="wrapper" id="wrapper">
+        <iframe src="./game/index.html" id="frame" title="Target Page"></iframe>
+    </div>
+
+    <script>
+        const frame = document.getElementById('frame');
+
+        const BASE_WIDTH = 700;
+        const BASE_HEIGHT = 480;
+
+        function scaleIframe() {
+            const windowWidth = window.innerWidth;
+            const windowHeight = window.innerHeight;
+
+            const scaleX = windowWidth / BASE_WIDTH;
+            const scaleY = windowHeight / BASE_HEIGHT;
+            
+            // Allows scaling BOTH smaller AND larger than 1.0 (100%)
+            const scale = Math.min(scaleX, scaleY);
+
+            frame.style.transform = `scale(${scale})`;
+        }
+
+        window.addEventListener('resize', scaleIframe);
+        window.addEventListener('load', scaleIframe);
+    </script>
+</body>
+</html>

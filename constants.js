@@ -336,6 +336,13 @@ const DEFAULT_APPS = [
     iconUrl: '',
     resolution: 100
   },
+  {
+    id:'app-task', 
+    name:'Task Manager', 
+    url:'__taskmgr__', 
+    icon:'chart', 
+    cat:'System'
+  },
 
   /* ── Chat ── */
   {
@@ -424,21 +431,12 @@ const DEFAULT_APPS = [
     resolution: 100
   },
   {
-    id: 'app-br',
-    name: 'Brick',
-    url: './brick/index.html',
-    icon: 'gear',
-    cat: 'Games',
-    iconUrl: 'http://gplay-18.surge.sh/img/brick.png',
-    resolution: 100
-  },
-  {
     id: 'app-brp',
-    name: 'Brick Plus',
+    name: 'Brick',
     url: './brickplus/index.html',
     icon: 'gear',
     cat: 'Games',
-    iconUrl: 'http://gplay-18.surge.sh/img/brickplus.png',
+    iconUrl: './big-tmp/playing/img/brick.png',
     resolution: 100
   },
   {
@@ -447,16 +445,25 @@ const DEFAULT_APPS = [
     url: './bb2/index.html',
     icon: 'gear',
     cat: 'Games',
-    iconUrl: 'http://gplay-18.surge.sh/img/bb.webp',
-    resolution: 70
+    iconUrl: './big-tmp/playing/img/bb.webp',
+    resolution: 100
   },
   {
     id: 'app-dm',
     name: 'DuckMath',
-    url: './dm/index.svg',
+    url: './dm/index.html?back=1',
     icon: 'gear',
     cat: 'Games',
     iconUrl: 'https://avatars.fastly.steamstatic.com/6323b1e849243967b1c201993581ce6065e1b740_full.jpg',
+    resolution: 100
+  },
+  {
+    id: 'app-dm',
+    name: 'GNMath',
+    url: './gn/index.html?back=1',
+    icon: 'gear',
+    cat: 'Games',
+    iconUrl: './gn/index.png',
     resolution: 100
   },
 
@@ -512,7 +519,7 @@ const DEFAULT_APPS = [
     url: './gplay-tmp/html/dd4/index.html?basic',
     icon: 'gamepad',
     cat: 'Games',
-    iconUrl: './gplay-tmp/img/dd4.png',
+    iconUrl: './big-tmp/playing/img/dd4.png',
     resolution: 100
   },
   {
@@ -583,7 +590,7 @@ const DEFAULT_APPS = [
   {
     id: 'app-cc1',
     name: 'Cookie Clicker',
-    url: './gplay-tmp/html/duckget/index.html#/class/cookie-clicker',
+    url: './dm/index.html#/class/cookie-clicker',
     icon: 'gamepad',
     cat: 'Games',
     iconUrl: './gplay-tmp/img/cc1.webp',
@@ -592,7 +599,7 @@ const DEFAULT_APPS = [
   {
     id: 'app-db',
     name: 'Drift Boss',
-    url: './gplay-tmp/html/duckget/index.html#/class/drift-boss',
+    url: './dm/index.html#/class/drift-boss',
     icon: 'gamepad',
     cat: 'Games',
     iconUrl: './gplay-tmp/img/db.webp',
@@ -619,7 +626,7 @@ const DEFAULT_APPS = [
   {
     id: 'app-r3',
     name: 'Run 3',
-    url: './gplay-tmp/html/duckget/index.html#/class/run-3',
+    url: './dm/index.html#/class/run-3',
     icon: 'gamepad',
     cat: 'Games',
     iconUrl: './gplay-tmp/img/r3.png',
@@ -646,7 +653,7 @@ const DEFAULT_APPS = [
   {
     id: 'app-smb',
     name: 'Mario Bros',
-    url: './gplay-tmp/html/duckget/index.html#/class/super-mario-bros',
+    url: './dm/index.html#/class/super-mario-bros',
     icon: 'gamepad',
     cat: 'Games',
     iconUrl: './gplay-tmp/img/smb.ico',
@@ -673,7 +680,7 @@ const DEFAULT_APPS = [
   {
     id: 'app-uno',
     name: 'UNO!',
-    url: './gplay-tmp/html/duckget/index.html#/class/uno',
+    url: './dm/index.html#/class/uno',
     icon: 'gamepad',
     cat: 'Games',
     iconUrl: './gplay-tmp/img/uno.webp',
@@ -682,7 +689,7 @@ const DEFAULT_APPS = [
   {
     id: 'app-jj',
     name: 'Jetpack Joyride',
-    url: './gplay-tmp/html/duckget/index.html#/class/jetpack-joyride',
+    url: './dm/index.html#/class/jetpack-joyride',
     icon: 'gamepad',
     cat: 'Games',
     iconUrl: './gplay-tmp/img/jj.webp',
@@ -718,7 +725,7 @@ const DEFAULT_APPS = [
   {
     id: 'app-pvz',
     name: 'Plants vs Zombies',
-    url: './gplay-tmp/html/duckget/index.html#/class/plants-vs-zombies',
+    url: './dm/index.html#/class/plants-vs-zombies',
     icon: 'gamepad',
     cat: 'Games',
     iconUrl: './gplay-tmp/img/pvz.webp',
@@ -751,7 +758,7 @@ const DEFAULT_APPS = [
     name: 'YellItOut',
     url: './big-tmp/playing/html/yio/index.html?x=1',
     icon: 'gamepad',
-    cat: 'Games',
+    cat: 'Tools',
     iconUrl: './big-tmp/playing/img/yio.png',
     resolution: 100
   },
@@ -812,7 +819,7 @@ const DEFAULT_APPS = [
   {
     id: 'app-pvzhstm',
     name: 'Plants vs Zombies Hybrid Story Mod',
-    url: './gplay-tmp/html/duckget/index.html#/class/plants-vs-zombie-hybrid-story-mod',
+    url: './dm/index.html#/class/plants-vs-zombie-hybrid-story-mod',
     icon: 'gamepad',
     cat: 'Games',
     iconUrl: '',
@@ -897,6 +904,15 @@ const DEFAULT_APPS = [
     icon: 'gamepad',
     cat: 'Games',
     iconUrl: './popplay/index.png',
+    resolution: 100
+  },
+  {
+    id: 'app-wc',
+    name: 'WebChat',
+    url: './chat/index.html',
+    icon: 'gamepad',
+    cat: 'Tools',
+    iconUrl: './chat/index.png',
     resolution: 100
   },
 ];

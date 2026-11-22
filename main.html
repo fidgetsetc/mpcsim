@@ -196,6 +196,62 @@ body.win-interacting .win-frame{pointer-events:none}
 .wp-swatch span{position:absolute;left:0;right:0;bottom:0;background:rgba(0,0,0,.6);color:#fff;font-size:9px;padding:2px 4px;text-align:center;letter-spacing:.3px;text-overflow:ellipsis;overflow:hidden;white-space:nowrap}
 .wp-none{display:flex;align-items:center;justify-content:center;color:#888;font-size:10px;background:#1a1a1a}
 .wp-hint{font-size:10px;color:#777;margin-top:5px;letter-spacing:.2px}
+
+/* ── Task Manager (built-in app, url "__taskmgr__") ── */
+.tm-body{flex:1;position:relative;background:#1b1b1b;color:#eee;font:13px 'Segoe UI',system-ui,sans-serif;display:flex;flex-direction:column;overflow:hidden}
+body[data-color-mode="light"] .tm-body{background:#fafafa;color:#212121}
+body[data-theme="win7"] .tm-body{margin:0 7px 7px}
+.tm-tabs{display:flex;gap:2px;padding:6px 10px 0;border-bottom:1px solid rgba(128,128,128,.3);flex-shrink:0}
+.tm-tabs button{background:transparent;border:0;border-bottom:2px solid transparent;color:inherit;padding:8px 16px;cursor:pointer;opacity:.6;font:inherit}
+.tm-tabs button:hover{opacity:.9}
+.tm-tabs button.on{opacity:1;border-bottom-color:var(--accent,#0078d4);font-weight:600}
+.tm-bar{display:flex;align-items:center;gap:8px;padding:10px 12px;flex-shrink:0}
+.tm-bar .tm-sp{flex:1}
+.tm-bar .tm-h{opacity:.7;font-size:12px}
+.tm-btn{background:rgba(128,128,128,.22);color:inherit;border:1px solid rgba(128,128,128,.35);border-radius:5px;padding:5px 12px;cursor:pointer;font:inherit}
+.tm-btn:hover{background:rgba(128,128,128,.36)}
+.tm-btn:disabled{opacity:.4;cursor:default}
+.tm-btn.pri{background:var(--accent,#0078d4);border-color:transparent;color:#fff}
+.tm-btn.pri:hover{filter:brightness(1.12)}
+.tm-btn.dng{background:#c42b1c;border-color:transparent;color:#fff}
+.tm-btn.dng:hover{filter:brightness(1.12)}
+.tm-btn.sm{padding:3px 10px;font-size:12px}
+.tm-main{flex:1;overflow:auto;padding:0 12px 8px}
+.tm-empty{padding:30px 10px;text-align:center;opacity:.55}
+.tm-row{display:flex;align-items:center;gap:10px;padding:8px 10px;border-radius:6px;border-bottom:1px solid rgba(128,128,128,.14)}
+.tm-row:hover{background:rgba(128,128,128,.12)}
+.tm-ico{width:26px;height:26px;display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:15px}
+.tm-ico img{width:22px;height:22px;object-fit:contain}
+.tm-name{flex:1;min-width:0}
+.tm-name b{display:block;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.tm-name span{display:block;font-size:11.5px;opacity:.65}
+.tm-pill{font-size:11px;padding:2px 9px;border-radius:10px;background:rgba(46,160,67,.25);color:#3fb950;flex-shrink:0}
+.tm-pill.off{background:rgba(196,43,28,.22);color:#f2635a}
+.tm-pill.min{background:rgba(128,128,128,.25);color:inherit;opacity:.8}
+body[data-color-mode="light"] .tm-pill{color:#1a7f37}
+body[data-color-mode="light"] .tm-pill.off{color:#b3261e}
+.tm-foot{padding:7px 12px;font-size:11.5px;opacity:.7;border-top:1px solid rgba(128,128,128,.25);flex-shrink:0}
+.tm-ov{position:absolute;inset:0;background:rgba(0,0,0,.55);display:flex;align-items:center;justify-content:center;z-index:20;padding:16px}
+.tm-dlg{background:#2a2a2a;color:#eee;border:1px solid rgba(255,255,255,.18);border-radius:8px;width:min(440px,100%);max-height:100%;display:flex;flex-direction:column;box-shadow:0 12px 40px rgba(0,0,0,.6)}
+body[data-color-mode="light"] .tm-dlg{background:#fff;color:#212121;border-color:rgba(0,0,0,.2)}
+.tm-dlg-t{padding:14px 16px 6px;font-size:15px;font-weight:600}
+.tm-dlg-t.warn{color:#f2a33a}
+.tm-dlg-b{padding:4px 16px 12px;overflow:auto;line-height:1.5}
+.tm-dlg-b p{margin:0 0 8px}
+.tm-dlg-b .tm-note{opacity:.7;font-size:12px}
+.tm-dlg-f{display:flex;justify-content:flex-end;gap:8px;padding:10px 16px 14px}
+.tm-search{width:100%;box-sizing:border-box;padding:7px 10px;margin-bottom:8px;border-radius:5px;border:1px solid rgba(128,128,128,.4);background:rgba(128,128,128,.14);color:inherit;font:inherit}
+.tm-pick{max-height:300px;overflow:auto}
+.tm-pick .tm-row{cursor:pointer}
+/* services that were stopped from Task Manager */
+body.svc-nowall #desktop-bg,body.svc-nowall #start-bg-layer,body.svc-nowall #lockscreen,body.svc-nowall .tile-desktop-bg{background-image:none!important}
+body.svc-nowall #desktop-bg{background-color:#000!important}
+body.svc-nopanel #taskbar,body.svc-nopanel #menubar,body.svc-nopanel #gn-dock{display:none!important}
+body.svc-nopanel{--off-top:0px!important;--off-bot:0px!important;--fs-top:0px!important;--fs-bot:0px!important;--dn-tb-h:0px!important}
+body.svc-noicons #desktop-icons-area{display:none!important}
+body.svc-nowm[data-theme] .app-win.app-win{top:var(--fs-top,0px)!important;left:0!important;width:100%!important;height:calc(var(--vh,100vh) - var(--fs-top,0px) - var(--fs-bot,0px))!important;border-radius:0!important;box-shadow:none!important;transition:none!important}
+body.svc-nowm .win-tb,body.svc-nowm .rh{display:none!important}
+
 /* ── Terminal app ── */
 .term-body{flex:1;background:#0c0c0c;color:#e8e8e8;font-family:'Cascadia Code','Consolas',monospace;font-size:13px;display:flex;flex-direction:column;overflow:hidden}
 .term-out{flex:1;overflow-y:auto;padding:10px 12px;white-space:pre-wrap;word-break:break-word;line-height:1.5}
@@ -617,7 +673,7 @@ body[data-theme="chromeos"] .win-ctrl.wc-close:hover{background:#d93025;color:#f
 @keyframes boot-spin{to{transform:rotate(360deg)}}
 #boot-bar{width:min(360px,70vw);height:3px;background:rgba(255,255,255,.18);margin-top:24px}
 #boot-bar-fill{height:100%;width:0;background:var(--accent,#0078d4);transition:width .2s}
-#boot-video{position:absolute;inset:0;width:100%;height:100%;object-fit:fill;background:#000;pointer-events:none;display:none}
+#boot-video-start,#boot-video,#boot-video-end{position:absolute;inset:0;width:100%;height:100%;object-fit:fill;background:#000;pointer-events:none;display:none}
 
 /* ── Shutdown ── */
 #start-bottom .btn-power{margin-left:auto}
@@ -786,13 +842,26 @@ body[data-theme="defaultnew"] .app-win.win-fs .rh{display:none}
 #grub .g-row{padding:2px 14px;white-space:pre;cursor:pointer;overflow:hidden;text-overflow:ellipsis}
 #grub .g-row.sel{background:#aaa;color:#000}
 #grub .g-help{width:min(780px,92vw);margin-top:14px;font-size:13px;line-height:1.55;color:#aaa;white-space:pre-wrap}
+/* boot grace period (shown before early-start plugins run) */
+#grace{position:fixed;inset:0;z-index:10001;background:#000;display:none;cursor:default}
+#grace.on{display:block}
+#grace .gr-t{position:absolute;top:14px;right:18px;color:#ccc;font-family:'Cascadia Code','Consolas','DejaVu Sans Mono',monospace;font-size:15px;user-select:none;white-space:pre}
 
-/* ═══ 1-app mode: one window on a black background ═══ */
-body.oneapp #taskbar,body.oneapp #desktop-icons-area,body.oneapp #desktop-credit,body.oneapp #menubar,
-body.oneapp #dn-menu,body.oneapp #dn-all,body.oneapp #start,body.oneapp #apps-screen,body.oneapp #apps-screen-win7{display:none!important}
-body.oneapp #desktop-bg{background:#000!important}
+/* ═══ 1-app mode: one chosen app, with optional limited desktop services ═══ */
+/* Services remain hidden until explicitly started in Task Manager. */
+body.oneapp.svc-nopanel #taskbar,
+body.oneapp.svc-noicons #desktop-icons-area,
+body.oneapp #desktop-credit,
+body.oneapp #menubar,
+body.oneapp #dn-menu,body.oneapp #dn-all,
+body.oneapp #start,body.oneapp #apps-screen,body.oneapp #apps-screen-win7{display:none!important}
+/* The wallpaper service controls whether the desktop is black or themed. */
+body.oneapp.svc-nowall #desktop-bg{background:#000!important}
+/* The limited panel has no launcher, pinned apps, or dock: only the active app and clock. */
+body.oneapp #start-orb,body.oneapp .tb-pinned,body.oneapp #gn-dock,body.oneapp .mb-apple{display:none!important}
 body.oneapp .win-ctrl[title="Minimize"]{display:none}
 body.oneapp{--off-top:0px!important;--off-bot:0px!important;--fs-top:0px!important;--fs-bot:0px!important}
+body.oneapp:not(.svc-nopanel){--off-bot:40px!important;--fs-bot:40px!important}
 
 /* ═══ Light mode overrides (applied after themes so they take precedence) ═══ */
 body[data-color-mode="light"]{
@@ -1114,19 +1183,22 @@ body.lite .pv img.pv-b{animation-duration:6s!important;animation-timing-function
 <div id="boot">
   <div class="boot-screen on" id="boot-start">
     <div class="boot-title">Click anywhere to start</div>
-    <div class="boot-hint">Press Space at any time to skip the startup video &nbsp;·&nbsp; Press 1 while loading, or hold 1 while clicking, for the boot menu</div>
+    <div class="boot-hint">Press Space to jump to the end of the startup video (again to skip it) &nbsp;·&nbsp; Press 1 while loading, or hold 1 while clicking, for the boot menu</div>
   </div>
   <div class="boot-screen" id="boot-load">
     <div id="boot-spin"></div>
     <div class="boot-title" id="boot-load-text" style="font-size:20px">Loading…</div>
     <div id="boot-bar"><div id="boot-bar-fill"></div></div>
-    <div class="boot-hint" style="position:absolute;bottom:28px">Press Space to skip &nbsp;·&nbsp; Press 1 for the boot menu</div>
+    <div class="boot-hint" style="position:absolute;bottom:28px">Press Space to finish booting &nbsp;·&nbsp; Press 1 for the boot menu</div>
   </div>
-  <video id="boot-video" playsinline preload="auto" disablepictureinpicture></video>
+  <video id="boot-video-start" playsinline preload="auto" disablepictureinpicture></video>   <!-- plays once at the start of a normal boot -->
+  <video id="boot-video" playsinline preload="auto" disablepictureinpicture></video>   <!-- looping video while loading -->
+  <video id="boot-video-end" playsinline preload="auto" disablepictureinpicture></video>   <!-- plays once, right before the lock screen -->
 </div>
 
 <!-- Boot menu -->
 <div id="grub"></div>
+<div id="grace"><div class="gr-t" id="grace-t"></div></div>
 
 <!-- Setup wizard (first run) -->
 <div id="setup">
@@ -1318,6 +1390,7 @@ body.lite .pv img.pv-b{animation-duration:6s!important;animation-timing-function
       <select class="f-sel" id="s-theme"></select>
       <div class="wp-hint">Independent of wallpaper. Restyles the taskbar, Start menu, windows, menus, dialogs and notifications.</div>
       <span class="f-label">Preset wallpapers</span>
+      <div class="wp-hint">If these do not suffice, go into Extra Wallpapers, there you can find more wallpapers(suggest extra wallpapers in Suggest), and import your own if your extra wallpaper suggestion was rejected.</div>
       <div class="wp-grid" id="g-wallpaper-presets"></div>
       <div class="wp-hint">If these do not suffice, go into Extra Wallpapers, there you can find more wallpapers(suggest extra wallpapers in Suggest), and import your own if your extra wallpaper suggestion was rejected.</div>
       <span class="f-label">Start background image URL</span>
@@ -1873,6 +1946,75 @@ const SOUND_FILES={
 };
 const SOUND_VOL={ /* e.g. click:.4, unlock:.8 */ };
 
+/* ══════════════════════════════════
+   SYSTEM SERVICES (managed from the Task Manager app)
+   All services run at boot. Stopping one only lasts until the next boot or until it is started again.
+══════════════════════════════════ */
+const SVC={
+  on:{plugins:true,wall:true,panel:true,wm:true,icons:true,video:true,sound:true},
+  subs:new Set(),
+  defs:[
+    {id:'plugins',lim:'plugins may run, but cannot launch other apps',name:'Plugin Runtime',ico:'fa-solid fa-puzzle-piece',desc:'Runs plugins and the bridge the Plugins app talks to.',
+      warn:['Stopping Plugin Runtime closes every running plugin and the plugin bridge.','Apps that plugins added will disappear and the Plugins app will stop working until you start the service again.']},
+    {id:'wall',lim:'desktop wallpaper only',name:'Wallpaper Display',ico:'fa-solid fa-image',desc:'Draws wallpapers and runs the Extra Wallpapers bridge.',
+      warn:['Stopping Wallpaper Display makes the background blank and closes the Extra Wallpapers bridge.','Extra Wallpapers will not be able to set wallpapers until you start the service again.']},
+    {id:'panel',lim:'active app and clock only; no Start button or launchers',name:'Visual Panel',ico:'fa-solid fa-table-columns',desc:'The taskbar, dock, shelf or top bar.',
+      warn:['Stopping Visual Panel closes the panel. You will lose the Start button, the taskbar and the clock.','You can still open Task Manager with Ctrl+Alt+Shift+M (or Ctrl+Shift+Esc) to start it again.']},
+    {id:'wm',name:'Window Manager',ico:'fa-solid fa-window-restore',desc:'Title bars, dragging and resizing of app windows.',
+      warn:['Stopping Window Manager removes the title bar, dragging and resizing of apps.','Apps will open fullscreen, taking as much room as they can (the Visual Panel is left alone if it is running). Use Task Manager to end apps.']},
+    {id:'icons',lim:'icons are shown, but only the selected app opens',name:'Desktop Icons',ico:'fa-solid fa-icons',desc:'The icons on the desktop.',
+      warn:['Stopping Desktop Icons gets rid of all the icons on the desktop.','Your icon layout is kept and comes back when you start the service again.']},
+    {id:'video',name:'Video Player',ico:'fa-solid fa-film',desc:'Startup, shutdown and setup videos.',
+      warn:['Stopping Video Player gets rid of the startup, shutdown and setup videos.','The setup wizard uses its built-in animation instead, and shutting down skips the outro.']},
+    {id:'sound',name:'Sound Player',ico:'fa-solid fa-volume-high',desc:'System sounds (clicks, windows, notifications).',
+      warn:['Stopping Sound Player gets rid of all system sounds.','Apps with their own audio are not affected.']},
+  ],
+  fx:{
+    plugins:{
+      stop(){
+        try{MPC.stopAll();}catch(e){}
+        [...S.openWins].filter(w=>w.appId==='app-plug'||/(^|\/)plugins\//.test(w.url||'')).forEach(w=>closeWin(w.id));
+        // Keep the bridge object available. The service flag blocks execution;
+        // deleting window.MPC breaks already-loaded or newly opened Plugins iframes.
+        window.MPC=MPC;
+      },
+      start(){
+        // Re-publish the stable host bridge before notifying connected Plugins apps.
+        window.MPC=MPC;
+        window.BOOT=BOOT;
+        if(BOOT.plugins){MPC.startAuto(true).catch(e=>MPC.log('autostart: '+e.message,'e'));}
+        MPC.changed();
+      },
+    },
+    wall:{
+      stop(){
+        document.body.classList.add('svc-nowall');
+        [...S.openWins].filter(w=>/extrawp/i.test(w.url||'')||w.appId==='app-xwp').forEach(w=>closeWin(w.id));
+      },
+      start(){document.body.classList.remove('svc-nowall');try{applyTheme();}catch(e){}},
+    },
+    panel:{
+      stop(){document.body.classList.add('svc-nopanel');window.dispatchEvent(new Event('resize'));},
+      start(){document.body.classList.remove('svc-nopanel');try{applyTheme();renderTaskbar();}catch(e){}window.dispatchEvent(new Event('resize'));},
+    },
+    wm:{
+      stop(){document.body.classList.add('svc-nowm');},
+      start(){document.body.classList.remove('svc-nowm');},
+    },
+    icons:{
+      stop(){document.body.classList.add('svc-noicons');},
+      start(){document.body.classList.remove('svc-noicons');try{renderDesktopIcons();}catch(e){}},
+    },
+    video:{stop(){},start(){}},
+    sound:{stop(){try{SFX.stopAll();}catch(e){}},start(){}},
+  },
+  def(id){return SVC.defs.find(d=>d.id===id);},
+  stop(id){if(!SVC.on[id])return;SVC.on[id]=false;try{SVC.fx[id].stop();}catch(e){console.error(e);}SVC.changed();},
+  start(id){if(SVC.on[id])return;SVC.on[id]=true;try{SVC.fx[id].start();}catch(e){console.error(e);}SVC.changed();},
+  changed(){SVC.subs.forEach(f=>{try{f();}catch(e){}});},
+};
+window.SVC=SVC;
+
 const SFX={
   vol:.7,muted:false,_base:{},_bad:{},_last:{},_live:{},
   load(){try{const o=JSON.parse(localStorage.getItem('mpc_sound')||'null');if(o){if(typeof o.vol==='number')SFX.vol=Math.max(0,Math.min(1,o.vol));if(typeof o.muted==='boolean')SFX.muted=o.muted;}}catch(e){}},
@@ -1898,6 +2040,7 @@ const SFX={
   },
   play(name,o){
     o=o||{};
+    if(!SVC.on.sound)return;   // Sound Player service stopped
     if(SFX.muted&&o.vol===undefined)return;
     const now=Date.now();
     if(o.throttle&&now-(SFX._last[name]||0)<o.throttle)return;
@@ -2805,7 +2948,10 @@ function renderDesktopIcons(){
     const ico=makeIconEl(app,'di',()=>{iw.style.background=S.accent;iw.style.borderRadius='0';});iw.appendChild(ico);
     const lbl=document.createElement('div');lbl.className='di-label';lbl.textContent=app.name;
     el.appendChild(iw);el.appendChild(lbl);
-    el.ondblclick=()=>launchApp(app,false);
+    el.ondblclick=()=>{
+      if(BOOT.oneApp&&app.id!==BOOT.oneApp){const chosen=getApp(BOOT.oneApp);notify('1-app mode: only '+(chosen?chosen.name:'the selected app')+' can be opened.');return;}
+      launchApp(app,false);
+    };
     el.oncontextmenu=e=>{e.preventDefault();showIconCtx(e,di);};
     el.addEventListener('mousedown',e=>startIconDrag(e,di,el));
     area.appendChild(el);
@@ -3014,6 +3160,7 @@ function renderTaskbar(){
     area.appendChild(btn);
   });
   S.openWins.forEach(w=>{
+    if(BOOT.oneApp&&w.url==='__taskmgr__')return; // the limited panel shows the chosen app only
     const btn=document.createElement('div');
     btn.className='tb-btn'+(w.minimized?'':' active');
     btn.title=w.name;
@@ -3043,10 +3190,17 @@ function renderTaskbar(){
    LAUNCH / WINDOWS
 ══════════════════════════════════ */
 function launchApp(app,fromStart=true){
+  // 1-app mode permits the selected app plus the built-in Task Manager only.
+  if(BOOT.oneApp&&app&&app.id!==BOOT.oneApp&&app.url!=='__taskmgr__'){
+    const chosen=getApp(BOOT.oneApp);
+    notify('1-app mode: only '+(chosen?chosen.name:'the selected app')+' can be opened.');
+    return;
+  }
   // opening an app from the Menu/Start plays only the app-open sound (no click, no menu-close)
   if(fromStart)SFX.stop('click');
   dnSetMenu(false,fromStart);
   if(app.url==='__desktop__'){goDesktop();return;}
+  if(app.url==='__taskmgr__'){openTaskManager();return;}
   if(app.url==='__physics__'){goDesktop();triggerWindowCrash();return;}
   if(!app.url&&app.id==='app-set'){openModal('m-settings');return;}
   if(!app.url){notify(`${app.name} has no URL.`);return;}
@@ -3074,6 +3228,7 @@ function buildWindow(w,fullscreen){
   }
   const appData=S.apps.find(a=>a.id===w.appId)||S.apps.find(a=>a.name===w.name&&a.icon===w.icon)||null;
   const isTerm=w.url==='__terminal__';
+  const isTM=w.url==='__taskmgr__';
   const res=Math.max(10,Math.min(200,(appData&&appData.resolution!=null)?appData.resolution:100));
   const zoom=res/100;
   // iframe wrapper handles zoom so the frame fills the window correctly
@@ -3093,7 +3248,7 @@ function buildWindow(w,fullscreen){
         <span class="term-prompt">${(S.username||'User').toLowerCase()}@localhost:~$</span>
         <input class="term-input" id="term-in-${w.id}" autocomplete="off" spellcheck="false">
       </div>
-    </div>`:`
+    </div>`:isTM?`<div class="tm-body" id="wfw-${w.id}"></div>`:`
     <div class="win-frame-wrap" id="wfw-${w.id}" style="flex:1;overflow:hidden;position:relative;">
       <iframe class="win-frame" src="${w.url}"
         style="position:absolute;top:0;left:0;width:${zoom!==1?Math.round(100/zoom)+'%':'100%'};height:${zoom!==1?Math.round(100/zoom)+'%':'100%'};transform-origin:top left;transform:scale(${zoom});border:none;"
@@ -3112,6 +3267,7 @@ function buildWindow(w,fullscreen){
   const _gf=el.querySelector('iframe.win-frame');
   if(_gf){_gf.addEventListener('load',()=>{try{_gf.focus();_gf.contentWindow.focus();}catch(e){}});}
   if(isTerm)initTerminal(w.id);
+  if(isTM)initTaskManager(w.id);
 }
 
 /* ══════════════════════════════════
@@ -4056,15 +4212,21 @@ document.body.dataset.colorMode=(S.colorMode||'dark');
 
 /* ══════════════════════════════════
    BOOT SEQUENCE
-   click -> fullscreen -> startup video (loops while everything loads, then finishes its current pass) -> lock screen
-   Quick boot: startup video plays once (if turned on) -> lock screen
-   Space skips straight to the lock screen at any point after the click.
+   click -> fullscreen -> START video (plays once) -> LOOP video (loops while everything loads) -> END video (plays once) -> lock screen
+   Quick boot (video on): only the END video plays -> lock screen (no start or loop video)
+   Space plays the END video right away (press Space again during it to go straight to the lock screen).
 ══════════════════════════════════ */
-const INTRO_VIDEO='./intro.mp4';   // the startup video (or change this path)
+const BOOT_START_VIDEO='./boot_start.mp4';   // part 0: plays once at the start of a normal boot, right before the loop (not on quick boot)
+const BOOT_LOOP_VIDEO='./boot_loop.mp4';   // part 1: loops while the system loads (or change this path)
+const BOOT_END_VIDEO='./boot_end.mp4';     // part 2: plays once when loading is done, right before the lock screen (or change this path)
 let bootPhase='click';
-let bootVideoOK=false;
+let bootStartOK=false;   // start video loaded
+let bootVideoOK=false;   // loop video loaded
+let bootEndOK=false;     // end video loaded
 const bootEl=document.getElementById('boot');
-const bootVideo=document.getElementById('boot-video');
+const bootStartVideo=document.getElementById('boot-video-start');   // the start video
+const bootVideo=document.getElementById('boot-video');          // the looping video
+const bootEndVideo=document.getElementById('boot-video-end');   // the end video
 
 /* ══════════════════════════════════
    PLUGIN RUNTIME
@@ -4089,6 +4251,42 @@ const MPC={
     const m=MPC.autoMap();m[p.id]=!!on;
     try{localStorage.setItem('mpc_autostart',JSON.stringify(m));}catch(e){MPC.log('Could not save autostart setting: '+e.message,'e');}
     MPC._ga[p.id]=!!on;   // in-memory fallback so the setting at least sticks for this session
+  },
+  /* Early start: plugins the user manually chose to run immediately at the start of boot (before the boot animation,
+     loading and everything else). Off for every plugin until the user turns it on; a plugin's own defaults never enable it. */
+  _ge:{},_gs:{},_gg:null,
+  earlyMap(){
+    if(BOOT.guest)return MPC._ge;
+    try{const m=JSON.parse(localStorage.getItem('mpc_early'));if(m&&typeof m==='object'&&!Array.isArray(m))return m;}catch(e){}
+    return MPC._gs;
+  },
+  isEarly(p){return !!MPC.earlyMap()[p.id];},
+  setEarly(p,on){
+    if(BOOT.guest){MPC._ge[p.id]=!!on;return;}
+    const m={...MPC.earlyMap()};m[p.id]=!!on;
+    try{localStorage.setItem('mpc_early',JSON.stringify(m));}catch(e){MPC.log('Could not save early start setting: '+e.message,'e');}
+    MPC._gs=m;   // in-memory fallback so the setting at least sticks for this session
+  },
+  earlyList(){   // plugins that will start immediately at boot under the current boot mode
+    if(!BOOT.plugins||!SVC.on.plugins)return [];
+    return [...MPC.builtin(),...MPC.custom()].filter(p=>MPC.isEarly(p));
+  },
+  earlyGrace(){   // 5 second "Press 1 to enter boot menu" grace period before early plugins start
+    if(BOOT.guest)return !!MPC._gg;
+    try{const v=localStorage.getItem('mpc_early_grace');if(v!==null)return v==='1';}catch(e){}
+    return !!MPC._gg;
+  },
+  setEarlyGrace(on){
+    MPC._gg=!!on;
+    if(BOOT.guest)return;
+    try{localStorage.setItem('mpc_early_grace',on?'1':'0');}catch(e){MPC.log('Could not save grace period setting: '+e.message,'e');}
+  },
+  async startEarly(){
+    const list=MPC.earlyList();
+    if(!list.length)return;
+    MPC.log('Early start: '+list.length+' plugin(s) before boot','w');
+    // don't let one slow plugin hold the boot forever (it keeps running in the background)
+    await Promise.race([Promise.all(list.map(p=>MPC.start(p))),new Promise(r=>setTimeout(r,5000))]);
   },
   _dropApps(r){   // remove the apps a plugin installed (desktop icons/tiles are kept so they reappear in place)
     if(!r||!r.apps||!r.apps.length)return;
@@ -4150,6 +4348,7 @@ const MPC={
         const k=String(key).toLowerCase();
         const a=S.apps.find(x=>x.id.toLowerCase()===k||x.name.toLowerCase()===k)||S.apps.find(x=>x.name.toLowerCase().includes(k));
         if(!a)throw new Error('No app: '+key);
+        if(BOOT.oneApp&&a.id!==BOOT.oneApp)throw new Error('1-app mode: only the selected app can be launched');
         launchApp(a,false);
       },
       setAccent:c=>{S.accent=c;applyTheme();renderAll();},
@@ -4168,6 +4367,7 @@ const MPC={
     };
   },
   async start(p){
+    if(!SVC.on.plugins){MPC.log('Plugin Runtime is stopped: '+p.name,'e');return;}
     if(!BOOT.plugins){MPC.log('Plugins are disabled (safe mode): '+p.name,'e');return;}
     if(MPC.running.has(p.id))return;
     MPC.running.set(p.id,{stops:[],apps:[]});MPC.changed();
@@ -4197,8 +4397,8 @@ const MPC={
     });
     MPC.changed();
   },
-  async startAuto(){
-    const list=[...MPC.builtin(),...MPC.custom()].filter(p=>MPC.isAuto(p));
+  async startAuto(all){   // all=true also starts the early-start plugins (used when they were not started at the beginning of boot)
+    const list=[...MPC.builtin(),...MPC.custom()].filter(p=>all?(MPC.isAuto(p)||MPC.isEarly(p)):(MPC.isAuto(p)&&!MPC.isEarly(p)));
     if(!list.length)return;
     MPC.log('Autostarting '+list.length+' plugin(s)');
     await Promise.race([Promise.all(list.map(p=>MPC.start(p))),new Promise(r=>setTimeout(r,8000))]);
@@ -4215,7 +4415,8 @@ function flushNotifs(){notifyQ.splice(0).forEach(a=>_notifyOrig(a[0],a[1]));}
 /* ══════════════════════════════════
    BOOT MODES
 ══════════════════════════════════ */
-let bootModeApplied=false,pluginsStarted=false,bootVideoP=null,bootRunId=0;
+let earlyStarted=false,graceDone=false,graceResolve=null;
+let bootEndPlaying=false,bootModeApplied=false,pluginsStarted=false,bootStartP=null,bootVideoP=null,bootEndP=null,bootRunId=0;
 function applyBootMode(){
   if(bootModeApplied)return;
   bootModeApplied=true;
@@ -4228,12 +4429,36 @@ function applyBootMode(){
   }
   if(!BOOT.plugins)notify('Safe mode — plugins are disabled.');
   document.body.classList.toggle('oneapp',!!BOOT.oneApp);
+  // 1-app mode: only Window Manager, Video Player and Sound Player run by default (the rest can be started from Task Manager)
+  if(BOOT.oneApp)['plugins','wall','panel','icons'].forEach(id=>SVC.stop(id));
 }
 async function startBootPlugins(){
   if(pluginsStarted)return;
   pluginsStarted=true;
   if(!BOOT.plugins)return;
-  try{await MPC.startAuto();}catch(e){MPC.log('autostart: '+e.message,'e');}
+  try{await MPC.startAuto(!earlyStarted);}catch(e){MPC.log('autostart: '+e.message,'e');}
+}
+/* Plugins the user turned "start immediately at boot" on for: they run first, before the boot animation and everything else. */
+async function startEarlyPlugins(){
+  if(earlyStarted)return;
+  earlyStarted=true;
+  if(!BOOT.plugins||!MPC.earlyList().length)return;
+  applyBootMode();   // guest / 1-app mode must be in place first, or the mode switch would wipe what the plugins changed
+  try{await MPC.startEarly();}catch(e){MPC.log('early start: '+e.message,'e');}
+}
+/* Black screen, "Press 1 to enter boot menu in 5s" at the top right. Resolves 'menu' (1 pressed) or 'go' (time ran out). */
+function bootGrace(){
+  return new Promise(res=>{
+    const el=document.getElementById('grace'),t=document.getElementById('grace-t');
+    const end=Date.now()+5000;let timer=null;
+    const finish=r=>{clearInterval(timer);graceResolve=null;el.classList.remove('on');res(r);};
+    const tick=()=>{
+      if(Date.now()>=end){finish('go');return;}
+      t.textContent='Press 1 to enter boot menu in '+Math.ceil((end-Date.now())/1000)+'s';
+    };
+    graceResolve=finish;
+    el.classList.add('on');tick();timer=setInterval(tick,100);
+  });
 }
 function bootLaunchOneApp(){
   if(!BOOT.oneApp)return;
@@ -4251,17 +4476,35 @@ async function bootRun(fast){
   if(BOOT.quick&&BOOT.quickVideo===null){openQuickAsk();return;}
   const my=++bootRunId;
   const live=ph=>my===bootRunId&&bootPhase===ph;
-  bootPhase='load';bootShow('');                       // black while the startup video loads
-  const wantVideo=(!BOOT.quick||BOOT.quickVideo===true)&&!S.lite;   // performance mode: no startup video
+  bootPhase='load';bootShow('');                       // black while the video loads
+  await startEarlyPlugins();                           // "start immediately at boot" plugins run before anything else
+  if(!live('load'))return;
+  const wantVideo=(!BOOT.quick||BOOT.quickVideo===true)&&!S.lite&&SVC.on.video;   // performance mode: no boot videos
+  let startDone=Promise.resolve();
   if(wantVideo){
-    if(!bootVideoP)bootVideoP=bootLoadVideo();
-    await bootVideoP;
+    if(BOOT.quick){                                    // quick boot: only the END video is used (no start or loop video)
+      if(!bootEndP)bootEndP=bootLoadEndVideo();
+      await bootEndP;
+    }else{                                             // normal boot: START video first, then the LOOP video
+      if(!bootStartP)bootStartP=bootLoadStartVideo();
+      await bootStartP;
+      if(!live('load'))return;
+      if(!bootVideoP)bootVideoP=bootLoadLoopVideo();   // loads while the start video plays
+      if(!bootStartOK)await bootVideoP;                // no start video file: go straight to the loop as before
+    }
     if(!live('load'))return;
   }
-  const useVideo=wantVideo&&bootVideoOK;
-  let vp=null;
-  if(useVideo)vp=bootPlayVideo(!BOOT.quick);           // the startup video replaces the loading screen (loops while loading)
-  else if(!BOOT.quick)bootShow('boot-load');           // no video file: fall back to the old loading screen
+  if(wantVideo&&!BOOT.quick){
+    if(bootStartOK){
+      startDone=bootPlayStart();                       // part 0: plays once...
+      (async()=>{                                      // ...then the loop takes over (loading continues underneath)
+        await startDone;await bootVideoP;
+        if(my!==bootRunId||bootEndPlaying||(bootPhase!=='load'&&bootPhase!=='wait'))return;
+        if(bootVideoOK)bootPlayLoop();
+      })();
+    }else if(bootVideoOK)bootPlayLoop();               // part 1: loops while everything loads
+    else bootShow('boot-load');                        // no video files: fall back to the old loading screen
+  }else if(!BOOT.quick)bootShow('boot-load');
   if(!BOOT.quick)await bootPreload();                  // quick boot: assets load lazily
   else if(!S.lite&&setupWillRun())PRELOAD.blob(SETUP_VIDEO,{kind:'video'});   // quick boot: still warm the setup video in the background
   if(!live('load'))return;
@@ -4272,14 +4515,16 @@ async function bootRun(fast){
   applyBootMode();
   await startBootPlugins();
   if(!live('wait'))return;
-  if(useVideo){
-    if(BOOT.quick){
-      bootVideo.loop=false;                            // quick boot: the video ends on its own 1s in
-      await vp;
-    }else{
-      await bootFadeVideo(900);                        // full load: loading is done, fade the video (and its sound) out
-    }
+  if(wantVideo){
+    await startDone;                                   // let the start video finish before the end video
     if(!live('wait'))return;
+    if(!bootEndP)bootEndP=bootLoadEndVideo();
+    await bootEndP;                                    // make sure the END video is ready
+    if(!live('wait'))return;
+    if(bootEndOK){
+      await bootPlayEnd();                             // part 2: loading is done, play the END video once (it covers the loop video)
+      if(!live('wait'))return;
+    }
   }else if(!BOOT.quick){
     document.getElementById('boot-load-text').textContent='Starting…';
     await bootSleep(fast?1200:5000);
@@ -4319,7 +4564,7 @@ function saveBootDefault(m){
     return true;
   }catch(e){return false;}
 }
-function grubApps(){return S.apps.filter(a=>a.url&&!a.url.startsWith('__'));}
+function grubApps(){return S.apps.filter(a=>a.url&&a.url!=='__desktop__'&&a.url!=='__physics__');}   // every app that opens in a window (Terminal and Task Manager included)
 function grubItems(){
   if(GS.view==='main')return GRUB_MAIN.slice();
   if(GS.view==='apps')return grubApps().map(a=>a.name).concat(['<< Back']);
@@ -4364,7 +4609,7 @@ function openGrub(){
   document.getElementById('grub').classList.add('on');
   grubRender();
 }
-function bootVideoStop(){try{bootVideo.pause();}catch(e){}bootVideo.style.display='none';bootEl.classList.remove('playing');}
+function bootVideoStop(){bootEndPlaying=false;try{bootStartVideo.pause();}catch(e){}try{bootVideo.pause();}catch(e){}try{bootEndVideo.pause();}catch(e){}bootStartVideo.style.display='none';bootVideo.style.display='none';bootEndVideo.style.display='none';bootEl.classList.remove('playing');}
 // quick boot without a saved video choice: ask on the spot
 function openQuickAsk(){
   grubOpen=true;
@@ -4378,7 +4623,7 @@ function closeGrub(){grubOpen=false;document.getElementById('grub').classList.re
 function grubConfirm(m){
   BOOT.plugins=m.plugins!==false;BOOT.guest=!!m.guest;BOOT.oneApp=m.oneApp||null;BOOT.quick=!!m.quick;BOOT.quickVideo=m.quick&&typeof m.quickVideo==='boolean'?m.quickVideo:null;
   closeGrub();
-  MPC.stopAll();pluginsStarted=false;bootModeApplied=false;   // restart under the chosen mode
+  MPC.stopAll();pluginsStarted=false;bootModeApplied=false;earlyStarted=false;   // restart under the chosen mode
   bootRun(true);
 }
 function grubActivate(i){
@@ -4447,10 +4692,11 @@ function grubKey(e){
   }
   grubRender();
 }
-function bootShow(id){document.querySelectorAll('.boot-screen').forEach(e=>e.classList.toggle('on',e.id===id));bootVideo.style.display='none';}
+function bootShow(id){document.querySelectorAll('.boot-screen').forEach(e=>e.classList.toggle('on',e.id===id));bootStartVideo.style.display='none';bootVideo.style.display='none';bootEndVideo.style.display='none';}
 function bootSleep(ms){return new Promise(r=>setTimeout(r,ms));}
 function bootFinish(){
   if(bootPhase==='done')return;
+  bootEndPlaying=false;
   closeGrub();
   applyBootMode();startBootPlugins();
   bootPhase='done';
@@ -4459,24 +4705,27 @@ function bootFinish(){
   scheduleIconInvert();
   bootLaunchOneApp();
   setTimeout(flushNotifs,700);
-  try{bootVideo.pause();}catch(e){}
+  try{bootStartVideo.pause();}catch(e){}try{bootVideo.pause();}catch(e){}try{bootEndVideo.pause();}catch(e){}
   bootEl.classList.add('boot-out');bootEl.classList.remove('playing');
-  setTimeout(()=>{bootEl.style.display='none';bootVideo.removeAttribute('src');try{bootVideo.load();}catch(e){}},520);
+  setTimeout(()=>{bootEl.style.display='none';bootStartVideo.removeAttribute('src');bootVideo.removeAttribute('src');bootEndVideo.removeAttribute('src');try{bootStartVideo.load();bootVideo.load();bootEndVideo.load();}catch(e){}},520);
 }
 function bootLoadImage(url){
   return cacheAsset(url);
 }
 
-function bootLoadVideo(){
-  return PRELOAD.blob(INTRO_VIDEO,{kind:'video'}).then(linked=>new Promise(res=>{   // linked = in-memory copy, or null -> stream the file as before
+function bootLoadVid(v,url,setOK){
+  return PRELOAD.blob(url,{kind:'video'}).then(linked=>new Promise(res=>{   // linked = in-memory copy, or null -> stream the file as before
     let t;
-    const done=ok=>{clearTimeout(t);bootVideo.oncanplaythrough=bootVideo.onerror=null;bootVideoOK=ok;res();};
-    t=setTimeout(()=>done(bootVideo.readyState>=2),15000);
-    bootVideo.oncanplaythrough=()=>done(true);
-    bootVideo.onerror=()=>done(false);
-    bootVideo.src=linked||INTRO_VIDEO;bootVideo.load();
+    const done=ok=>{clearTimeout(t);v.oncanplaythrough=v.onerror=null;setOK(ok);res();};
+    t=setTimeout(()=>done(v.readyState>=2),15000);
+    v.oncanplaythrough=()=>done(true);
+    v.onerror=()=>done(false);
+    v.src=linked||url;v.load();
   }));
 }
+function bootLoadStartVideo(){return bootLoadVid(bootStartVideo,BOOT_START_VIDEO,ok=>{bootStartOK=ok;});}
+function bootLoadLoopVideo(){return bootLoadVid(bootVideo,BOOT_LOOP_VIDEO,ok=>{bootVideoOK=ok;});}
+function bootLoadEndVideo(){return bootLoadVid(bootEndVideo,BOOT_END_VIDEO,ok=>{bootEndOK=ok;});}
 // will the setup wizard run on this boot? (same rules as maybeStartSetup)
 function setupWillRun(){
   if(BOOT.guest||BOOT.oneApp)return false;
@@ -4500,7 +4749,7 @@ async function bootPreload(){
     ...rest.map(u=>()=>cacheAsset(u)),
   ];
   const wantSetup=!S.lite&&setupWillRun();
-  const total=tasks.length+(S.lite?0:1)+(wantSetup?1:0);
+  const total=tasks.length+(S.lite?0:3)+(wantSetup?1:0);   // 3 = start + loop + end video
   let done=0;
   const bar=document.getElementById('boot-bar-fill'),txt=document.getElementById('boot-load-text');
   const tick=()=>{
@@ -4522,8 +4771,12 @@ async function bootPreload(){
   };
   const jobs=[...Array(workerCount)].map(()=>worker());
   if(!S.lite){
-    if(!bootVideoP)bootVideoP=bootLoadVideo();
+    if(!bootStartP)bootStartP=bootLoadStartVideo();
+    jobs.push(bootStartP.then(tick));
+    if(!bootVideoP)bootVideoP=bootLoadLoopVideo();
     jobs.push(bootVideoP.then(tick));
+    if(!bootEndP)bootEndP=bootLoadEndVideo();
+    jobs.push(bootEndP.then(tick));
   }
   if(wantSetup)jobs.push(PRELOAD.blob(SETUP_VIDEO,{kind:'video'}).then(tick,tick));
   SFX.preload();   // builds the sound elements from the in-memory copies (the files themselves are already in the queue above)
@@ -4531,46 +4784,73 @@ async function bootPreload(){
   // Load with timeout fallback (anything still downloading keeps going and gets linked as soon as it arrives)
   await Promise.race([Promise.all(jobs),bootSleep(45000)]);
 }
-function bootFadeVideo(ms){
+function bootPlayStart(){   // part 0: plays once at the start of a normal boot. Resolves when it finishes (or fails).
   return new Promise(res=>{
-    const v=bootVideo;
-    if(v.paused||v.ended){res();return;}
-    const v0=v.volume,t0=performance.now();
+    if(!bootStartOK){res();return;}
+    const v=bootStartVideo;
+    document.querySelectorAll('.boot-screen').forEach(e=>e.classList.remove('on'));
+    bootVideo.style.display='none';bootEndVideo.style.display='none';
+    v.style.transition='none';v.style.opacity='1';
+    v.style.display='block';bootEl.classList.add('playing');
     v.loop=false;
-    v.style.transition='opacity '+ms+'ms ease';
-    requestAnimationFrame(()=>{v.style.opacity='0';});
-    const iv=setInterval(()=>{
-      const k=Math.min(1,(performance.now()-t0)/ms);
-      try{v.volume=Math.max(0,v0*(1-k));}catch(e){}
-      if(k>=1){clearInterval(iv);try{v.pause();}catch(e){}try{v.volume=v0;}catch(e){}res();}
-    },30);
+    v.onended=v.onerror=()=>res();
+    v.currentTime=0;
+    const p=v.play();
+    if(p&&p.catch)p.catch(()=>{v.muted=true;const q=v.play();if(q&&q.catch)q.catch(()=>res());});
   });
 }
-function bootPlayVideo(loop){
+function bootPlayLoop(){   // part 1: the looping video shown while the system loads
+  const v=bootVideo;
+  document.querySelectorAll('.boot-screen').forEach(e=>e.classList.remove('on'));
+  bootEndVideo.style.display='none';
+  v.style.transition='none';v.style.opacity='1';
+  v.style.display='block';bootEl.classList.add('playing');
+  v.loop=true;v.onended=v.onerror=null;
+  v.onplaying=()=>{v.onplaying=null;try{bootStartVideo.pause();}catch(e){}bootStartVideo.style.display='none';};   // swap once the loop is really showing
+  v.currentTime=0;
+  const p=v.play();
+  if(p&&p.catch)p.catch(()=>{v.muted=true;const q=v.play();if(q&&q.catch)q.catch(()=>{});});
+}
+function bootPlayEnd(){    // part 2: plays once, right before the lock screen. Resolves when it finishes.
   return new Promise(res=>{
-    if(!bootVideoOK){res();return;}
-    let capT=null;
-    const _res=res;res=()=>{clearInterval(capT);_res();};
+    if(!bootEndOK){res();return;}
+    bootEndPlaying=true;
+    const v=bootEndVideo;
     document.querySelectorAll('.boot-screen').forEach(e=>e.classList.remove('on'));
-    bootVideo.style.transition='none';bootVideo.style.opacity='1';
-    bootVideo.style.display='block';bootEl.classList.add('playing');
-    bootVideo.loop=!!loop;
-    bootVideo.onended=()=>res();bootVideo.onerror=()=>res();
-    bootVideo.currentTime=0;
-    if(BOOT.quick){   // quick boot: the video ends 1s into playback
-      capT=setInterval(()=>{if(bootVideo.currentTime>=1)res();},50);
-      bootVideo.ontimeupdate=()=>{if(bootVideo.currentTime>=1)res();};
-    }
-    const p=bootVideo.play();
-    if(p&&p.catch)p.catch(()=>{bootVideo.muted=true;const q=bootVideo.play();if(q&&q.catch)q.catch(()=>res());});
+    v.style.transition='none';v.style.opacity='1';
+    v.style.display='block';bootEl.classList.add('playing');   // sits on top of the loop video
+    v.loop=false;
+    v.onended=v.onerror=()=>res();
+    v.onplaying=()=>{v.onplaying=null;try{bootStartVideo.pause();}catch(e){}try{bootVideo.pause();}catch(e){}bootStartVideo.style.display='none';bootVideo.style.display='none';};   // swap once the end video is really showing (no black flash)
+    v.currentTime=0;
+    const p=v.play();
+    if(p&&p.catch)p.catch(()=>{v.muted=true;const q=v.play();if(q&&q.catch)q.catch(()=>res());});
   });
+}
+async function bootSkipToEnd(){   // Space: cut loading short and play the end video, then the lock screen
+  const my=++bootRunId;                    // cancels the running boot sequence
+  const live=()=>my===bootRunId&&bootPhase==='wait';
+  bootPhase='wait';                        // also stops the asset preloader
+  applyBootMode();startBootPlugins();
+  const wantVideo=(!BOOT.quick||BOOT.quickVideo===true)&&!S.lite&&SVC.on.video;
+  if(wantVideo){
+    if(!bootEndP)bootEndP=bootLoadEndVideo();
+    await bootEndP;
+    if(!live())return;
+    if(bootEndOK){await bootPlayEnd();if(!live())return;}
+  }
+  bootFinish();
 }
 async function bootStart(){
   if(bootPhase!=='click')return;
   bootPhase='load';
   SFX.preload();
   try{const de=document.documentElement;if(!document.fullscreenElement){const r=de.requestFullscreen||de.webkitRequestFullscreen;if(r){const p=r.call(de);if(p&&p.catch)p.catch(()=>{});}}}catch(e){}
-  if(key1Held&&!grubUsed){openGrub();return;}   // 1 held while clicking: straight to the boot menu
+  if(key1Held&&!grubUsed){openGrub();return;}   // 1 held while clicking: straight to the boot menu (before any early plugin runs)
+  if(!graceDone&&MPC.earlyGrace()&&MPC.earlyList().length){   // grace period before anything starts
+    graceDone=true;bootPhase='grace';
+    if(await bootGrace()==='menu'){openGrub();return;}
+  }
   bootRun(false);
 }
 bootEl.addEventListener('click',()=>{if(bootPhase==='click')bootStart();});
@@ -4580,8 +4860,9 @@ window.addEventListener('blur',()=>{key1Held=false;});
 document.addEventListener('keydown',e=>{
   if(e.key==='1')key1Held=true;
   if(grubOpen){grubKey(e);return;}
+  if(bootPhase==='grace'){e.preventDefault();if(e.key==='1'&&!e.repeat&&graceResolve)graceResolve('menu');return;}
   if(e.key==='1'&&!e.repeat&&!grubUsed&&(bootPhase==='load'||bootPhase==='wait')){e.preventDefault();openGrub();return;}
-  if(e.code==='Space'&&bootPhase!=='click'&&bootPhase!=='done'&&bootPhase!=='menu'){e.preventDefault();bootFinish();}
+  if(e.code==='Space'&&bootPhase!=='click'&&bootPhase!=='done'&&bootPhase!=='menu'&&bootPhase!=='grace'){e.preventDefault();if(bootEndPlaying)bootFinish();else bootSkipToEnd();}   // 1st Space: play the end video. Space during the end video: straight to the lock screen
 },true);
 /* ══════════════════════════════════
    SETUP WIZARD
@@ -4655,6 +4936,7 @@ function setupPlayIntro(){
   v.onplaying=()=>{if(!live())return;started=true;settled=true;clearTimeout(guard);v.style.display='block';intro.classList.add('has-video');};
   v.onended=()=>{if(live())setupReveal();};
   v.onerror=()=>{if(started){if(live())setupReveal();}else giveUp();};
+  if(!SVC.on.video){giveUp();return;}   // Video Player service stopped: built-in animation instead
   if(PRELOAD.fail.get(SETUP_VIDEO)==='http'){giveUp();return;}   // preloader already found the file is missing
   v.muted=false;v.loop=false;v.src=PRELOAD.url(SETUP_VIDEO);   // preloaded copy if there is one
   try{v.load();}catch(e){}
@@ -5148,6 +5430,7 @@ function shutDown(){
   v.onplaying=()=>{started=true;clearTimeout(guard);v.style.display='block';spin.style.display='none';txt.style.display='none';ov.classList.add('playing');};
   v.onended=finish;
   v.onerror=()=>{clearTimeout(guard);if(started)finish();else setTimeout(finish,1500);};   // no video: show the message briefly, then close
+  if(!SVC.on.video){clearTimeout(guard);setTimeout(finish,900);return;}   // Video Player service stopped: no outro
   v.src=OUTRO_VIDEO;
   const pr=v.play();
   if(pr&&pr.catch)pr.catch(()=>{v.muted=true;const q=v.play();if(q&&q.catch)q.catch(()=>{clearTimeout(guard);setTimeout(finish,1500);});});
@@ -5208,6 +5491,138 @@ function powerBootManager(){
 }
 
 /* ══════════════════════════════════
+   TASK MANAGER  (app url: "__taskmgr__")
+   Apps: see running apps, End Task, Start App.   Services: Stop (with a warning) / Start Service.
+══════════════════════════════════ */
+function openTaskManager(){
+  if(bootPhase!=='done')return;
+  const ex=S.openWins.find(w=>w.url==='__taskmgr__');
+  if(ex){const el=document.getElementById(ex.id);if(ex.minimized)toggleWin(ex.id);else if(el)bringFront(el);return;}
+  goDesktop();
+  const app=getApp('app-task')||{id:'app-task',name:'Task Manager',icon:'chart'};
+  const id='w'+(S.nextWin++);
+  const w={id,name:app.name,url:'__taskmgr__',icon:app.icon,appId:app.id,minimized:false};
+  S.openWins.push(w);buildWindow(w,false);renderTaskbar();SFX.play('windowOpen');
+}
+document.addEventListener('keydown',e=>{   // works even when the Visual Panel is stopped
+  if(bootPhase!=='done'||currentView==='lock')return;
+  const tmKey=(e.code==='Escape'&&e.ctrlKey&&e.shiftKey&&!e.altKey)   // Ctrl+Shift+Esc
+    ||(e.code==='KeyM'&&e.ctrlKey&&e.altKey&&e.shiftKey);              // Ctrl+Alt+Shift+M (for systems that already use Ctrl+Alt+Esc, e.g. xkill on Linux)
+  if(tmKey){e.preventDefault();openTaskManager();}
+});
+function initTaskManager(winId){
+  const host=document.getElementById('wfw-'+winId);if(!host)return;
+  const h=(tag,cls,txt)=>{const e=document.createElement(tag);if(cls)e.className=cls;if(txt!==undefined)e.textContent=txt;return e;};
+  const st={tab:'apps',sig:''};
+  const tabs=h('div','tm-tabs'),main=h('div','tm-main'),foot=h('div','tm-foot');
+  const bar=h('div','tm-bar');
+  const tabBtns={};
+  [['apps','Apps'],['services','Services']].forEach(([k,l])=>{const b=h('button','',l);b.onclick=()=>{st.tab=k;st.sig='';render();};tabs.appendChild(b);tabBtns[k]=b;});
+  host.append(tabs,bar,main,foot);
+
+  const dialog=(title,nodes,buttons,warn)=>{
+    const ov=h('div','tm-ov'),box=h('div','tm-dlg');
+    box.appendChild(h('div','tm-dlg-t'+(warn?' warn':''),title));
+    const b=h('div','tm-dlg-b');nodes.forEach(n=>b.appendChild(n));box.appendChild(b);
+    const f=h('div','tm-dlg-f');
+    buttons.forEach(bt=>{const x=h('button','tm-btn'+(bt.cls?' '+bt.cls:''),bt.label);x.onclick=()=>{ov.remove();if(bt.fn)bt.fn();};f.appendChild(x);});
+    box.appendChild(f);ov.appendChild(box);
+    ov.addEventListener('mousedown',e=>{if(e.target===ov)ov.remove();});
+    host.appendChild(ov);return ov;
+  };
+  const para=(t,c)=>h('p',c||'',t);
+  const iconFor=app=>{
+    const w=h('div','tm-ico');
+    if(app){w.appendChild(makeIconEl(app,'small'));}else{const i=document.createElement('i');i.className='fa-solid fa-window-maximize';w.appendChild(i);}
+    return w;
+  };
+
+  /* ---- Start App picker ---- */
+  function startAppDialog(){
+    const list=h('div','tm-pick'),q=h('input','tm-search');q.type='search';q.placeholder='Search apps';
+    let ov;
+    const fill=()=>{
+      list.innerHTML='';const t=q.value.trim().toLowerCase();
+      const apps=S.apps.filter(a=>a.url!=='__desktop__'&&(!BOOT.oneApp||a.id===BOOT.oneApp)&&(!t||a.name.toLowerCase().includes(t))).sort((a,b)=>a.name.localeCompare(b.name));
+      if(!apps.length){list.appendChild(h('div','tm-empty','No apps found.'));return;}
+      apps.forEach(a=>{
+        const r=h('div','tm-row');r.appendChild(iconFor(a));
+        const n=h('div','tm-name');n.appendChild(h('b','',a.name));n.appendChild(h('span','',a.cat||'App'));r.appendChild(n);
+        r.onclick=()=>{ov.remove();launchApp(a,false);setTimeout(render,250);};
+        list.appendChild(r);
+      });
+    };
+    q.oninput=fill;fill();
+    ov=dialog('Start App',[q,list],[{label:'Cancel'}]);
+    q.focus();
+  }
+
+  /* ---- Services ---- */
+  function stopDialog(d){
+    dialog('Stop '+d.name+'?',[...d.warn.map(t=>para(t)),para('Not recommended. The service starts again on boot, or from Task Manager > Services > Start Service.','tm-note')],
+      [{label:'Cancel'},{label:'Stop Service',cls:'dng',fn:()=>{SVC.stop(d.id);notify(d.name+' stopped');}}],true);
+  }
+  function startServiceDialog(){
+    const stopped=SVC.defs.filter(d=>!SVC.on[d.id]);
+    if(!stopped.length){notify('All services are running');return;}
+    const list=h('div','tm-pick');
+    let ov;
+    stopped.forEach(d=>{
+      const r=h('div','tm-row');
+      const ic=h('div','tm-ico');const i=document.createElement('i');i.className=d.ico;ic.appendChild(i);r.appendChild(ic);
+      const n=h('div','tm-name');n.appendChild(h('b','',d.name));n.appendChild(h('span','',d.desc+(BOOT.oneApp&&d.lim?' (1-app mode: '+d.lim+')':'')));r.appendChild(n);
+      const b=h('button','tm-btn sm pri','Start');b.onclick=e=>{e.stopPropagation();SVC.start(d.id);notify(d.name+' started');r.remove();if(!list.children.length)ov.remove();};
+      r.appendChild(b);list.appendChild(r);
+    });
+    ov=dialog('Start Service',[list],[{label:'Close'}]);
+  }
+
+  /* ---- rendering ---- */
+  function render(){
+    if(!document.getElementById(winId)){SVC.subs.delete(sub);return;}
+    const sig=st.tab+'|'+S.openWins.map(w=>w.id+(w.minimized?'m':'')).join(',')+'|'+SVC.defs.map(d=>SVC.on[d.id]?1:0).join('');
+    if(sig===st.sig)return;st.sig=sig;
+    Object.keys(tabBtns).forEach(k=>tabBtns[k].classList.toggle('on',k===st.tab));
+    bar.innerHTML='';main.innerHTML='';
+    if(st.tab==='apps'){
+      const sa=h('button','tm-btn pri');sa.innerHTML='<i class="fa-solid fa-play"></i> Start App';sa.onclick=startAppDialog;
+      bar.append(sa,h('div','tm-sp'),h('span','tm-h',S.openWins.length+' running'));
+      if(!S.openWins.length)main.appendChild(h('div','tm-empty','No apps are running. Press Start App to open one.'));
+      S.openWins.forEach(w=>{
+        const app=getApp(w.appId)||S.apps.find(a=>a.name===w.name&&a.icon===w.icon)||null;
+        const r=h('div','tm-row');r.appendChild(iconFor(app));
+        const n=h('div','tm-name');n.appendChild(h('b','',w.name));r.appendChild(n);
+        r.appendChild(h('span','tm-pill'+(w.minimized?' min':''),w.minimized?'Minimized':'Running'));
+        const sw=h('button','tm-btn sm',w.minimized?'Restore':'Switch to');
+        sw.onclick=()=>{if(w.minimized)toggleWin(w.id);else{const el=document.getElementById(w.id);if(el)bringFront(el);}setTimeout(render,250);};
+        const et=h('button','tm-btn sm dng','End Task');
+        et.onclick=()=>{closeWin(w.id);setTimeout(render,250);};
+        r.append(sw,et);main.appendChild(r);
+      });
+      foot.textContent='End Task closes the app immediately.';
+    }else{
+      const ss=h('button','tm-btn pri');ss.innerHTML='<i class="fa-solid fa-play"></i> Start Service';ss.onclick=startServiceDialog;
+      ss.disabled=SVC.defs.every(d=>SVC.on[d.id]);
+      bar.append(ss,h('div','tm-sp'),h('span','tm-h',SVC.defs.filter(d=>SVC.on[d.id]).length+' of '+SVC.defs.length+' running'));
+      SVC.defs.forEach(d=>{
+        const on=SVC.on[d.id],r=h('div','tm-row');
+        const ic=h('div','tm-ico');const i=document.createElement('i');i.className=d.ico;ic.appendChild(i);r.appendChild(ic);
+        const n=h('div','tm-name');n.appendChild(h('b','',d.name));n.appendChild(h('span','',d.desc+(BOOT.oneApp&&d.lim?' (1-app mode: '+d.lim+')':'')));r.appendChild(n);
+        r.appendChild(h('span','tm-pill'+(on?'':' off'),on?'Running':'Stopped'));
+        if(on){const b=h('button','tm-btn sm','Stop');b.onclick=()=>stopDialog(d);r.appendChild(b);}
+        else{const b=h('button','tm-btn sm pri','Start');b.onclick=()=>{SVC.start(d.id);notify(d.name+' started');};r.appendChild(b);}
+        main.appendChild(r);
+      });
+      foot.textContent='Stopping services is not recommended. Stopped services start again on boot.';
+    }
+  }
+  const sub=()=>{st.sig='';render();};
+  SVC.subs.add(sub);
+  render();
+  const iv=setInterval(()=>{if(!document.getElementById(winId)){clearInterval(iv);return;}render();},800);
+}
+
+/* ══════════════════════════════════
    EXTRA WALLPAPERS BRIDGE
    The Extra Wallpapers app (./extrawp/) sends {type:'extrawp:set',url,target:'desktop'|'start'|'both'}
 ══════════════════════════════════ */
@@ -5216,6 +5631,7 @@ const xwpState=()=>({type:'extrawp:state',desktop:S.desktopBgImage||'',start:S.s
 window.addEventListener('message',e=>{
   const d=e.data;if(!d||typeof d!=='object')return;
   const reply=()=>{if(e.source)e.source.postMessage(xwpState(),'*');};
+  if(!SVC.on.wall)return;   // Wallpaper Display service stopped: the Extra Wallpapers bridge is closed
   if(d.type==='extrawp:hello'){reply();return;}
   if(d.type!=='extrawp:set')return;
   const u=d.url;

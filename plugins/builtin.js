@@ -8,4 +8,5 @@ window.MPC_BUILTIN_PLUGINS=[
   {id:'notes',  name:'Notes',          desc:'Bundles a Notes app. Running installs it, stopping removes it.',    path:'./plugins/js/notes.js',   icon:'fa-solid fa-note-sticky',    color:'#0078d4', autostart:false, hasApp:true},
   {id:'winctl', name:'Window Controls',desc:'Bundles an app to enable/disable window buttons, for normal and 1-app mode windows.', path:'./plugins/js/winctl.js', icon:'fa-solid fa-window-restore', color:'#0078d4', autostart:false, hasApp:true},
   {id:'winctl', name:'Local Files (beta)'    ,desc:'(Does not work as expected, will be fixed.)Save files locally inside your app. ',                               path:'./plugins/js/localfiles.js', icon:'fa-solid fa-folder-open', color:'#0078d4', autostart:false, hasApp:true},
+  {id:'bootanim', name:'Boot Animation Changer'    ,desc:'Change the boot animation. (immediate start needed)',                               path:'./plugins/js/bootanim.js', icon:'fa-solid fa-folder-open', color:'#0078d4', autostart:false, hasApp:true},
 ];

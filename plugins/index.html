@@ -75,11 +75,23 @@ main::-webkit-scrollbar{width:6px}main::-webkit-scrollbar-thumb{background:#444}
 const BUILTIN=()=>(window.MPC_BUILTIN_PLUGINS||[]);
 const COLORS=['#0078d4','#107c10','#e81123','#744da9','#e3008c','#ff8c00','#00b294','#038387','#d13438','#515151','#2d7d9a','#8e562e'];
 
-/* ═══ Host access (mpcsim parent window, same origin) ═══ */
-let P=null;
-try{P=window.parent&&window.parent!==window?window.parent:null;P&&P.document;}catch(e){P=null;}
-const host=()=>{if(!P)throw new Error('Not running inside mpcsim — no host available.');return P;};
-const RT=()=>host().MPC;               // plugin runtime lives in the host page
+/* ═══ Host access (mpcsim ancestor window, same origin) ═══
+   The Plugins app can be nested inside another app/iframe. Do not assume
+   the immediate parent is the desktop, and do not cache a missing bridge:
+   Plugin Runtime can be stopped and started while this page is alive. */
+const findHost=()=>{
+  let w=window;
+  for(let depth=0;depth<8;depth++){
+    try{
+      if(w!==window && w.document && (w.BOOT || w.MPC))return w;
+      if(w===w.parent)break;
+      w=w.parent;
+    }catch(e){break;}
+  }
+  return null;
+};
+const host=()=>{const h=findHost();if(!h)throw new Error('Not connected to mpcsim — open Plugins from the desktop.');return h;};
+const RT=()=>{const r=host().MPC;if(!r)throw new Error('Plugin Runtime is stopped or unavailable. Start Plugin Runtime in Task Manager.');return r;};
 const HS=()=>RT().S();
 const GUEST=()=>{try{return !!host().BOOT.guest}catch(e){return false}};
 const isRun=id=>{try{return RT().running.has(id)}catch(e){return false}};
@@ -104,6 +116,43 @@ const getCode=p=>RT().getCode(p);
 const stopPlugin=p=>{try{RT().stop(p)}catch(e){log(e.message,'e')}};
 const startPlugin=p=>{try{return RT().start(p)}catch(e){log(e.message,'e')}};
 const togglePlugin=p=>{try{RT().running.has(p.id)?RT().stop(p):RT().start(p)}catch(e){log(e.message,'e')}};
+const earlyOn=o=>{try{return RT().isEarly(o)}catch(e){return false}};
+const graceOn=()=>{try{return RT().earlyGrace()}catch(e){return false}};
+const anyEarly=()=>{try{const rt=RT();return [...BUILTIN(),...custom].some(o=>rt.isEarly(o));}catch(e){return false}};
+
+/* "Start immediately at boot": off until the user turns it on per plugin, with a warning, then a grace period question */
+function toggleEarly(p){
+  let rt;try{rt=RT();}catch(e){log(e.message,'e');return;}
+  if(!rt.isEarly){log('This version of mpcsim does not support starting plugins immediately at boot.','e');return;}
+  if(rt.isEarly(p)){rt.setEarly(p,false);render();log(p.name+' will no longer start immediately at boot.');return;}
+  openM(`<h2><i class="fa fa-triangle-exclamation" style="color:#ff8c00"></i>&nbsp; Start “${esc(p.name)}” immediately at boot?</h2><div class="mb">
+    <p style="font-size:13px;line-height:1.65">Normally plugins start <b>after</b> mpcsim has finished loading. With this on, <b>${esc(p.name)}</b> runs <b>first</b>, right when boot begins — before the boot animation, loading and everything else.</p>
+    <p style="font-size:13px;line-height:1.65;margin-top:10px;color:#ffb35c"><b>A malicious or buggy plugin that starts this early can break boot</b> — for example by freezing it, hiding the screen or interfering with the system before you can react. Only turn this on for plugins you trust.</p>
+    <div class="note">If boot breaks, hold <b>1</b> while you click to start (or press 1 during the grace period) to open the boot menu, then pick <b>safe mode</b> to boot without plugins.</div></div>
+    <div class="mf"><button class="btn p" id="ea-yes">Enable anyway</button><button class="btn" id="ea-no">Cancel</button></div>`);
+  document.getElementById('ea-no').onclick=closeM;
+  document.getElementById('ea-yes').onclick=()=>{
+    const first=!anyEarly();
+    rt.setEarly(p,true);
+    log(p.name+' will start immediately at boot.','o');
+    if(first){askGrace();}else{closeM();render();}
+  };
+}
+function askGrace(){
+  openM(`<h2>Add a grace period before boot?</h2><div class="mb">
+    <p style="font-size:13px;line-height:1.65">Do you want a <b>5 second grace period</b> before anything starts? The screen stays black and shows this in the top right corner while it counts down:</p>
+    <div style="background:#000;border:1px solid #444;height:70px;margin:12px 0;position:relative"><span style="position:absolute;top:8px;right:12px;font:13px Consolas,monospace;color:#ccc">Press 1 to enter boot menu in 5s</span></div>
+    <p style="font-size:13px;line-height:1.65">Pressing <b>1</b> opens the boot menu <b>before</b> any early plugin runs, so you can start in safe mode if one of them causes trouble. Recommended.</p>
+    <div class="note">You can change this later with the grace period button at the top of this app.</div></div>
+    <div class="mf"><button class="btn p" id="gp-yes">Yes, add a 5s grace period</button><button class="btn" id="gp-no">No grace period</button></div>`);
+  const done=on=>{try{RT().setEarlyGrace(on);}catch(e){log(e.message,'e');}closeM();render();log('Boot grace period '+(on?'on (5s).':'off.'),'o');};
+  document.getElementById('gp-yes').onclick=()=>done(true);
+  document.getElementById('gp-no').onclick=()=>done(false);
+}
+function toggleGrace(){
+  try{const rt=RT();if(!rt.setEarlyGrace)throw new Error('This version of mpcsim does not support the boot grace period.');rt.setEarlyGrace(!rt.earlyGrace());}catch(e){log(e.message,'e');return;}
+  render();log('Boot grace period '+(graceOn()?'on: 5s before early plugins start.':'off.'),'o');
+}
 function toggleAuto(p){try{RT().setAuto(p,!autoOn(p));render();log((autoOn(p)?'Will start':'Will not start')+' '+p.name+' at boot');}catch(e){log(e.message,'e')}}
 
 /* Apps a plugin has installed (only known while it runs) */
@@ -129,12 +178,14 @@ function bar(){
     <button class="btn" id="b-app"><i class="fa fa-window-maximize"></i> Import app (.html)</button>
     <button class="btn" id="b-new"><i class="fa fa-plus"></i> Create plugin</button>
     <button class="btn" id="b-exp"><i class="fa fa-download"></i> Export plugins</button>
+    <button class="btn" id="b-grace" title="Black screen with 'Press 1 to enter boot menu' before early-start plugins run"><i class="fa fa-hourglass-half"></i> Boot grace period: ${graceOn()?'On':'Off'}</button>
     <span class="sp"></span>
     <input id="search" placeholder="Search…" value="${esc(q)}">`;
   b.querySelector('#b-imp').onclick=()=>document.getElementById('f-js').click();
   b.querySelector('#b-app').onclick=()=>document.getElementById('f-html').click();
   b.querySelector('#b-new').onclick=()=>editPlugin();
   b.querySelector('#b-exp').onclick=()=>exportAll();
+  b.querySelector('#b-grace').onclick=()=>toggleGrace();
   const s=b.querySelector('#search');
   s.oninput=()=>{q=s.value;render(true);};
 }
@@ -145,7 +196,7 @@ function tile(o,i){
   el.style.background=o.color||COLORS[i%COLORS.length];
   el.style.animationDelay=Math.min(i*25,300)+'ms';
   const n=ownedApps(o).length;
-  const tag=(o.builtin?'built-in':'custom')+(autoOn(o)?' · boot':'')+(hasApp(o)?(n?' · '+n+' app'+(n>1?'s':''):' · app'):'');
+  const tag=(o.builtin?'built-in':'custom')+(earlyOn(o)?' · early boot':autoOn(o)?' · boot':'')+(hasApp(o)?(n?' · '+n+' app'+(n>1?'s':''):' · app'):'');
   el.innerHTML=`<span class="tag">${esc(tag)}</span><span class="st">running</span><div class="ic"><i class="${esc(o.icon||'fa-solid fa-puzzle-piece')}"></i></div><div class="nm">${esc(o.name)}</div><div class="ds">${esc(o.desc||'')}</div>`;
   return el;
 }
@@ -153,10 +204,11 @@ function pluginMenu(p,isCustom){
   const items=[['Run / stop',()=>togglePlugin(p)]];
   ownedApps(p).forEach(a=>items.push(['Open '+a.name,()=>openApp(a)]));
   items.push([autoOn(p)?'Disable autostart on boot':'Autostart on boot',()=>toggleAuto(p)]);
+  items.push([earlyOn(p)?'Disable start immediately at boot':'Start immediately at boot…',()=>toggleEarly(p)]);
   if(isCustom){
     items.push(['Edit',()=>editPlugin(p)]);
     items.push(['Export .js',()=>dl(p.name.replace(/\W+/g,'_')+'.js',p.code,'text/javascript')]);
-    items.push(['Delete',()=>{stopPlugin(p);custom=custom.filter(x=>x.id!==p.id);sv('mpc_plugins',custom);render();}]);
+    items.push(['Delete',()=>{stopPlugin(p);try{RT().setEarly(p,false);}catch(e){}custom=custom.filter(x=>x.id!==p.id);sv('mpc_plugins',custom);render();}]);
   }else items.push(['View source',()=>viewSource(p)]);
   return items;
 }
@@ -315,7 +367,8 @@ function exportAll(){
 try{const rt=RT();rt.logs.forEach(e=>logRaw(e.t,e.m,e.c));rt.onLog=e=>logRaw(e.t,e.m,e.c);rt.onChange=()=>render(true);}catch(e){}
 render();
 try{const b=host().BOOT;if(b.guest)log('Guest mode: custom plugins are not loaded or saved.');if(!b.plugins)log('Safe mode: plugins are disabled.','e');}catch(e){}
-log('Plugins ready. '+(P?'Host connected.':'Host NOT connected (open inside mpcsim).'),P?'o':'e');
+const connected=!!findHost(),runtimeReady=!!(findHost()&&findHost().MPC);
+log('Plugins ready. '+(connected?(runtimeReady?'Host connected.':'Host connected; Plugin Runtime is stopped.'):'Host NOT connected (open inside mpcsim).'),connected?'o':'e');
 </script>
 </body>
 </html>
