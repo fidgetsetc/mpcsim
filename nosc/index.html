@@ -1,0 +1,680 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>mpcsimnosc</title>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+html,body{width:100%;height:100%;overflow:hidden;background:#000;user-select:none;font-family:Arial,'Helvetica Neue',Helvetica,'Liberation Sans',sans-serif}
+body{
+  --accent:#0078d4;--font:Arial,'Helvetica Neue',Helvetica,'Liberation Sans',sans-serif;
+  --dn-bar:#0d0d0d;--dn-panel:#4a4a4a;--dn-edge:var(--accent);--dn-win:#404040;--dn-tab:#262626;
+  --dn-tb-h:46px;--dn-left:calc(1% + 12px);--fs-top:9px;--fs-bot:57px;
+}
+
+/* ── Desktop ── */
+#desktop{position:fixed;inset:0;display:flex;flex-direction:column;background:#000}
+#desktop-bg{position:absolute;inset:0;background-size:cover;background-position:center;z-index:0}
+#desktop-icons-area{position:relative;flex:1;padding:8px;overflow:hidden;z-index:1}
+.desktop-icon{position:absolute;width:82px;height:107px;display:flex;flex-direction:column;align-items:center;justify-content:flex-start;gap:5px;cursor:pointer;border-radius:10px;touch-action:none;animation:icon-in .2s ease both}
+.desktop-icon:hover{background:rgba(255,255,255,.18)}
+.desktop-icon.selected{background:rgba(255,255,255,.28)}
+.desktop-icon.icon-dragging{z-index:5;opacity:.9}
+.di-icon-wrap{width:68px;height:68px;border-radius:14px;background:#000;border:1px solid var(--dn-edge);overflow:hidden;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.di-icon-wrap img{width:100%;height:100%;object-fit:cover;pointer-events:none}
+.di-icon-wrap i{font-size:30px;color:#fff;pointer-events:none}
+.di-label{width:82px;padding:1px 3px;color:#fff;font-size:16px;line-height:17px;max-height:36px;overflow:hidden;text-align:center;background:rgba(0,0,0,.62);border-radius:6px;text-shadow:0 1px 2px rgba(0,0,0,.9);pointer-events:none;word-break:break-word}
+@keyframes icon-in{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:none}}
+
+/* ── Taskbar ── */
+#taskbar{position:relative;z-index:100000;align-self:flex-start;width:97%;margin-left:1%;height:var(--dn-tb-h);padding:0 10px 7px 12px;background:var(--dn-bar);border-radius:12px 12px 0 0;display:flex;align-items:center;flex-shrink:0}
+#start-orb{position:relative;width:142px;height:22px;flex-shrink:0;display:flex;align-items:center;justify-content:flex-start;gap:7px;padding-left:13px;border-radius:5px;background:var(--dn-panel);color:#fff;font-size:19px;line-height:1;white-space:nowrap;cursor:pointer;transition:background .15s,border-radius .15s}
+#start-orb:hover{background:#6a6a6a}
+#start-orb i{font-size:17px;color:#fff}
+#start-orb::after{content:'Menu';font-size:19px}
+body.dn-open #start-orb{background:var(--dn-panel);border-radius:0 0 5px 5px}
+body.dn-open #start-orb::before{content:'';position:absolute;left:0;right:0;top:-12px;height:12px;background:var(--dn-panel)}
+#tb-apps{flex:1;display:flex;gap:15px;padding:0 0 0 13px;align-items:center}
+.tb-btn{width:30px;height:30px;background:#fff;border:1px solid var(--dn-edge);border-radius:6px;overflow:hidden;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:background .15s,transform .12s;animation:tb-in .15s ease both}
+.tb-btn:hover{background:#e6f0fa;transform:translateY(-2px)}
+.tb-btn.active{box-shadow:inset 0 -3px 0 var(--accent)}
+.tb-btn img.tbi{width:100%;height:100%;padding:3px;object-fit:contain}
+.tb-btn i.tbi{font-size:16px;color:#111}
+@keyframes tb-in{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+#tb-right{display:flex;align-items:center;gap:12px;flex-shrink:0}
+#tb-clock{color:#fff;font-size:24px;line-height:1;white-space:nowrap;cursor:default}
+#tray-fs{display:none;align-items:center;gap:8px;height:30px;padding:0 12px;cursor:pointer;color:#fff;background:var(--accent);font-size:13px;font-weight:600;white-space:nowrap;border-radius:6px}
+#tray-fs:hover{filter:brightness(1.15)}
+
+/* ── Menu + All apps panels ── */
+#dn-menu,#dn-all{display:none;position:fixed;color:#fff;font-family:var(--font)}
+body.dn-open #dn-menu{display:flex}
+body.dn-open.dn-all #dn-all{display:flex}
+#dn-menu{z-index:100;left:var(--dn-left);bottom:0;width:142px;max-height:calc(100vh - 12px);flex-direction:column;padding:14px 0 calc(var(--dn-tb-h) + 12px);background:var(--dn-panel);border-radius:14px 14px 0 0;box-shadow:0 0 0 1px rgba(255,255,255,.22),0 6px 24px rgba(0,0,0,.45);transform-origin:bottom left;animation:dn-menu-in .22s cubic-bezier(.2,.8,.3,1) both}
+#dn-list{flex:1;min-height:0;overflow-y:auto;overflow-x:hidden;padding:0 8px 0 11px;scrollbar-width:thin;scrollbar-color:#808080 transparent}
+.dn-row{display:flex;align-items:center;gap:5px;height:38px;margin:0 -4px 7px;padding:0 4px;border-radius:10px;cursor:pointer;transition:background .15s}
+.dn-row:hover,.dn-cell:hover{background:rgba(255,255,255,.12)}
+.dn-ico{width:68px;height:68px;border-radius:14px;background:#000;border:1px solid var(--dn-edge);overflow:hidden;display:flex;align-items:center;justify-content:center;flex-shrink:0;transition:transform .15s}
+.dn-ico img{width:100%;height:100%;object-fit:cover}
+.dn-ico i{font-size:30px;color:#fff}
+.dn-row .dn-ico{width:38px;height:38px;border-radius:9px}
+.dn-row .dn-ico i{font-size:18px}
+.dn-row:hover .dn-ico,.dn-cell:hover .dn-ico{transform:scale(1.08)}
+.dn-name{flex:1;min-width:0;font-size:16px;line-height:18px;color:#fff;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.dn-btns{display:flex;flex-direction:column;gap:8px;flex-shrink:0;padding-top:6px;padding-bottom:2px}
+.dn-btn{width:119px;height:28px;margin-left:14px;display:flex;align-items:center;justify-content:center;background:#000;color:#fff;border:1px solid var(--dn-edge);border-radius:4px;font:19px var(--font);cursor:pointer;transition:background .15s,transform .1s}
+.dn-btn:hover{background:#222}
+.dn-btn:active{transform:scale(.96)}
+.dn-btn.dn-off{background:#c40000;border-color:#ff6b6b}
+.dn-btn.dn-off:hover{background:#e00000}
+#dn-all{z-index:99;left:var(--dn-left);bottom:calc(var(--dn-tb-h) + 35px);width:797px;max-width:calc(100vw - var(--dn-left) - 12px);height:max(160px,calc(var(--dn-mh,413px) - 93px));max-height:calc(100vh - 93px);flex-direction:column;padding-top:15px;background:var(--dn-panel);border-radius:14px;box-shadow:0 0 0 1px rgba(255,255,255,.22),0 6px 24px rgba(0,0,0,.45);transform-origin:left bottom;animation:dn-all-in .24s cubic-bezier(.2,.8,.3,1) both}
+.dn-all-head{flex-shrink:0;padding-left:158px;font-size:24px;line-height:28px;color:#fff}
+#dn-grid{flex:1;min-height:0;overflow-y:auto;overflow-x:hidden;padding:5px 7px 12px 150px;display:grid;grid-template-columns:repeat(auto-fill,80px);grid-auto-rows:min-content;row-gap:15px;justify-content:start;align-content:start;scrollbar-width:thin;scrollbar-color:#808080 transparent}
+.dn-cell{width:80px;display:flex;flex-direction:column;align-items:center;gap:3px;padding:0 0 2px;border-radius:10px;cursor:pointer;transition:background .15s}
+.dn-cell .dn-name{flex:none;width:80px;text-align:center;font-size:15px;line-height:17px;min-height:34px;white-space:normal;display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:2;line-clamp:2;overflow-wrap:anywhere}
+body.dn-closing #dn-menu{animation:dn-menu-out .15s ease-in both;pointer-events:none}
+body.dn-closing #dn-all,body.dn-all-closing #dn-all{animation:dn-all-out .15s ease-in both;pointer-events:none}
+@keyframes dn-menu-in{from{opacity:0;transform:translateY(36px)}to{opacity:1;transform:none}}
+@keyframes dn-menu-out{from{opacity:1;transform:none}to{opacity:0;transform:translateY(36px)}}
+@keyframes dn-all-in{from{opacity:0;transform:translateX(-28px) scale(.95)}to{opacity:1;transform:none}}
+@keyframes dn-all-out{from{opacity:1;transform:none}to{opacity:0;transform:translateX(-28px) scale(.95)}}
+@media (max-width:900px),(max-height:600px){
+  .dn-all-head{font-size:18px;line-height:22px;padding-left:150px}
+  .dn-cell,.dn-cell .dn-name{width:64px}
+  .dn-cell .dn-ico{width:52px;height:52px;border-radius:11px}
+  .dn-cell .dn-name{font-size:12px;line-height:14px;min-height:28px}
+  #dn-grid{grid-template-columns:repeat(auto-fill,64px);row-gap:10px}
+}
+@media (prefers-reduced-motion:reduce){#dn-menu,#dn-all{animation:none!important}}
+
+/* ── Windows ── */
+#wins-layer{position:fixed;z-index:5;inset:0;pointer-events:none}
+.app-win{position:absolute;display:flex;flex-direction:column;pointer-events:all;min-width:360px;min-height:260px;border-radius:28px;overflow:hidden;background:var(--dn-win);animation:win-open .18s cubic-bezier(.2,.8,.4,1) both}
+.app-win.win-fs{top:var(--fs-top)!important;left:1%!important;width:97%!important;height:calc(100vh - var(--fs-top) - var(--fs-bot))!important;border-radius:15px}
+.app-win.win-min{display:none}
+.app-win.win-closing{animation:win-close .15s ease forwards;pointer-events:none}
+.app-win.win-minimizing{animation:win-minimize .16s cubic-bezier(.4,0,1,.6) forwards;pointer-events:none}
+body.win-interacting .win-frame{pointer-events:none}
+@keyframes win-open{from{opacity:0;transform:scale(.93) translateY(8px)}to{opacity:1;transform:none}}
+@keyframes win-close{from{opacity:1;transform:none}to{opacity:0;transform:scale(.93) translateY(8px)}}
+@keyframes win-minimize{from{opacity:1;transform:none}to{opacity:0;transform:scaleY(.05) translateY(60px)}}
+.win-tb{height:34px;padding:0 36px 0 18px;background:#000;display:flex;align-items:flex-start;cursor:move;flex-shrink:0}
+.app-win.win-fs .win-tb{padding:0 21px 0 16px;cursor:default}
+.win-title{flex:1;min-width:0;color:#fff;font-size:19px;font-weight:400;line-height:34px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.win-res{font-size:10px;color:rgba(255,255,255,.45);margin-right:4px;line-height:34px}
+.win-ctrl{position:relative;width:75px;height:28px;margin:0 0 0 11px;padding:0;border:0;flex-shrink:0;background:var(--dn-tab);color:transparent;font-size:0;cursor:pointer;clip-path:polygon(0 0,100% 0,calc(100% - 14px) 100%,14px 100%)}
+.win-ctrl[title="Maximize"]{width:62px}
+.win-ctrl.wc-close{width:85px;background:#c40000}
+.win-ctrl:hover{background:#4d4d4d}
+.win-ctrl.wc-close:hover{background:#e00000}
+.win-ctrl::after{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:600;color:#fff}
+.win-ctrl[title="Minimize"]::after{content:'hide'}
+.win-ctrl[title="Maximize"]::after{content:'full'}
+.win-ctrl[title="Close"]::after{content:'close'}
+.win-frame{border:none;background:#fff}
+.rh{position:absolute;bottom:6px;right:6px;width:20px;height:20px;cursor:se-resize;z-index:10}
+.app-win.win-fs .rh{display:none}
+
+/* ── Context menu ── */
+#ctx{position:fixed;z-index:5000;display:none;min-width:178px;padding:6px;background:#2b2b2b;border:1px solid #6a6a6a;border-radius:12px;box-shadow:0 6px 20px rgba(0,0,0,.4);font-family:var(--font)}
+#ctx div{color:#fff;font-size:14px;padding:8px 14px;border-radius:8px;cursor:pointer;display:flex;align-items:center;gap:9px}
+#ctx div:hover{background:#595959}
+#ctx .sep{height:1px;background:#555;padding:0;margin:4px 0;border-radius:0;cursor:default}
+#ctx .sep:hover{background:#555}
+
+/* ── Notifications ── */
+#notifs{position:fixed;bottom:56px;right:8px;z-index:4000;display:flex;flex-direction:column;gap:6px;pointer-events:none}
+.notif{background:#000;border-left:3px solid var(--accent);color:#fff;border-radius:12px;padding:12px 16px;font-size:13px;min-width:270px;animation:nin .3s ease;pointer-events:all;cursor:pointer}
+@keyframes nin{from{transform:translateX(110%);opacity:0}to{transform:none;opacity:1}}
+
+/* ── Personalize dialog ── */
+#overlay{position:fixed;inset:0;z-index:2000;background:rgba(0,0,0,.6);display:none;align-items:center;justify-content:center}
+#overlay.on{display:flex}
+.modal{background:var(--dn-win);width:min(420px,calc(100vw - 24px));max-height:90vh;display:flex;flex-direction:column;border-radius:18px;overflow:hidden;color:#fff}
+.modal-head{background:#000;height:34px;padding:0 20px;display:flex;align-items:center}
+.modal-head h2{font-size:19px;font-weight:400}
+.modal-body{padding:18px 22px;overflow-y:auto;flex:1}
+.f-label{display:block;font-size:11px;color:#c8c8c8;margin:14px 0 6px;text-transform:uppercase;letter-spacing:.6px}
+.f-label:first-child{margin-top:0}
+.f-sel{width:100%;background:#2b2b2b;border:1px solid #6a6a6a;border-radius:6px;color:#fff;padding:8px 10px;font-size:13px;outline:none;cursor:pointer}
+.color-grid{display:flex;flex-wrap:wrap;gap:5px}
+.cswatch{width:28px;height:28px;cursor:pointer;border:3px solid transparent;border-radius:4px}
+.cswatch:hover,.cswatch.sel{border-color:#fff}
+.wp-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(70px,1fr));gap:7px;margin-top:6px;max-height:180px;overflow-y:auto;scrollbar-width:thin;scrollbar-color:#808080 transparent}
+.wp-swatch{position:relative;min-height:40px;background:#1a1a1a;cursor:pointer;border:2px solid #444;transition:border-color .12s;display:flex;align-items:center;justify-content:center;padding:4px 6px;color:#fff;font-size:10px;text-align:center;overflow:hidden;text-overflow:ellipsis;word-break:break-word}
+.wp-swatch:hover{border-color:var(--accent,#0078d4)}
+.wp-swatch.sel{border-color:#fff;box-shadow:0 0 0 1px #777}
+.modal-foot{padding:13px 22px;background:#000;display:flex;gap:8px;justify-content:flex-end}
+.btn-p,.btn-s{border:none;border-radius:6px;padding:8px 20px;font-size:13px;cursor:pointer;color:#fff}
+.btn-p{background:var(--accent)}
+.btn-p:hover{filter:brightness(1.1)}
+.btn-s{background:#595959}
+.btn-s:hover{background:#6a6a6a}
+.btn-d{background:#c40000;margin-right:auto}
+</style>
+<script src="./constants.js"></script>
+</head>
+<body>
+
+<div id="desktop">
+  <div id="desktop-bg"></div>
+  <div id="desktop-icons-area"></div>
+  <div id="wins-layer"></div>
+  <div id="dn-all">
+    <div class="dn-all-head">ALL APPS</div>
+    <div id="dn-grid"></div>
+  </div>
+  <div id="dn-menu">
+    <div id="dn-list"></div>
+    <div class="dn-btns">
+      <button class="dn-btn" onclick="dnToggleAll()">All apps &gt;</button>
+      <button class="dn-btn dn-off" onclick="powerMenu(event)">Power</button>
+    </div>
+  </div>
+  <div id="taskbar">
+    <div id="start-orb" onclick="toggleMenu()" title="Menu"><i class="fa-solid fa-grip"></i></div>
+    <div id="tb-apps"></div>
+    <div id="tb-right">
+      <div id="tray-fs" title="Back to Fullscreen" onclick="goFullscreen()"><i class="fa-solid fa-expand"></i><span>Back to Fullscreen</span></div>
+      <div id="tb-clock"></div>
+    </div>
+  </div>
+</div>
+
+<div id="notifs"></div>
+<div id="ctx"></div>
+
+<div id="overlay" onclick="if(event.target===this)closeModal()">
+  <div class="modal" id="m-settings">
+    <div class="modal-head"><h2>Personalize</h2></div>
+    <div class="modal-body">
+      <span class="f-label">Accent color</span>
+      <div class="color-grid" id="g-accent"></div>
+      <span class="f-label">Preset wallpapers</span>
+      <div class="wp-grid" id="g-wallpaper-presets"></div>
+      <span class="f-label">Time format</span>
+      <select class="f-sel" id="s-clock"><option value="12">12-hour</option><option value="24">24-hour</option></select>
+    </div>
+    <div class="modal-foot">
+      <button class="btn-s btn-d" onclick="resetAll()">Reset</button>
+      <button class="btn-p" onclick="saveSettings()">Apply</button>
+      <button class="btn-s" onclick="closeModal()">Cancel</button>
+    </div>
+  </div>
+</div>
+
+<script>
+const ICON_LIB = [
+  {k:'globe',    fa:'fa-solid fa-globe'},
+  {k:'earth',    fa:'fa-solid fa-earth-americas'},
+  {k:'map',      fa:'fa-solid fa-map-location-dot'},
+  {k:'cloud-sun',fa:'fa-solid fa-cloud-sun'},
+  {k:'newspaper',fa:'fa-solid fa-newspaper'},
+  {k:'book',     fa:'fa-solid fa-book-open'},
+  {k:'play',     fa:'fa-solid fa-circle-play'},
+  {k:'music',    fa:'fa-solid fa-music'},
+  {k:'headphones',fa:'fa-solid fa-headphones'},
+  {k:'envelope', fa:'fa-solid fa-envelope'},
+  {k:'calendar', fa:'fa-solid fa-calendar-days'},
+  {k:'file-text',fa:'fa-solid fa-file-lines'},
+  {k:'image',    fa:'fa-solid fa-image'},
+  {k:'camera',   fa:'fa-solid fa-camera'},
+  {k:'calculator',fa:'fa-solid fa-calculator'},
+  {k:'code',     fa:'fa-solid fa-code'},
+  {k:'terminal', fa:'fa-solid fa-terminal'},
+  {k:'github',   fa:'fa-brands fa-github'},
+  {k:'reddit',   fa:'fa-brands fa-reddit'},
+  {k:'twitter',  fa:'fa-brands fa-x-twitter'},
+  {k:'store',    fa:'fa-solid fa-store'},
+  {k:'gear',     fa:'fa-solid fa-gear'},
+  {k:'desktop',  fa:'fa-solid fa-desktop'},
+  {k:'window',   fa:'fa-solid fa-window-maximize'},
+  {k:'folder',   fa:'fa-solid fa-folder'},
+  {k:'trash',    fa:'fa-solid fa-trash'},
+  {k:'star',     fa:'fa-solid fa-star'},
+  {k:'heart',    fa:'fa-solid fa-heart'},
+  {k:'bolt',     fa:'fa-solid fa-bolt'},
+  {k:'chart',    fa:'fa-solid fa-chart-bar'},
+  {k:'lock',     fa:'fa-solid fa-lock'},
+  {k:'user',     fa:'fa-solid fa-user'},
+  {k:'users',    fa:'fa-solid fa-users'},
+  {k:'video',    fa:'fa-solid fa-video'},
+  {k:'film',     fa:'fa-solid fa-film'},
+  {k:'gamepad',  fa:'fa-solid fa-gamepad'},
+  {k:'robot',    fa:'fa-solid fa-robot'},
+  {k:'wifi',     fa:'fa-solid fa-wifi'},
+  {k:'cloud',    fa:'fa-solid fa-cloud'},
+  {k:'search',   fa:'fa-solid fa-magnifying-glass'},
+  {k:'paint',    fa:'fa-solid fa-paintbrush'},
+  {k:'puzzle',   fa:'fa-solid fa-puzzle-piece'},
+  {k:'bell',     fa:'fa-solid fa-bell'},
+  {k:'bookmark', fa:'fa-solid fa-bookmark'},
+  {k:'pin',      fa:'fa-solid fa-thumbtack'},
+  {k:'windows',  fa:'fa-solid fa-grip'},
+  {k:'edge',     fa:'fa-brands fa-edge'},
+  {k:'chrome',   fa:'fa-brands fa-chrome'},
+  {k:'firefox',  fa:'fa-brands fa-firefox-browser'},
+  {k:'safari',   fa:'fa-brands fa-safari'},
+  {k:'spotify',  fa:'fa-brands fa-spotify'},
+  {k:'youtube',  fa:'fa-brands fa-youtube'},
+  {k:'google',   fa:'fa-brands fa-google'},
+  {k:'book',   fa:'fa-solid fa-book'},
+];
+function faForKey(k) { return (ICON_LIB.find(x=>x.k===k)||ICON_LIB[0]).fa; }
+
+/* ── helpers ── */
+const $=id=>document.getElementById(id);
+const clone=o=>JSON.parse(JSON.stringify(o));
+const uid=()=>'id-'+Date.now()+'-'+Math.random().toString(36).slice(2,6);
+const TB_H=46;
+
+/* ── icons: app image if there is one, FA symbol otherwise ── */
+const BLACK=new Map();   // image src -> true when the icon is pure black (inverted on the dark icon tiles)
+function invertIfBlack(img){
+  const run=()=>{
+    let b=BLACK.get(img.src);
+    if(b===undefined){
+      b=false;
+      try{
+        const w=Math.min(48,img.naturalWidth||48),h=Math.min(48,img.naturalHeight||48);
+        const c=document.createElement('canvas');c.width=w;c.height=h;
+        const x=c.getContext('2d',{willReadFrequently:true});x.drawImage(img,0,0,w,h);
+        const d=x.getImageData(0,0,w,h).data;let op=0,tr=0,br=0;
+        for(let i=0;i<d.length;i+=4){if(d[i+3]<30){tr++;continue;}op++;if(Math.max(d[i],d[i+1],d[i+2])>70)br++;}
+        b=op>0&&br===0&&tr/(w*h)>.05;
+      }catch(e){}
+      BLACK.set(img.src,b);
+    }
+    if(b)img.style.filter='invert(1)';
+  };
+  if(img.complete&&img.naturalWidth)run();else img.addEventListener('load',run,{once:true});
+}
+function makeIconEl(app,cls,dark){
+  const fa=()=>{const i=document.createElement('i');i.className=faForKey(app?app.icon:'globe');return i;};
+  let el;
+  if(app&&app.iconUrl){
+    el=document.createElement('img');el.alt=app.name||'';
+    el.onerror=()=>{el.onerror=null;if(el.parentNode){const f=fa();if(cls)f.className+=' '+cls;el.replaceWith(f);}};
+    el.src=app.iconUrl;
+    if(dark)invertIfBlack(el);
+  }else el=fa();
+  if(cls)el.className=(el.className+' '+cls).trim();
+  return el;
+}
+
+/* ── state ── */
+const GONE_IDS=new Set(['app-xwp','app-plug']);                 // apps that depended on removed features
+const GONE_URLS=new Set(['__terminal__','__physics__','__taskmgr__']);
+const S={
+  accent:'#0078d4',clock24:false,desktopBgImage:WALLPAPER_PRESETS&&WALLPAPER_PRESETS[0]?WALLPAPER_PRESETS[0].url:'',
+  apps:clone(DEFAULT_APPS).filter(a=>!GONE_IDS.has(a.id)&&!GONE_URLS.has(a.url)),
+  tiles:clone(DEFAULT_TILES),
+  dicons:clone(DEFAULT_DICONS),
+  tbPins:['app-ie','app-term','app-yt','app-ai','app-set'],
+  openWins:[],nextWin:1,
+};
+const KEY='mpcsimnosc';
+const getApp=id=>S.apps.find(a=>a.id===id);
+function loadS(){
+  try{
+    const p=JSON.parse(localStorage.getItem(KEY)||'null');if(!p)return;
+    if(p.accent)S.accent=p.accent;
+    if(typeof p.clock24==='boolean')S.clock24=p.clock24;
+    if(Array.isArray(p.tiles))S.tiles=p.tiles;
+    if(Array.isArray(p.dicons))S.dicons=p.dicons;
+    if(Array.isArray(p.tbPins))S.tbPins=p.tbPins;
+    if(p.desktopBgImage)S.desktopBgImage=p.desktopBgImage;
+  }catch(e){}
+}
+function saveS(){try{localStorage.setItem(KEY,JSON.stringify({accent:S.accent,clock24:S.clock24,tiles:S.tiles,dicons:S.dicons,tbPins:S.tbPins,desktopBgImage:S.desktopBgImage}));}catch(e){}}
+function applyAccent(){document.body.style.setProperty('--accent',S.accent);applyWallpaper();}
+function applyWallpaper(){const db=$('desktop-bg');db.style.backgroundImage=S.desktopBgImage?`url('${S.desktopBgImage}')`:'none';}
+function renderWallpaperPresets(){
+  const g=$('g-wallpaper-presets');g.innerHTML='';
+  WALLPAPER_PRESETS.forEach(p=>{
+    const d=document.createElement('div');
+    d.className='wp-swatch'+((p.url||'')===(S.desktopBgImage||'').trim()?' sel':'');
+    d.textContent=p.name;d.title=p.name;
+    d.onclick=()=>{S.desktopBgImage=p.url;renderWallpaperPresets();applyWallpaper();};
+    g.appendChild(d);
+  });
+}
+
+/* ── clock ── */
+function tickClock(){
+  $('tb-clock').textContent=new Date().toLocaleString(undefined,S.clock24?{hourCycle:'h23'}:{hour12:true});
+}
+
+/* ── Menu + All apps panels ── */
+let _closeT=null,_allT=null;
+const body=document.body;
+function syncMenuHeight(){
+  const m=$('dn-menu');
+  const n=document.querySelectorAll('#dn-list .dn-row').length;
+  const h=Math.max(200,Math.min(14+n*45+72+TB_H+12,window.innerHeight-12));
+  m.style.height=h+'px';body.style.setProperty('--dn-mh',h+'px');
+}
+window.addEventListener('resize',syncMenuHeight);
+function setMenu(open){
+  if(!open&&body.classList.contains('dn-closing')&&_closeT)return;   // already closing: keep its timer
+  clearTimeout(_closeT);_closeT=null;
+  if(open){body.classList.remove('dn-closing');body.classList.add('dn-open');syncMenuHeight();return;}
+  if(!body.classList.contains('dn-open'))return;
+  body.classList.add('dn-closing');
+  _closeT=setTimeout(()=>{_closeT=null;body.classList.remove('dn-open','dn-all','dn-closing','dn-all-closing');},160);
+}
+function toggleMenu(){setMenu(!(body.classList.contains('dn-open')&&!body.classList.contains('dn-closing')));}
+function dnToggleAll(){
+  clearTimeout(_allT);_allT=null;
+  if(body.classList.contains('dn-all')&&!body.classList.contains('dn-all-closing')){
+    body.classList.add('dn-all-closing');
+    _allT=setTimeout(()=>{_allT=null;body.classList.remove('dn-all','dn-all-closing');},160);
+  }else{body.classList.remove('dn-all-closing');body.classList.add('dn-all');}
+}
+function dnIcon(app){const w=document.createElement('div');w.className='dn-ico';w.appendChild(makeIconEl(app,'',true));return w;}
+function dnLabel(app){const n=document.createElement('span');n.className='dn-name';n.textContent=app.name;return n;}
+function renderMenu(){
+  const list=$('dn-list'),grid=$('dn-grid');list.innerHTML='';grid.innerHTML='';
+  const wire=(el,app)=>{
+    el.title=app.name;el.onclick=()=>launchApp(app);
+    el.oncontextmenu=e=>{e.preventDefault();e.stopPropagation();showAppCtx(e,app);};
+  };
+  S.tiles.forEach(t=>{
+    const app=getApp(t.appId);if(!app)return;
+    const row=document.createElement('div');row.className='dn-row';
+    row.appendChild(dnIcon(app));row.appendChild(dnLabel(app));wire(row,app);list.appendChild(row);
+  });
+  S.apps.forEach(app=>{
+    const cell=document.createElement('div');cell.className='dn-cell';
+    cell.appendChild(dnIcon(app));cell.appendChild(dnLabel(app));wire(cell,app);grid.appendChild(cell);
+  });
+  syncMenuHeight();
+}
+
+/* ── desktop icons ── */
+const ICON_W=82,ICON_H=107;
+function defaultIconPos(idx){
+  const rows=Math.max(1,Math.floor((window.innerHeight-58-TB_H-10)/105));
+  return {x:47+Math.floor(idx/rows)*88,y:58+(idx%rows)*105};
+}
+function renderDesktopIcons(){
+  const area=$('desktop-icons-area');area.innerHTML='';
+  S.dicons.forEach((di,idx)=>{
+    const app=getApp(di.appId);if(!app)return;
+    if(di.dx==null||di.dy==null){const p=defaultIconPos(idx);di.dx=p.x;di.dy=p.y;}
+    const el=document.createElement('div');el.className='desktop-icon';el.dataset.id=di.id;
+    el.style.left=di.dx+'px';el.style.top=di.dy+'px';el.style.animationDelay=(idx*40)+'ms';
+    const iw=document.createElement('div');iw.className='di-icon-wrap';iw.appendChild(makeIconEl(app,'',true));
+    const lbl=document.createElement('div');lbl.className='di-label';lbl.textContent=app.name;
+    el.appendChild(iw);el.appendChild(lbl);
+    el.ondblclick=()=>launchApp(app,false);
+    el.oncontextmenu=e=>{e.preventDefault();e.stopPropagation();showCtx(e,[
+      {label:'Open',ico:'fa-solid fa-arrow-up-right-from-square',fn:()=>launchApp(app,false)},
+      {label:'Remove from desktop',ico:'fa-solid fa-trash',fn:()=>{S.dicons=S.dicons.filter(d=>d.id!==di.id);saveS();renderDesktopIcons();}},
+    ]);};
+    el.addEventListener('mousedown',e=>startIconDrag(e,di,el));
+    area.appendChild(el);
+  });
+  saveS();
+}
+let iconDrag=null;
+function startIconDrag(e,di,el){
+  if(e.button!==0)return;
+  document.querySelectorAll('.desktop-icon.selected').forEach(x=>x.classList.remove('selected'));
+  el.classList.add('selected');
+  iconDrag={di,el,moved:false,sx:e.clientX,sy:e.clientY,ol:el.offsetLeft,ot:el.offsetTop};
+  e.preventDefault();
+}
+$('desktop-icons-area').addEventListener('mousedown',e=>{
+  if(!e.target.closest('.desktop-icon'))document.querySelectorAll('.desktop-icon.selected').forEach(x=>x.classList.remove('selected'));
+});
+
+/* ── taskbar ── */
+function isTbPinned(id){return S.tbPins.includes(id);}
+function pinToTaskbar(id){if(!S.tbPins.includes(id)){S.tbPins.push(id);saveS();renderTaskbar();}}
+function unpinFromTaskbar(id){S.tbPins=S.tbPins.filter(x=>x!==id);saveS();renderTaskbar();}
+function renderTaskbar(){
+  const area=$('tb-apps');area.innerHTML='';
+  const running=new Set(S.openWins.map(w=>w.appId).filter(Boolean));
+  S.tbPins.forEach(id=>{
+    if(running.has(id))return;
+    const app=getApp(id);if(!app)return;
+    const b=document.createElement('div');b.className='tb-btn';b.title=app.name;
+    b.appendChild(makeIconEl(app,'tbi'));
+    b.onclick=()=>launchApp(app,false);
+    b.oncontextmenu=e=>{e.preventDefault();showCtx(e,[
+      {label:'Open',ico:'fa-solid fa-arrow-up-right-from-square',fn:()=>launchApp(app,false)},
+      {label:'Unpin from taskbar',ico:'fa-solid fa-thumbtack-slash',fn:()=>unpinFromTaskbar(app.id)},
+    ]);};
+    area.appendChild(b);
+  });
+  S.openWins.forEach(w=>{
+    const app=getApp(w.appId);
+    const b=document.createElement('div');b.className='tb-btn'+(w.minimized?'':' active');b.title=w.name;
+    b.appendChild(makeIconEl(app,'tbi'));
+    b.onclick=()=>toggleWin(w.id);
+    b.oncontextmenu=e=>{e.preventDefault();showCtx(e,[
+      app?(isTbPinned(app.id)
+        ?{label:'Unpin from taskbar',ico:'fa-solid fa-thumbtack-slash',fn:()=>unpinFromTaskbar(app.id)}
+        :{label:'Pin to taskbar',ico:'fa-solid fa-thumbtack',fn:()=>pinToTaskbar(app.id)}):null,
+      app?'-':null,
+      {label:'Close window',ico:'fa-solid fa-xmark',fn:()=>closeWin(w.id)},
+    ].filter(Boolean));};
+    area.appendChild(b);
+  });
+}
+
+/* ── launching + windows ── */
+function launchApp(app,fromMenu=true){
+  setMenu(false);
+  if(app.url==='__desktop__')return;
+  if(!app.url&&app.id==='app-set'){openModal();return;}
+  if(!app.url||app.url.startsWith('__')){notify(`${app.name} isn't available in mpcsimnosc.`);return;}
+  const w={id:'w'+(S.nextWin++),name:app.name,url:app.url,icon:app.icon,appId:app.id,minimized:false};
+  S.openWins.push(w);buildWindow(w,fromMenu);renderTaskbar();
+}
+function winRect(idx){
+  const off=idx*26%150,W=window.innerWidth,H=window.innerHeight;
+  return {left:Math.round(W*0.2477)+off,top:Math.round(H*0.0972)+off,width:Math.round(W*0.6805),height:Math.round(H*0.6708)};
+}
+function buildWindow(w,fullscreen){
+  const el=document.createElement('div');
+  el.className='app-win'+(fullscreen?' win-fs':'');el.id=w.id;
+  if(!fullscreen){const r=winRect(S.openWins.length-1);Object.assign(el.style,{left:r.left+'px',top:r.top+'px',width:r.width+'px',height:r.height+'px'});}
+  const app=getApp(w.appId);
+  const res=Math.max(10,Math.min(200,(app&&app.resolution!=null)?app.resolution:100)),zoom=res/100;
+  const tb=document.createElement('div');tb.className='win-tb';
+  const title=document.createElement('span');title.className='win-title';title.textContent=w.name;tb.appendChild(title);
+  if(res!==100){const r=document.createElement('span');r.className='win-res';r.textContent=res+'%';tb.appendChild(r);}
+  [['Minimize','─',()=>minWin(w.id)],['Maximize','□',()=>maxWin(w.id)],['Close','✕',()=>closeWin(w.id),'wc-close']].forEach(([t,s,fn,c])=>{
+    const b=document.createElement('button');b.className='win-ctrl'+(c?' '+c:'');b.title=t;b.textContent=s;b.onclick=fn;tb.appendChild(b);
+  });
+  const wrap=document.createElement('div');wrap.style.cssText='flex:1;overflow:hidden;position:relative';
+  const f=document.createElement('iframe');f.className='win-frame';f.src=w.url;
+  f.style.cssText=`position:absolute;top:0;left:0;width:${zoom!==1?Math.round(100/zoom)+'%':'100%'};height:${zoom!==1?Math.round(100/zoom)+'%':'100%'};transform-origin:top left;transform:scale(${zoom});border:none`;
+  f.setAttribute('allow','fullscreen; pointer-lock; autoplay; gamepad; keyboard-map; clipboard-write');
+  f.setAttribute('allowfullscreen','');
+  f.setAttribute('sandbox','allow-scripts allow-same-origin allow-forms allow-top-navigation allow-pointer-lock allow-popups allow-modals allow-downloads');
+  f.addEventListener('load',()=>{try{f.focus();f.contentWindow.focus();}catch(e){}});
+  wrap.appendChild(f);
+  const rh=document.createElement('div');rh.className='rh';
+  el.append(tb,wrap,rh);
+  $('wins-layer').appendChild(el);
+  makeDraggable(el,tb);makeResizable(el,rh);
+  el.addEventListener('mousedown',()=>bringFront(el));
+  bringFront(el);
+}
+let winDrag=null,winResize=null;
+function makeDraggable(win,handle){
+  handle.addEventListener('mousedown',e=>{
+    if(e.target.closest('.win-ctrl')||win.classList.contains('win-fs'))return;
+    winDrag={win,ox:e.clientX-win.offsetLeft,oy:e.clientY-win.offsetTop};
+    body.classList.add('win-interacting');e.preventDefault();
+  });
+}
+function makeResizable(win,handle){
+  handle.addEventListener('mousedown',e=>{
+    winResize={win,sx:e.clientX,sy:e.clientY,sw:win.offsetWidth,sh:win.offsetHeight};
+    body.classList.add('win-interacting');e.preventDefault();
+  });
+}
+document.addEventListener('mousemove',e=>{
+  if(iconDrag){
+    const dx=e.clientX-iconDrag.sx,dy=e.clientY-iconDrag.sy;
+    if(!iconDrag.moved&&(Math.abs(dx)>4||Math.abs(dy)>4)){iconDrag.moved=true;iconDrag.el.classList.add('icon-dragging');}
+    if(iconDrag.moved){
+      const a=$('desktop-icons-area');
+      iconDrag.el.style.left=Math.max(0,Math.min(iconDrag.ol+dx,a.clientWidth-ICON_W))+'px';
+      iconDrag.el.style.top=Math.max(0,Math.min(iconDrag.ot+dy,a.clientHeight-ICON_H))+'px';
+    }
+  }
+  if(winDrag){
+    const w=winDrag.win,W=window.innerWidth,H=window.innerHeight;
+    w.style.left=Math.max(-(w.offsetWidth-60),Math.min(W-60,e.clientX-winDrag.ox))+'px';
+    w.style.top=Math.max(0,Math.min(H-TB_H-30,e.clientY-winDrag.oy))+'px';
+  }
+  if(winResize){
+    winResize.win.style.width=Math.max(360,winResize.sw+e.clientX-winResize.sx)+'px';
+    winResize.win.style.height=Math.max(260,winResize.sh+e.clientY-winResize.sy)+'px';
+  }
+});
+document.addEventListener('mouseup',()=>{
+  if(iconDrag){
+    if(iconDrag.moved){iconDrag.di.dx=iconDrag.el.offsetLeft;iconDrag.di.dy=iconDrag.el.offsetTop;iconDrag.el.classList.remove('icon-dragging');saveS();}
+    iconDrag=null;
+  }
+  winDrag=winResize=null;body.classList.remove('win-interacting');
+});
+function bringFront(el){let mx=1;document.querySelectorAll('.app-win').forEach(w=>mx=Math.max(mx,parseInt(w.style.zIndex)||1));el.style.zIndex=Math.min(mx+1,99999);}
+function minWin(id){
+  const w=S.openWins.find(x=>x.id===id),el=$(id);if(!w||!el)return;
+  el.classList.add('win-minimizing');
+  setTimeout(()=>{el.classList.remove('win-minimizing');w.minimized=true;el.classList.add('win-min');renderTaskbar();},170);
+}
+function maxWin(id){
+  const el=$(id);if(!el)return;
+  if(!el.classList.toggle('win-fs')){const r=winRect(0);Object.assign(el.style,{left:r.left+'px',top:r.top+'px',width:r.width+'px',height:r.height+'px'});}
+}
+function closeWin(id){
+  const el=$(id);if(!el)return;
+  el.classList.add('win-closing');
+  setTimeout(()=>{el.remove();S.openWins=S.openWins.filter(w=>w.id!==id);renderTaskbar();},160);
+}
+function toggleWin(id){
+  const w=S.openWins.find(x=>x.id===id),el=$(id);if(!w||!el)return;
+  if(w.minimized){w.minimized=false;el.classList.remove('win-min');bringFront(el);renderTaskbar();}
+  else minWin(id);
+}
+
+/* ── context menus ── */
+function showCtx(e,items){
+  const m=$('ctx');m.innerHTML='';
+  items.forEach(it=>{
+    if(it==='-'){const s=document.createElement('div');s.className='sep';m.appendChild(s);return;}
+    const d=document.createElement('div');
+    const i=document.createElement('i');i.className=it.ico||'fa-solid fa-circle-dot';i.style.cssText='width:16px;opacity:.7';
+    d.appendChild(i);d.appendChild(document.createTextNode(it.label));
+    d.onclick=()=>{m.style.display='none';it.fn();};m.appendChild(d);
+  });
+  m.style.display='block';
+  m.style.left=Math.max(0,Math.min(e.clientX,window.innerWidth-m.offsetWidth-6))+'px';
+  m.style.top=Math.max(0,Math.min(e.clientY,window.innerHeight-m.offsetHeight-6))+'px';
+}
+function showAppCtx(e,app){
+  const pinned=S.tiles.some(t=>t.appId===app.id);
+  showCtx(e,[
+    pinned
+      ?{label:'Unpin from menu',ico:'fa-solid fa-thumbtack',fn:()=>{S.tiles=S.tiles.filter(t=>t.appId!==app.id);saveS();renderMenu();}}
+      :{label:'Pin to menu',ico:'fa-solid fa-thumbtack',fn:()=>{S.tiles.push({id:uid(),appId:app.id,size:'medium',group:'Apps'});saveS();renderMenu();}},
+    isTbPinned(app.id)
+      ?{label:'Unpin from taskbar',ico:'fa-solid fa-thumbtack-slash',fn:()=>unpinFromTaskbar(app.id)}
+      :{label:'Pin to taskbar',ico:'fa-solid fa-thumbtack',fn:()=>pinToTaskbar(app.id)},
+    {label:'Add to desktop',ico:'fa-solid fa-desktop',fn:()=>{
+      if(S.dicons.some(d=>d.appId===app.id)){notify(`${app.name} is already on the desktop`);return;}
+      S.dicons.push({id:uid(),appId:app.id});renderDesktopIcons();}},
+  ]);
+}
+function powerMenu(e){
+  e.stopPropagation();
+  showCtx(e,[
+    {label:'Restart',ico:'fa-solid fa-rotate-right',fn:()=>location.reload()},
+    {label:'Fullscreen',ico:'fa-solid fa-expand',fn:goFullscreen},
+  ]);
+}
+$('desktop').addEventListener('contextmenu',e=>{
+  if(e.target.closest('.desktop-icon,#taskbar,#dn-menu,#dn-all')){if(e.target.closest('#dn-menu,#dn-all'))e.preventDefault();return;}
+  e.preventDefault();
+  showCtx(e,[
+    {label:'Personalize',ico:'fa-solid fa-sliders',fn:openModal},
+    {label:'Fullscreen',ico:'fa-solid fa-expand',fn:goFullscreen},
+    '-',
+    {label:'Restart',ico:'fa-solid fa-rotate-right',fn:()=>location.reload()},
+  ]);
+});
+document.addEventListener('click',e=>{if(!e.target.closest('#ctx'))$('ctx').style.display='none';});
+document.addEventListener('mousedown',e=>{
+  if(body.classList.contains('dn-open')&&!e.target.closest('#dn-menu,#dn-all,#start-orb,#ctx,#overlay,#notifs'))setMenu(false);
+});
+
+/* ── Personalize ── */
+function openModal(){
+  const accents=(typeof ACCENT_COLORS!=='undefined'&&ACCENT_COLORS)||[S.accent];
+  const g=$('g-accent');g.innerHTML='';
+  accents.forEach(c=>{
+    const s=document.createElement('div');s.className='cswatch'+(c===S.accent?' sel':'');s.style.background=c;s.dataset.color=c;
+    s.onclick=()=>{g.querySelectorAll('.cswatch').forEach(x=>x.classList.remove('sel'));s.classList.add('sel');};
+    g.appendChild(s);
+  });
+  renderWallpaperPresets();
+  $('s-clock').value=S.clock24?'24':'12';
+  $('overlay').classList.add('on');
+}
+function closeModal(){$('overlay').classList.remove('on');}
+function saveSettings(){
+  const sel=document.querySelector('#g-accent .sel');
+  if(sel)S.accent=sel.dataset.color;
+  S.clock24=$('s-clock').value==='24';
+  saveS();applyAccent();tickClock();closeModal();notify('Personalization applied!');
+}
+function resetAll(){
+  if(!confirm('Reset mpcsimnosc settings, pins and desktop icons?'))return;
+  try{localStorage.removeItem(KEY);}catch(e){}
+  location.reload();
+}
+
+/* ── notifications + fullscreen tray ── */
+function notify(msg,dur=2800){
+  const n=document.createElement('div');n.className='notif';n.textContent=msg;
+  n.onclick=()=>n.remove();$('notifs').appendChild(n);
+  setTimeout(()=>{n.style.transition='opacity .3s';n.style.opacity='0';setTimeout(()=>n.remove(),320);},dur);
+}
+function goFullscreen(){
+  try{const de=document.documentElement,r=de.requestFullscreen||de.webkitRequestFullscreen;if(r){const p=r.call(de);if(p&&p.catch)p.catch(()=>{});}}catch(e){}
+}
+function checkFullscreenTray(){
+  const off=Math.abs(window.innerWidth-screen.width)>5||Math.abs(window.innerHeight-screen.height)>5;
+  $('tray-fs').style.display=off?'flex':'none';
+}
+['resize','fullscreenchange','webkitfullscreenchange','focus'].forEach(ev=>window.addEventListener(ev,checkFullscreenTray));
+document.addEventListener('keydown',e=>{
+  if(e.key==='Escape'){
+    if($('overlay').classList.contains('on')){closeModal();return;}
+    if(body.classList.contains('dn-open')){if(body.classList.contains('dn-all'))dnToggleAll();else setMenu(false);}
+  }
+  if(e.key==='F1'){e.preventDefault();openModal();}
+});
+
+/* ── start ── */
+loadS();
+applyAccent();
+(function(){   // use the menu button icon from constants.js if it defines one
+  try{if(typeof THEMES!=='undefined'&&THEMES.defaultnew&&THEMES.defaultnew.orb)$('start-orb').innerHTML=`<i class="${THEMES.defaultnew.orb}"></i>`;}catch(e){}
+})();
+renderMenu();renderDesktopIcons();renderTaskbar();
+tickClock();setInterval(tickClock,1000);
+checkFullscreenTray();setInterval(checkFullscreenTray,1000);
+</script>
+</body>
+</html>
