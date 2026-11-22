@@ -864,7 +864,7 @@ const DEFAULT_APPS = [
   {
     id: 'app-fnaf3',
     name: 'FNAF 3',
-    url: './fnaf/3.html',
+    url: './fnaf/index.html#3.html',
     icon: 'gamepad',
     cat: 'Games',
     iconUrl: './fnaf/index.jpg',
@@ -873,7 +873,7 @@ const DEFAULT_APPS = [
   {
     id: 'app-fnaf4',
     name: 'FNAF 4',
-    url: './fnaf/4.html',
+    url: './fnaf/index.html#4.html',
     icon: 'gamepad',
     cat: 'Games',
     iconUrl: './fnaf/index.jpg',

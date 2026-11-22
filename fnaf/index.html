@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Centered Responsive Scaling Iframe Wrapper</title>
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        html, body {
+            width: 100vw;
+            height: 100vh;
+            background-color: #0f0f11;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            overflow: hidden;
+        }
+
+        .wrapper {
+            position: relative;
+            width: 1024px;
+            height: 728px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        iframe {
+            width: 1024px;
+            height: 720px;
+            border: none;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+            background-color: #ffffff;
+            transform-origin: center center;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="wrapper" id="wrapper">
+        <iframe id="frame" title="Target Page" scrolling="no"></iframe>
+    </div>
+
+    <script>
+        const frame = document.getElementById('frame');
+
+        const BASE_WIDTH = 1024;
+        const BASE_HEIGHT = 728;
+
+        // Default page loaded when no hash is given
+        const DEFAULT_PATH = './game/index.html';
+        // Folder that hash paths are resolved against, e.g. #1.html -> ./game/1.html
+        const BASE_DIR = './';
+
+        function resolveHash() {
+            // Strip the leading "#" and decode (e.g. %20)
+            let hash = decodeURIComponent(window.location.hash.slice(1)).trim();
+
+            if (!hash) return DEFAULT_PATH;
+
+            // Block absolute URLs and protocol tricks (javascript:, http:, //host)
+            if (/^[a-z][a-z0-9+.-]*:/i.test(hash) || hash.startsWith('//')) {
+                return DEFAULT_PATH;
+            }
+
+            // Block path traversal and leading slashes
+            hash = hash.replace(/^\/+/, '');
+            if (hash.split('/').includes('..')) return DEFAULT_PATH;
+
+            return BASE_DIR + hash;
+        }
+
+        function loadFromHash() {
+            const target = resolveHash();
+            // Only reload if the target actually changed
+            if (frame.getAttribute('src') !== target) {
+                frame.setAttribute('src', target);
+            }
+        }
+
+        function scaleIframe() {
+            const windowWidth = window.innerWidth;
+            const windowHeight = window.innerHeight;
+
+            const scaleX = windowWidth / BASE_WIDTH;
+            const scaleY = windowHeight / BASE_HEIGHT;
+
+            // Allows scaling BOTH smaller AND larger than 1.0 (100%)
+            const scale = Math.min(scaleX, scaleY);
+
+            frame.style.transform = `scale(${scale})`;
+        }
+
+        window.addEventListener('resize', scaleIframe);
+        window.addEventListener('load', scaleIframe);
+        window.addEventListener('hashchange', loadFromHash);
+
+        loadFromHash();
+        scaleIframe();
+    </script>
+</body>
+</html>
