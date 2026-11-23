@@ -9,7 +9,7 @@
   const STYLE_ID = 'mpcsim-file-router-style';
   const DIALOG_ID = 'mpcsim-file-router-dialog';
   const patched = new WeakSet();
-  let observer = null;
+  const observers = new Set();
   let scanTimer = null;
   let activeRequest = null;
   let z = 2147483000;
@@ -313,6 +313,7 @@
         n.querySelectorAll && n.querySelectorAll('a[download],a[href^="blob:"],a[href^="data:"]').forEach(a => patchAnchor(a, win));
       }
     });
+    observers.add(mo);
     mo.observe(doc.documentElement, {childList:true,subtree:true});
     win.__mpcFileRouterObserver = mo;
   }
@@ -343,7 +344,7 @@
   scanTimer = mpc.interval(scan, 700);
   mpc.onStop(() => {
     if (scanTimer) clearInterval(scanTimer);
-    if (observer) observer.disconnect();
+    observers.forEach(mo => { try { mo.disconnect(); } catch (_) {} });
     try { const d = mpc.doc(); const el=d.getElementById(DIALOG_ID); if(el)el.remove(); const st=d.getElementById(STYLE_ID);if(st)st.remove(); } catch (_) {}
     try { delete window.MPCSIM_FILES; } catch (_) {}
   });

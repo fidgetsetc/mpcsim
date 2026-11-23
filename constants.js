@@ -910,11 +910,21 @@ const DEFAULT_APPS = [
     id: 'app-wc',
     name: 'WebChat',
     url: './chat/index.html',
-    icon: 'gamepad',
+    icon: 'gear',
     cat: 'Tools',
     iconUrl: './chat/index.png',
     resolution: 100
   },
+  {
+    id: 'app-cam',
+    name: 'Camera',
+    url: './cam/index.html',
+    icon: 'gear',
+    cat: 'Tools',
+    iconUrl: './cam/index.png',
+    resolution: 100
+  },
+
 ];
 const DEFAULT_TILES = [
   {id:'tl0',appId:'app-suggest', size:'small',   group:'Apps',        color:'#2d7d9a'},

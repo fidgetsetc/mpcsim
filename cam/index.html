@@ -1,0 +1,608 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Camera</title>
+<style>
+  :root { --yellow: #f7c600; --blue: #007aff; --red: #ff3b30; --side: 0px; }
+  * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+  html, body { height: 100%; margin: 0; background: #000; }
+  body { font-family: -apple-system, "Helvetica Neue", "Segoe UI", Roboto, sans-serif; color: #fff; overflow: hidden; }
+  button { font: inherit; color: inherit; background: none; border: 0; padding: 0; cursor: pointer; }
+  button:focus-visible { outline: 2px solid var(--yellow); outline-offset: 2px; border-radius: 4px; }
+  svg { display: block; }
+
+  .app { position: relative; width: 100%; height: 100%; background: #000; display: flex; flex-direction: column; overflow: hidden; }
+
+  /* top bar */
+  .top { height: 52px; flex: none; display: grid; grid-template-columns: 1fr auto 1fr; align-items: center; padding: 0 14px; font-size: 12px; background: #000; z-index: 3; }
+  .top .l { justify-self: start; display: flex; gap: 12px; align-items: center; }
+  .top .r { justify-self: end; }
+  .chip { border: 1px solid #fff; border-radius: 4px; padding: 1px 6px; letter-spacing: .3px; white-space: nowrap; }
+  .chip[aria-expanded="true"] { color: var(--yellow); border-color: var(--yellow); }
+  .chip:disabled { opacity: .35; }
+  #soundBtn { opacity: .85; }
+  #soundBtn[aria-pressed="true"] { opacity: .45; text-decoration: line-through; }
+  #timer { font-size: 17px; font-variant-numeric: tabular-nums; letter-spacing: .5px; }
+  .menu { position: absolute; top: 52px; left: 0; right: var(--side); min-height: 40px; padding: 6px 10px; background: rgba(0,0,0,.78); display: none; flex-wrap: wrap; justify-content: center; align-items: center; gap: 6px 20px; z-index: 4; font-size: 14px; }
+  .menu.open { display: flex; }
+  .menu button { padding: 4px 2px; }
+  .menu button[aria-checked="true"] { color: var(--yellow); }
+  .menu small { color: #999; font-size: 11px; margin-left: 4px; }
+
+  /* viewfinder */
+  .stage { flex: 1; min-height: 0; position: relative; display: flex; align-items: center; justify-content: center; }
+  .finder { position: relative; overflow: hidden; background: #111; transition: width .22s ease, height .22s ease; }
+  .finder video { width: 100%; height: 100%; object-fit: cover; display: block; }
+  .finder video.mirror { transform: scaleX(-1); }
+  #grid { position: absolute; inset: 0; pointer-events: none; opacity: .35;
+    background: linear-gradient(#fff,#fff) 33.33% 0/1px 100% no-repeat, linear-gradient(#fff,#fff) 66.66% 0/1px 100% no-repeat,
+                linear-gradient(#fff,#fff) 0 33.33%/100% 1px no-repeat, linear-gradient(#fff,#fff) 0 66.66%/100% 1px no-repeat; }
+  #grid[hidden] { display: none; }
+  #info { position: absolute; left: 8px; bottom: 8px; font-size: 11px; padding: 2px 8px; border-radius: 9px; background: rgba(0,0,0,.55); pointer-events: none; font-variant-numeric: tabular-nums; }
+  #shade { position: absolute; inset: 0; background: #000; opacity: 0; pointer-events: none; }
+  #shade.on { opacity: 1; }
+  #msg { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; text-align: center; padding: 28px; font-size: 14px; color: #aaa; z-index: 2; }
+
+  /* bottom bar (portrait default) */
+  .bottom { flex: none; height: 168px; background: #000; display: flex; flex-direction: column; align-items: center; padding-bottom: env(safe-area-inset-bottom, 0px); }
+  .modes { position: relative; width: 100%; height: 40px; overflow: hidden; margin-top: 6px; touch-action: pan-y; }
+  .modes::after { content: ""; position: absolute; width: 5px; height: 5px; border-radius: 50%; background: var(--yellow); bottom: 2px; left: 50%; margin-left: -2.5px; }
+  .modes ul { --i: 1; list-style: none; margin: 0; padding: 0; display: flex; position: absolute; left: 50%; top: 0; height: 34px; align-items: center; transition: transform .25s ease; transform: translateX(calc(var(--i) * -84px - 42px)); }
+  .modes li { flex: none; width: 84px; text-align: center; }
+  .modes button { font-size: 13px; letter-spacing: .6px; padding: 8px 4px; }
+  .modes button[aria-selected="true"] { color: var(--yellow); }
+  .row { flex: 1; width: 100%; display: grid; grid-template-columns: 1fr auto 1fr; align-items: center; padding: 0 22px 6px; }
+  #thumb { width: 44px; height: 44px; border-radius: 4px; border: 1px solid #fff; background: #222; overflow: hidden; justify-self: start; }
+  #thumb img, #thumb video { width: 100%; height: 100%; object-fit: cover; display: block; }
+  #flip { justify-self: end; width: 44px; height: 44px; display: grid; place-items: center; }
+
+  #shutter { width: 66px; height: 66px; border-radius: 50%; border: 3px solid #fff; display: grid; place-items: center; }
+  #shutter i { width: 54px; height: 54px; border-radius: 50%; background: #fff; transition: transform .08s, background .15s, border-radius .15s, width .15s, height .15s; }
+  #shutter:active i { transform: scale(.88); background: #ccc; }
+  #shutter.video i { background: var(--red); }
+  #shutter.video:active i { background: #b02a22; }
+  #shutter.recording i { width: 28px; height: 28px; border-radius: 6px; }
+
+  /* landscape: controls move to the right edge */
+  @media (orientation: landscape) {
+    :root { --side: 176px; }
+    .app { display: grid; grid-template-columns: 1fr var(--side); grid-template-rows: 52px 1fr; }
+    .top { grid-column: 1; grid-row: 1; }
+    .stage { grid-column: 1; grid-row: 2; }
+    .bottom { grid-column: 2; grid-row: 1 / 3; height: auto; display: grid; grid-template-columns: 82px 1fr; padding: env(safe-area-inset-top, 0px) env(safe-area-inset-right, 0px) env(safe-area-inset-bottom, 0px) 0; }
+    .modes { width: 82px; height: 100%; margin: 0; touch-action: pan-x; }
+    .modes::after { bottom: auto; left: 6px; top: 50%; margin: -2.5px 0 0; }
+    .modes ul { flex-direction: column; left: 0; top: 50%; width: 100%; height: auto; transform: translateY(calc(var(--i) * -40px - 20px)); }
+    .modes li { width: 100%; height: 40px; display: grid; place-items: center; }
+    .row { grid-template-columns: 1fr; grid-template-rows: 1fr auto 1fr; padding: 14px 0; justify-items: center; }
+    #flip { grid-row: 1; justify-self: center; align-self: end; margin-bottom: 8px; }
+    #shutter { grid-row: 2; }
+    #thumb { grid-row: 3; justify-self: center; align-self: start; margin-top: 8px; }
+  }
+
+  /* photos screen */
+  .screen { position: absolute; inset: 0; background: #fff; color: #000; display: none; flex-direction: column; z-index: 10; }
+  .screen.open { display: flex; }
+  .nav { flex: none; height: 52px; display: grid; grid-template-columns: 1fr auto 1fr; align-items: center; padding: 0 12px; background: #f7f7f8; border-bottom: 1px solid #c8c7cc; font-size: 17px; }
+  .nav .title { font-weight: 600; }
+  .nav .back, .nav .act { color: var(--blue); }
+  .nav .act { justify-self: end; }
+  .nav .back { justify-self: start; display: flex; align-items: center; gap: 2px; }
+  #roll { flex: 1; overflow-y: auto; }
+  .sec { padding: 10px 12px 6px; background: #f7f7f8; position: sticky; top: 0; font-size: 15px; font-weight: 600; border-bottom: 1px solid #e5e5ea; }
+  .sec small { display: block; font-weight: 400; color: #8e8e93; font-size: 12px; }
+  .cells { display: grid; grid-template-columns: repeat(auto-fill, minmax(92px, 1fr)); gap: 2px; padding: 2px 0; }
+  .cell { position: relative; aspect-ratio: 1; background: #ddd; overflow: hidden; }
+  .cell img, .cell video { width: 100%; height: 100%; object-fit: cover; display: block; pointer-events: none; }
+  .cell .dur { position: absolute; left: 0; right: 0; bottom: 0; padding: 12px 5px 2px; font-size: 11px; color: #fff; text-align: right; background: linear-gradient(transparent, rgba(0,0,0,.6)); }
+  .empty { padding: 60px 30px; text-align: center; color: #8e8e93; }
+  .toolbar { flex: none; height: 48px; background: #f7f7f8; border-top: 1px solid #c8c7cc; display: flex; align-items: center; justify-content: space-between; padding: 0 22px; }
+  #viewer { z-index: 20; }
+  #vBody { flex: 1; min-height: 0; display: flex; align-items: center; justify-content: center; background: #fff; }
+  #vBody img, #vBody video { max-width: 100%; max-height: 100%; }
+  [hidden] { display: none !important; }
+  .cell .check { position: absolute; right: 5px; bottom: 5px; width: 22px; height: 22px; border-radius: 50%; border: 2px solid #fff; background: rgba(0,0,0,.25); display: none; text-align: center; font-size: 13px; line-height: 18px; color: #fff; }
+  #roll.selecting .cell .check { display: block; }
+  .cell.sel .check { background: var(--blue); }
+  .cell.sel .check::after { content: "✓"; }
+  .cell.sel img, .cell.sel video { opacity: .7; }
+  #rollBar button { color: var(--blue); font-size: 17px; padding: 8px 4px; }
+  #rollBar button:disabled { opacity: .35; cursor: default; }
+  #toast { position: absolute; left: 50%; bottom: 64px; transform: translateX(-50%); max-width: 90%; background: rgba(30,30,30,.92); color: #fff; padding: 8px 14px; border-radius: 14px; font-size: 13px; z-index: 30; text-align: center; }
+</style>
+</head>
+<body>
+<div class="app" id="app">
+  <div class="top">
+    <div class="l">
+      <button class="chip" id="ratioBtn" aria-haspopup="true" aria-expanded="false" aria-label="Aspect ratio">Full</button>
+      <button class="chip" id="resBtn" aria-haspopup="true" aria-expanded="false" aria-label="Resolution">--</button>
+      <button id="soundBtn" aria-pressed="false" aria-label="Toggle sounds">Sound</button>
+    </div>
+    <div id="timer" hidden>00:00:00</div>
+    <div class="r"><button id="gridBtn" aria-pressed="false">Grid</button></div>
+  </div>
+  <div class="menu" id="ratioMenu" role="radiogroup" aria-label="Aspect ratio"></div>
+  <div class="menu" id="resMenu" role="radiogroup" aria-label="Resolution"></div>
+
+  <div class="stage" id="stage">
+    <div class="finder" id="finder">
+      <video id="preview" autoplay playsinline muted></video>
+      <div id="grid" hidden></div>
+      <div id="info"></div>
+      <div id="shade"></div>
+    </div>
+    <div id="msg">Starting camera…</div>
+  </div>
+
+  <div class="bottom">
+    <div class="modes">
+      <ul id="modeList" role="tablist">
+        <li><button role="tab" data-mode="video">VIDEO</button></li>
+        <li><button role="tab" data-mode="photo">PHOTO</button></li>
+        <li><button role="tab" data-mode="square">SQUARE</button></li>
+      </ul>
+    </div>
+    <div class="row">
+      <button id="thumb" aria-label="Open photos"></button>
+      <button id="shutter" aria-label="Take photo"><i></i></button>
+      <button id="flip" aria-label="Switch camera">
+        <svg width="32" height="26" viewBox="0 0 32 26" fill="none" stroke="#fff" stroke-width="1.6" stroke-linejoin="round" stroke-linecap="round">
+          <path d="M3 6h6l2-3h10l2 3h6v17H3z"/><path d="M11.5 14a4.5 4.5 0 0 1 8-2.5M20.5 14a4.5 4.5 0 0 1-8 2.5"/><path d="M19.5 9.5v2.5H17M12.5 18.5V16H15"/>
+        </svg>
+      </button>
+    </div>
+  </div>
+
+  <section class="screen" id="roll-screen" aria-label="Photos">
+    <div class="nav">
+      <button class="back" id="rollBack"><svg width="12" height="20" viewBox="0 0 12 20" fill="none" stroke="#007aff" stroke-width="2.4"><path d="M10 2 2 10l8 8"/></svg>Camera</button>
+      <button class="back" id="rollAll" hidden>Select All</button>
+      <div class="title" id="rollTitle">Camera Roll</div>
+      <button class="act" id="rollSelect">Select</button>
+    </div>
+    <div id="roll"></div>
+    <div class="toolbar" id="rollBar" hidden>
+      <button id="rollExport" disabled>Export</button>
+      <button id="rollDelete" disabled>Delete</button>
+    </div>
+  </section>
+  <div id="toast" role="status" hidden></div>
+
+  <section class="screen" id="viewer" aria-label="Viewer">
+    <div class="nav">
+      <button class="back" id="vBack"><svg width="12" height="20" viewBox="0 0 12 20" fill="none" stroke="#007aff" stroke-width="2.4"><path d="M10 2 2 10l8 8"/></svg>Back</button>
+      <div class="title" id="vTitle"></div>
+      <span></span>
+    </div>
+    <div id="vBody"></div>
+    <div class="toolbar">
+      <button id="vSave" aria-label="Save to device">
+        <svg width="24" height="30" viewBox="0 0 24 30" fill="none" stroke="#007aff" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 18V4M7 9l5-5 5 5M4 14v12h16V14"/></svg>
+      </button>
+      <button id="vDel" aria-label="Delete">
+        <svg width="22" height="28" viewBox="0 0 22 28" fill="none" stroke="#007aff" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 7h16M8 7V4h6v3M5 7l1 17h10l1-17M9 11v9M13 11v9"/></svg>
+      </button>
+    </div>
+  </section>
+</div>
+
+<script>
+(() => {
+  const $ = id => document.getElementById(id);
+
+  /* ---------- sounds ---------- */
+  const DIR = '../sounds/';
+  const snd = { click: 'click.ogg', pictake: 'pictake.wav', recstart: 'recstart.wav', recend: 'recend.wav' };
+  for (const k in snd) { snd[k] = new Audio(DIR + snd[k]); snd[k].preload = 'auto'; }
+  let muted = false;
+  const play = n => { if (muted) return; try { snd[n].currentTime = 0; snd[n].play().catch(() => {}); } catch (e) {} };
+
+  /* ---------- IndexedDB ---------- */
+  const dbp = new Promise((res, rej) => {
+    const r = indexedDB.open('camera-app', 1);
+    r.onupgradeneeded = () => r.result.createObjectStore('media', { keyPath: 'id', autoIncrement: true });
+    r.onsuccess = () => res(r.result); r.onerror = () => rej(r.error);
+  });
+  const tx = async (mode, fn) => {
+    const db = await dbp;
+    return new Promise((res, rej) => {
+      const t = db.transaction('media', mode), q = fn(t.objectStore('media'));
+      t.oncomplete = () => res(q && q.result); t.onerror = () => rej(t.error);
+    });
+  };
+  const dbAdd = r => tx('readwrite', s => s.add(r));
+  const dbAll = () => tx('readonly', s => s.getAll());
+  const dbDel = id => tx('readwrite', s => s.delete(id));
+  const dbClear = () => tx('readwrite', s => s.clear());
+
+  /* ---------- state ---------- */
+  const preview = $('preview'), finder = $('finder'), stage = $('stage'), shutter = $('shutter');
+  const RATIOS = [['Full', 0], ['3:4', 3/4], ['9:16', 9/16], ['1:1', 1], ['4:3', 4/3], ['16:9', 16/9]];
+  const RES = [['4K', 3840, 2160], ['1440p', 2560, 1440], ['1080p', 1920, 1080], ['720p', 1280, 720], ['480p', 640, 480]];
+  const MODES = ['video', 'photo', 'square'];
+  let mode = 'photo', ratio = 0, facing = 'user', stream = null, resPref = null;
+  let recorder = null, chunks = [], recStart = 0, tick = 0, drawId = 0;
+  const native = () => preview.videoWidth && preview.videoHeight ? preview.videoWidth / preview.videoHeight : 4 / 3;
+  const eff = () => mode === 'square' ? 1 : (ratio || native());
+
+  /* ---------- layout ---------- */
+  function layout() {
+    const sw = stage.clientWidth, sh = stage.clientHeight, r = eff();
+    const w = Math.min(sw, sh * r);
+    finder.style.width = w + 'px'; finder.style.height = (w / r) + 'px';
+  }
+  new ResizeObserver(layout).observe(stage);
+  preview.addEventListener('resize', () => { layout(); updateInfo(); });
+  preview.addEventListener('loadedmetadata', () => { layout(); updateInfo(); });
+
+  /* ---------- menus ---------- */
+  const menus = { ratio: [$('ratioBtn'), $('ratioMenu')], res: [$('resBtn'), $('resMenu')] };
+  function toggleMenu(name) {
+    for (const k in menus) {
+      const [b, m] = menus[k], open = k === name && !m.classList.contains('open');
+      m.classList.toggle('open', open); b.setAttribute('aria-expanded', open);
+    }
+  }
+  $('ratioBtn').onclick = () => { if (!recorder) { play('click'); toggleMenu('ratio'); } };
+  $('resBtn').onclick = () => { if (!recorder) { play('click'); toggleMenu('res'); } };
+
+  RATIOS.forEach(([label, v]) => {
+    const b = document.createElement('button');
+    b.textContent = label; b.setAttribute('role', 'radio'); b.dataset.v = v;
+    b.onclick = () => { ratio = v; play('click'); syncRatio(); toggleMenu(); };
+    $('ratioMenu').append(b);
+  });
+  function syncRatio() {
+    $('ratioBtn').textContent = mode === 'square' ? '1:1' : RATIOS.find(r => r[1] === ratio)[0];
+    $('ratioBtn').disabled = mode === 'square';
+    [...$('ratioMenu').children].forEach(b => b.setAttribute('aria-checked', +b.dataset.v === ratio));
+    layout();
+  }
+
+  /* ---------- camera + resolution detection ---------- */
+  const resLabel = (w, h) => {
+    const s = Math.min(w, h);
+    return s >= 2000 ? '4K' : s >= 1400 ? '1440p' : s >= 1000 ? '1080p' : s >= 700 ? '720p' : s >= 460 ? '480p' : s + 'p';
+  };
+  function buildResMenu(track) {
+    const caps = track.getCapabilities ? track.getCapabilities() : {};
+    const maxLong = Math.max(caps.width?.max || 0, caps.height?.max || 0);
+    const menu = $('resMenu'); menu.replaceChildren();
+    const add = (label, sub, pref) => {
+      const b = document.createElement('button');
+      b.setAttribute('role', 'radio');
+      b.setAttribute('aria-checked', String(pref === resPref));
+      b.innerHTML = label + (sub ? `<small>${sub}</small>` : '');
+      b.onclick = () => { resPref = pref; play('click'); toggleMenu(); startCamera(); };
+      menu.append(b);
+    };
+    add('Max', maxLong ? `${caps.width.max}×${caps.height.max}` : 'auto', null);
+    RES.forEach(r => { if (!maxLong || r[1] <= maxLong) add(r[0], `${r[1]}×${r[2]}`, r); });
+  }
+  function updateInfo() {
+    if (!stream) return;
+    const t = stream.getVideoTracks()[0], s = t.getSettings();
+    const w = preview.videoWidth || s.width, h = preview.videoHeight || s.height;
+    if (!w) return;
+    $('resBtn').textContent = resLabel(w, h);
+    const fps = s.frameRate ? ' · ' + Math.round(s.frameRate) + ' fps' : '';
+    $('info').textContent = `${w}×${h}${fps}`;
+  }
+  async function startCamera() {
+    stopCamera();
+    $('msg').style.display = 'flex'; $('msg').textContent = 'Starting camera…';
+    if (!navigator.mediaDevices) { $('msg').textContent = 'Camera access needs https or localhost.'; return; }
+    const size = resPref ? { width: { ideal: resPref[1] }, height: { ideal: resPref[2] } } : { width: { ideal: 4096 }, height: { ideal: 2160 } };
+    const vc = { facingMode: { ideal: facing }, ...size };
+    try { stream = await navigator.mediaDevices.getUserMedia({ video: vc, audio: true }); }
+    catch (e) {
+      try { stream = await navigator.mediaDevices.getUserMedia({ video: vc, audio: false }); }
+      catch (err) { $('msg').textContent = 'Camera unavailable. Allow camera access in your browser. (' + err.name + ')'; return; }
+    }
+    preview.srcObject = stream;
+    const track = stream.getVideoTracks()[0], f = track.getSettings().facingMode;
+    preview.classList.toggle('mirror', f ? f === 'user' : facing === 'user');
+    buildResMenu(track);
+    $('msg').style.display = 'none';
+    updateInfo();
+  }
+  const stopCamera = () => { if (stream) stream.getTracks().forEach(t => t.stop()); stream = null; };
+  $('flip').onclick = () => { if (recorder) return; play('click'); facing = facing === 'user' ? 'environment' : 'user'; startCamera(); };
+
+  /* ---------- modes carousel ---------- */
+  const list = $('modeList');
+  function setMode(m, silent) {
+    if (recorder || m === mode && !silent) return;
+    mode = m;
+    list.style.setProperty('--i', MODES.indexOf(m));
+    list.querySelectorAll('button').forEach(b => b.setAttribute('aria-selected', b.dataset.mode === m));
+    shutter.classList.toggle('video', m === 'video');
+    shutter.setAttribute('aria-label', m === 'video' ? 'Start recording' : 'Take photo');
+    if (!silent) play('click');
+    syncRatio();
+  }
+  list.querySelectorAll('button').forEach(b => b.onclick = () => setMode(b.dataset.mode));
+  let sp = null;
+  [document.querySelector('.bottom'), stage].forEach(el => {
+    el.addEventListener('pointerdown', e => { sp = [e.clientX, e.clientY]; });
+    el.addEventListener('pointerup', e => {
+      if (!sp) return;
+      const dx = e.clientX - sp[0], dy = e.clientY - sp[1]; sp = null;
+      const d = Math.abs(dx) > Math.abs(dy) ? dx : dy;
+      if (Math.abs(d) < 50) return;
+      const i = MODES.indexOf(mode) + (d < 0 ? 1 : -1);
+      if (i >= 0 && i < MODES.length) setMode(MODES[i]);
+    });
+  });
+
+  /* ---------- capture ---------- */
+  function cropRect() {
+    const vw = preview.videoWidth, vh = preview.videoHeight, r = eff();
+    let cw, ch;
+    if (vw / vh > r) { ch = vh; cw = vh * r; } else { cw = vw; ch = vw / r; }
+    return { sx: (vw - cw) / 2, sy: (vh - ch) / 2, cw, ch };
+  }
+  async function takePhoto() {
+    if (!stream || !preview.videoWidth) return;
+    play('pictake');
+    const shade = $('shade'); shade.classList.add('on'); setTimeout(() => shade.classList.remove('on'), 80);
+    const c = cropRect(), cv = document.createElement('canvas');
+    cv.width = Math.round(c.cw); cv.height = Math.round(c.ch);
+    cv.getContext('2d').drawImage(preview, c.sx, c.sy, c.cw, c.ch, 0, 0, cv.width, cv.height);
+    const blob = await new Promise(r => cv.toBlob(r, 'image/jpeg', 0.92));
+    await dbAdd({ type: 'photo', mime: 'image/jpeg', blob, width: cv.width, height: cv.height, created: Date.now() });
+    refreshThumb();
+  }
+
+  const pad = n => String(n).padStart(2, '0');
+  const clock = s => `${pad(Math.floor(s / 3600))}:${pad(Math.floor(s / 60) % 60)}:${pad(Math.floor(s % 60))}`;
+  const short = s => Math.floor(s / 60) + ':' + pad(Math.floor(s % 60));
+
+  function startRecording() {
+    if (!stream || !preview.videoWidth || !window.MediaRecorder) return;
+    play('recstart');
+    setTimeout(() => {
+      const c0 = cropRect(), scale = Math.min(1, 3840 / Math.max(c0.cw, c0.ch));
+      const canvas = document.createElement('canvas');
+      canvas.width = Math.round(c0.cw * scale) & ~1; canvas.height = Math.round(c0.ch * scale) & ~1;
+      const g = canvas.getContext('2d');
+      const draw = () => {
+        const c = cropRect();
+        g.drawImage(preview, c.sx, c.sy, c.cw, c.ch, 0, 0, canvas.width, canvas.height);
+        drawId = requestAnimationFrame(draw);
+      };
+      draw();
+      const out = canvas.captureStream(30);
+      stream.getAudioTracks().forEach(t => out.addTrack(t));
+      const mime = ['video/webm;codecs=vp9,opus', 'video/webm;codecs=vp8,opus', 'video/webm', 'video/mp4'].find(m => MediaRecorder.isTypeSupported(m));
+      const w = canvas.width, h = canvas.height;
+      recorder = new MediaRecorder(out, mime ? { mimeType: mime } : undefined);
+      chunks = [];
+      recorder.ondataavailable = e => e.data.size && chunks.push(e.data);
+      recorder.onstop = async () => {
+        const type = recorder.mimeType || 'video/webm', dur = (Date.now() - recStart) / 1000;
+        recorder = null;
+        await dbAdd({ type: 'video', mime: type, blob: new Blob(chunks, { type }), duration: dur, width: w, height: h, created: Date.now() });
+        refreshThumb();
+      };
+      recorder.start(250); recStart = Date.now();
+      shutter.classList.add('recording'); shutter.setAttribute('aria-label', 'Stop recording');
+      $('timer').hidden = false; $('timer').textContent = '00:00:00';
+      document.querySelector('.top .l').style.visibility = 'hidden';
+      tick = setInterval(() => $('timer').textContent = clock((Date.now() - recStart) / 1000), 250);
+    }, 300);
+  }
+  function stopRecording() {
+    if (!recorder || recorder.state === 'inactive') return;
+    recorder.stop(); play('recend');
+    cancelAnimationFrame(drawId); clearInterval(tick);
+    $('timer').hidden = true; document.querySelector('.top .l').style.visibility = '';
+    shutter.classList.remove('recording'); shutter.setAttribute('aria-label', 'Start recording');
+  }
+  shutter.onclick = () => { toggleMenu(); mode === 'video' ? (recorder ? stopRecording() : startRecording()) : takePhoto(); };
+  document.addEventListener('keydown', e => {
+    if (e.code === 'Space' && !$('roll-screen').classList.contains('open') && document.activeElement.tagName !== 'BUTTON') { e.preventDefault(); shutter.click(); }
+  });
+
+  $('soundBtn').onclick = e => { muted = !muted; e.currentTarget.setAttribute('aria-pressed', muted); };
+  $('gridBtn').onclick = e => {
+    const on = e.currentTarget.getAttribute('aria-pressed') !== 'true';
+    e.currentTarget.setAttribute('aria-pressed', on); $('grid').hidden = !on;
+    e.currentTarget.style.color = on ? 'var(--yellow)' : ''; play('click');
+  };
+
+  /* ---------- thumbnail ---------- */
+  let thumbUrl = null;
+  async function refreshThumb() {
+    const items = await dbAll(), t = $('thumb');
+    if (thumbUrl) URL.revokeObjectURL(thumbUrl);
+    t.replaceChildren();
+    if (!items.length) { thumbUrl = null; return; }
+    const last = items[items.length - 1];
+    thumbUrl = URL.createObjectURL(last.blob);
+    const el = document.createElement(last.type === 'photo' ? 'img' : 'video');
+    el.src = thumbUrl; if (last.type === 'video') { el.muted = true; el.preload = 'metadata'; }
+    t.append(el);
+  }
+
+  /* ---------- camera roll ---------- */
+  let urls = [];
+  const rollScreen = $('roll-screen'), viewer = $('viewer');
+  async function renderRoll() {
+    urls.forEach(URL.revokeObjectURL); urls = [];
+    const items = (await dbAll()).sort((a, b) => b.created - a.created), roll = $('roll');
+    rollItems = items;
+    roll.replaceChildren();
+    if (!items.length) { roll.innerHTML = '<div class="empty">No photos or videos yet.<br>Take one and it will show up here.</div>'; return; }
+    const groups = new Map();
+    items.forEach(it => {
+      const k = new Date(it.created).toDateString();
+      (groups.get(k) || groups.set(k, []).get(k)).push(it);
+    });
+    for (const [k, arr] of groups) {
+      const sec = document.createElement('div'); sec.className = 'sec';
+      const photos = arr.filter(a => a.type === 'photo').length, vids = arr.length - photos;
+      sec.innerHTML = `${new Date(k).toLocaleDateString(undefined, { month: 'long', day: 'numeric', year: 'numeric' })}<small>${[photos && photos + (photos > 1 ? ' Photos' : ' Photo'), vids && vids + (vids > 1 ? ' Videos' : ' Video')].filter(Boolean).join(', ')}</small>`;
+      const cells = document.createElement('div'); cells.className = 'cells';
+      arr.forEach(it => {
+        const url = URL.createObjectURL(it.blob); urls.push(url);
+        const b = document.createElement('button'); b.className = 'cell';
+        b.setAttribute('aria-label', it.type + ' ' + new Date(it.created).toLocaleTimeString());
+        const el = document.createElement(it.type === 'photo' ? 'img' : 'video');
+        el.src = url; if (it.type === 'video') { el.muted = true; el.preload = 'metadata'; }
+        b.append(el);
+        if (it.type === 'video') { const s = document.createElement('span'); s.className = 'dur'; s.textContent = '▶︎ ' + short(it.duration || 0); b.append(s); }
+        const ck = document.createElement('span'); ck.className = 'check'; b.append(ck);
+        b.dataset.id = it.id;
+        if (selected.has(it.id)) b.classList.add('sel');
+        b.onclick = () => selecting ? toggleSel(it, b) : openItem(it);
+        cells.append(b);
+      });
+      roll.append(sec, cells);
+    }
+  }
+  $('thumb').onclick = () => { if (recorder) return; play('click'); rollScreen.classList.add('open'); renderRoll(); };
+  $('rollBack').onclick = () => { play('click'); setSelecting(false); rollScreen.classList.remove('open'); refreshThumb(); };
+
+  /* ---------- select / export / delete ---------- */
+  let rollItems = [], selecting = false;
+  const selected = new Map();
+  function setSelecting(on) {
+    selecting = on; selected.clear();
+    $('rollSelect').textContent = on ? 'Cancel' : 'Select';
+    $('rollBack').hidden = on; $('rollAll').hidden = !on; $('rollBar').hidden = !on;
+    $('roll').classList.toggle('selecting', on);
+    document.querySelectorAll('#roll .cell').forEach(c => c.classList.remove('sel'));
+    syncSel();
+  }
+  function syncSel() {
+    const n = selected.size;
+    $('rollTitle').textContent = selecting ? (n ? `${n} Selected` : 'Select Items') : 'Camera Roll';
+    $('rollExport').disabled = $('rollDelete').disabled = !n;
+    $('rollExport').textContent = n ? `Export (${n})` : 'Export';
+    $('rollAll').textContent = n && n === rollItems.length ? 'Select None' : 'Select All';
+  }
+  function toggleSel(it, btn) {
+    selected.has(it.id) ? selected.delete(it.id) : selected.set(it.id, it);
+    btn.classList.toggle('sel', selected.has(it.id)); syncSel();
+  }
+  $('rollSelect').onclick = () => { play('click'); setSelecting(!selecting); };
+  $('rollAll').onclick = () => {
+    const all = selected.size !== rollItems.length;
+    selected.clear(); if (all) rollItems.forEach(it => selected.set(it.id, it));
+    document.querySelectorAll('#roll .cell').forEach(c => c.classList.toggle('sel', selected.has(+c.dataset.id)));
+    syncSel();
+  };
+  $('rollExport').onclick = async () => {
+    const items = rollItems.filter(it => selected.has(it.id));
+    if (await exportItems(items)) setSelecting(false);
+  };
+  $('rollDelete').onclick = async () => {
+    const n = selected.size;
+    if (!n || !confirm(`Delete ${n} item${n > 1 ? 's' : ''}? This can't be undone.`)) return;
+    for (const id of [...selected.keys()]) await dbDel(id);
+    setSelecting(false); renderRoll();
+  };
+
+  /* ---------- export ---------- */
+  const stamp = d => { d = new Date(d); return `${d.getFullYear()}${pad(d.getMonth() + 1)}${pad(d.getDate())}_${pad(d.getHours())}${pad(d.getMinutes())}${pad(d.getSeconds())}`; };
+  function fileNames(items) {
+    const used = new Set();
+    return items.map(it => {
+      const ext = it.mime.includes('mp4') ? 'mp4' : it.mime.includes('webm') ? 'webm' : 'jpg';
+      const base = `${it.type === 'photo' ? 'IMG' : 'VID'}_${stamp(it.created)}`;
+      let name = `${base}.${ext}`, n = 1;
+      while (used.has(name)) name = `${base}_${n++}.${ext}`;
+      used.add(name); return name;
+    });
+  }
+  function download(blob, name) {
+    const u = URL.createObjectURL(blob), a = document.createElement('a');
+    a.href = u; a.download = name; document.body.append(a); a.click(); a.remove();
+    setTimeout(() => URL.revokeObjectURL(u), 10000);
+  }
+  let toastT = 0;
+  function toast(t) { const el = $('toast'); el.textContent = t; el.hidden = false; clearTimeout(toastT); toastT = setTimeout(() => el.hidden = true, 3500); }
+
+  const crcT = (() => { const t = new Uint32Array(256); for (let n = 0; n < 256; n++) { let c = n; for (let k = 0; k < 8; k++) c = c & 1 ? 0xEDB88320 ^ (c >>> 1) : c >>> 1; t[n] = c >>> 0; } return t; })();
+  const crc32 = u8 => { let c = 0xFFFFFFFF; for (let i = 0; i < u8.length; i++) c = crcT[(c ^ u8[i]) & 255] ^ (c >>> 8); return (c ^ 0xFFFFFFFF) >>> 0; };
+  async function makeZip(files) { // stored (uncompressed) zip; photos/videos are already compressed
+    const parts = [], central = [], enc = new TextEncoder(); let offset = 0;
+    for (const f of files) {
+      const data = new Uint8Array(await f.blob.arrayBuffer()), name = enc.encode(f.name), crc = crc32(data), d = new Date(f.date);
+      const time = (d.getHours() << 11) | (d.getMinutes() << 5) | (d.getSeconds() >> 1);
+      const day = ((d.getFullYear() - 1980) << 9) | ((d.getMonth() + 1) << 5) | d.getDate();
+      const lh = new DataView(new ArrayBuffer(30));
+      lh.setUint32(0, 0x04034b50, true); lh.setUint16(4, 20, true); lh.setUint16(6, 0x0800, true);
+      lh.setUint16(10, time, true); lh.setUint16(12, day, true); lh.setUint32(14, crc, true);
+      lh.setUint32(18, data.length, true); lh.setUint32(22, data.length, true); lh.setUint16(26, name.length, true);
+      parts.push(lh.buffer, name, data);
+      const ch = new DataView(new ArrayBuffer(46));
+      ch.setUint32(0, 0x02014b50, true); ch.setUint16(4, 20, true); ch.setUint16(6, 20, true); ch.setUint16(8, 0x0800, true);
+      ch.setUint16(12, time, true); ch.setUint16(14, day, true); ch.setUint32(16, crc, true);
+      ch.setUint32(20, data.length, true); ch.setUint32(24, data.length, true); ch.setUint16(28, name.length, true);
+      ch.setUint32(42, offset, true);
+      central.push(ch.buffer, name);
+      offset += 30 + name.length + data.length;
+    }
+    const csize = central.reduce((a, p) => a + p.byteLength, 0), end = new DataView(new ArrayBuffer(22));
+    end.setUint32(0, 0x06054b50, true); end.setUint16(8, files.length, true); end.setUint16(10, files.length, true);
+    end.setUint32(12, csize, true); end.setUint32(16, offset, true);
+    return new Blob([...parts, ...central, end.buffer], { type: 'application/zip' });
+  }
+
+  // One item: plain download. Several: save into a chosen folder (Chrome/Edge), otherwise one zip.
+  async function exportItems(items) {
+    if (!items.length) return false;
+    const names = fileNames(items);
+    try {
+      if (items.length === 1) { download(items[0].blob, names[0]); toast('Saved ' + names[0]); return true; }
+      if (window.showDirectoryPicker) {
+        let dir = null;
+        try { dir = await showDirectoryPicker({ mode: 'readwrite' }); }
+        catch (e) { if (e.name === 'AbortError') return false; }
+        if (dir) {
+          toast(`Exporting ${items.length} items…`);
+          for (let i = 0; i < items.length; i++) {
+            const fh = await dir.getFileHandle(names[i], { create: true }), w = await fh.createWritable();
+            await w.write(items[i].blob); await w.close();
+          }
+          toast(`Exported ${items.length} items to “${dir.name}”`); return true;
+        }
+      }
+      toast(`Preparing ${items.length} items…`);
+      const zip = await makeZip(items.map((it, i) => ({ name: names[i], blob: it.blob, date: it.created })));
+      download(zip, `camera-export-${stamp(Date.now())}.zip`);
+      toast(`Exported ${items.length} items as a zip`); return true;
+    } catch (e) { toast('Export failed: ' + e.message); return false; }
+  }
+
+  let cur = null, curUrl = null;
+  function openItem(it) {
+    play('click'); cur = it;
+    if (curUrl) URL.revokeObjectURL(curUrl);
+    curUrl = URL.createObjectURL(it.blob);
+    const el = document.createElement(it.type === 'photo' ? 'img' : 'video');
+    el.src = curUrl; if (it.type === 'video') { el.controls = true; el.playsInline = true; }
+    $('vBody').replaceChildren(el);
+    const when = new Date(it.created).toLocaleString(undefined, { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' });
+    $('vTitle').textContent = it.width ? `${when} · ${it.width}×${it.height}` : when;
+    viewer.classList.add('open');
+  }
+  const closeViewer = () => { viewer.classList.remove('open'); $('vBody').replaceChildren(); };
+  $('vBack').onclick = () => { play('click'); closeViewer(); };
+  $('vDel').onclick = async () => { await dbDel(cur.id); closeViewer(); renderRoll(); };
+  $('vSave').onclick = () => exportItems([cur]);
+
+  /* ---------- init ---------- */
+  window.addEventListener('beforeunload', stopCamera);
+  setMode('photo', true);
+  refreshThumb();
+  startCamera();
+})();
+</script>
+</body>
+</html>

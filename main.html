@@ -1349,6 +1349,202 @@ body.lite .pv img.pv-b{animation-duration:6s!important;animation-timing-function
 </style>
 <script src="./plugins/builtin.js"></script>
 <script src="./constants.js"></script>
+
+<style id="battery-ac-style">
+/* ── Battery indicator (only shown when the Battery API exists) ── */
+#tray-battery{display:none;align-items:center;gap:6px;height:30px;padding:0 6px;color:#ddd;font-size:12px;cursor:pointer;white-space:nowrap}
+#tray-battery:hover,#tb-clock:hover{background:rgba(255,255,255,.14)}
+#tray-battery i{font-size:15px}
+#tray-battery.low i,#mb-battery.low i,.ac-bat.low .ac-bat-ico{color:#ff5a4d}
+#tray-battery.charging i,#mb-battery.charging i,.ac-bat.charging .ac-bat-ico{color:#5fd36b}
+#tb-clock{cursor:pointer;padding:0 6px}
+body[data-color-mode="light"] #tray-battery{color:#212121}
+body[data-color-mode="light"] #tray-battery:hover,body[data-color-mode="light"] #tb-clock:hover{background:rgba(0,0,0,.08)}
+body[data-theme="win7"] #tray-battery,body[data-theme="gnome"] #tray-battery,body[data-color-mode="light"][data-theme="win7"] #tray-battery,body[data-color-mode="light"][data-theme="gnome"] #tray-battery{color:#fff}
+body[data-theme="defaultnew"] #tray-battery{color:#fff;font-size:20px}
+body[data-theme="defaultnew"] #tray-battery i{font-size:20px}
+body[data-theme="gnome"] #tray-battery{height:20px;border-radius:10px;font-weight:700;font-size:13px}
+body[data-theme="gnome"] #tb-clock{padding:0 12px;border-radius:12px;height:20px;top:3px}
+body[data-theme="gnome"] #tray-battery{position:absolute;right:10px;top:3px}
+body[data-theme="mac"] #tray-battery{display:none!important}
+#mb-battery i{font-size:13px;margin-right:4px}
+
+/* ── Action center ── */
+#action-center{position:absolute;z-index:100002;right:8px;bottom:calc(var(--off-bot,40px) + 8px);width:368px;max-width:calc(100% - 16px);max-height:calc(100% - var(--off-bot,40px) - var(--off-top,0px) - 20px);overflow-y:auto;display:none;flex-direction:column;gap:10px;padding:14px;background:rgba(28,28,30,.96);color:#eee;border-top:3px solid var(--accent,#0078d4);box-shadow:0 8px 36px rgba(0,0,0,.6);font-family:var(--font,'Segoe UI',sans-serif);font-size:13px}
+#action-center.on{display:flex;animation:ac-in .2s cubic-bezier(.2,.8,.4,1) both}
+@keyframes ac-in{from{opacity:0;transform:translateY(14px)}to{opacity:1;transform:none}}
+body[data-theme="mac"] #action-center,body[data-theme="gnome"] #action-center{bottom:auto;top:calc(var(--off-top,0px) + 8px)}
+body[data-theme="gnome"] #action-center{right:50%;transform:translateX(50%);animation-name:ac-in-g}
+@keyframes ac-in-g{from{opacity:0;transform:translateX(50%) translateY(-10px)}to{opacity:1;transform:translateX(50%)}}
+body[data-theme="defaultnew"] #action-center{right:1%;bottom:calc(var(--dn-tb-h,46px) + 6px)}
+body[data-theme] #action-center{background:var(--ui-bg);color:var(--ui-fg);border-radius:var(--ui-r);border-top:var(--ui-bt) solid var(--ui-btc);border:var(--ui-border);box-shadow:var(--ui-sh,0 8px 36px rgba(0,0,0,.5))}
+body[data-theme="mac"] #action-center,body[data-theme="gnome"] #action-center,body[data-theme="win11"] #action-center,body[data-theme="chromeos"] #action-center{box-shadow:0 8px 36px rgba(0,0,0,.5)}
+#action-center::-webkit-scrollbar{width:4px}#action-center::-webkit-scrollbar-thumb{background:rgba(128,128,128,.4)}
+.ac-head{display:flex;align-items:baseline;justify-content:space-between;gap:8px}
+.ac-time{font-size:34px;font-weight:200;line-height:1}
+.ac-date{font-size:12px;opacity:.7;text-align:right}
+.ac-cal{display:grid;grid-template-columns:repeat(7,1fr);gap:2px;text-align:center;font-size:11px}
+.ac-cal b{font-weight:600;opacity:.55;padding:2px 0}
+.ac-cal span{padding:4px 0;border-radius:var(--ui-ir,0)}
+.ac-cal span.today{background:var(--accent,#0078d4);color:#fff;font-weight:700}
+.ac-cal span.dim{opacity:.3}
+.ac-month{font-size:12px;font-weight:600;display:flex;justify-content:space-between;align-items:center}
+.ac-month button{background:none;border:none;color:inherit;opacity:.7;cursor:pointer;padding:2px 8px;font-size:12px}
+.ac-month button:hover{opacity:1;background:rgba(128,128,128,.2)}
+.ac-sec{font-size:10px;letter-spacing:1.5px;text-transform:uppercase;opacity:.55;display:flex;justify-content:space-between;align-items:center}
+.ac-sec button{background:none;border:none;color:inherit;font-size:11px;letter-spacing:0;text-transform:none;cursor:pointer;opacity:.9}
+.ac-sec button:hover{text-decoration:underline}
+.ac-bat{display:none;align-items:center;gap:12px;padding:10px 12px;background:rgba(128,128,128,.15);border-radius:var(--ui-ir,0)}
+.ac-bat.show{display:flex}
+.ac-bat-ico{font-size:24px;width:30px;text-align:center}
+.ac-bat-main{flex:1;min-width:0}
+.ac-bat-pct{font-size:15px;font-weight:600}
+.ac-bat-sub{font-size:11px;opacity:.7;margin-top:1px}
+.ac-bat-bar{height:4px;background:rgba(128,128,128,.3);margin-top:6px;border-radius:2px;overflow:hidden}
+.ac-bat-bar div{height:100%;background:var(--accent,#0078d4);transition:width .4s}
+.ac-bat.low .ac-bat-bar div{background:#ff5a4d}.ac-bat.charging .ac-bat-bar div{background:#5fd36b}
+.ac-quick{display:grid;grid-template-columns:repeat(3,1fr);gap:6px}
+.ac-q{display:flex;flex-direction:column;align-items:flex-start;justify-content:space-between;gap:10px;min-height:62px;padding:9px 10px;background:rgba(128,128,128,.18);border:none;color:inherit;font:inherit;font-size:12px;cursor:pointer;text-align:left;border-radius:var(--ui-ir,0)}
+.ac-q i{font-size:16px}
+.ac-q:hover{background:rgba(128,128,128,.3)}
+.ac-q.on{background:var(--accent,#0078d4);color:#fff}
+.ac-vol{display:flex;align-items:center;gap:10px}
+.ac-vol i{width:18px;text-align:center;opacity:.8}
+.ac-vol input{flex:1;accent-color:var(--accent,#0078d4)}
+.ac-list{display:flex;flex-direction:column;gap:5px;max-height:190px;overflow-y:auto}
+.ac-n{padding:8px 10px;background:rgba(128,128,128,.15);border-left:3px solid var(--accent,#0078d4);font-size:12px;display:flex;justify-content:space-between;gap:8px;border-radius:var(--ui-ir,0)}
+.ac-n small{opacity:.55;white-space:nowrap;font-size:10px;padding-top:1px}
+.ac-empty{opacity:.5;font-size:12px;text-align:center;padding:10px 0}
+body.dnd #notifs{display:none}
+.ac-view{display:flex;flex-direction:column;gap:10px}
+.ac-tabs{display:flex;gap:4px}
+.ac-tab{flex:1;background:rgba(128,128,128,.15);border:none;border-bottom:2px solid transparent;color:inherit;font:inherit;font-size:12px;padding:7px;cursor:pointer;opacity:.75}
+.ac-tab:hover{opacity:1;background:rgba(128,128,128,.25)}
+.ac-tab.on{opacity:1;border-bottom-color:var(--accent,#0078d4);font-weight:600}
+.cl-bar{display:flex;gap:6px}
+.cl-bar button{flex:1;background:rgba(128,128,128,.18);border:none;color:inherit;font:inherit;font-size:12px;padding:7px 8px;cursor:pointer;border-radius:var(--ui-ir,0)}
+.cl-bar button:hover{background:rgba(128,128,128,.3)}
+.cl-bar button.on{background:var(--accent,#0078d4);color:#fff}
+.cl-search{width:100%;background:rgba(128,128,128,.15);border:none;border-bottom:2px solid var(--accent,#0078d4);color:inherit;font:inherit;font-size:12px;padding:7px 9px;outline:none;border-radius:var(--ui-ir,0)}
+.cl-list{display:flex;flex-direction:column;gap:5px;max-height:340px;overflow-y:auto}
+.cl-item{display:flex;gap:8px;align-items:flex-start;padding:8px 10px;background:rgba(128,128,128,.15);border-left:3px solid transparent;cursor:pointer;border-radius:var(--ui-ir,0)}
+.cl-item:hover{background:rgba(128,128,128,.28)}
+.cl-item.pin{border-left-color:var(--accent,#0078d4)}
+.cl-body{flex:1;min-width:0}
+.cl-text{font-size:12px;line-height:1.35;white-space:pre-wrap;word-break:break-word;display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden}
+.cl-meta{font-size:10px;opacity:.55;margin-top:3px}
+.cl-act{display:flex;flex-direction:column;gap:2px}
+.cl-act button{background:none;border:none;color:inherit;opacity:.5;cursor:pointer;font-size:12px;width:24px;height:22px}
+.cl-act button:hover{opacity:1;background:rgba(128,128,128,.3)}
+.cl-item.pin .cl-act .cl-pin{opacity:1;color:var(--accent,#0078d4)}
+.cl-hint{font-size:10px;opacity:.5;text-align:center}
+</style>
+
+<style id="win10-look">
+/* ── Windows 10 accuracy pass ── */
+#tb-search,#tb-cortana,#tb-taskview,.w10-tray,#tray-notif{display:none}
+body[data-theme="win10"]{--mn-w:542px;--mn-h:min(600px,calc(var(--vh,100vh) - 40px));--st-bg:rgba(33,43,50,.97);--accent-light:#76b9ed}
+body[data-theme="win10"] #taskbar{background:#1c1c1c;padding:0;gap:0;border-top:0}
+body[data-theme="win10"] #start-orb{width:48px;height:40px;font-size:0;color:#fff}
+body[data-theme="win10"] #start-orb i{display:none}
+body[data-theme="win10"] #start-orb::before{content:"\f17a";font-family:"Font Awesome 6 Brands";font-size:17px;font-weight:400}
+body[data-theme="win10"] #start-orb:hover{background:#3a3a3a}
+body[data-theme="win10"] #tb-search{display:block;flex:0 0 275px;width:275px;height:40px;border:2px solid transparent;border-radius:0;background:#fff url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 16 16'%3E%3Ccircle cx='9.5' cy='6.5' r='4.5' fill='none' stroke='%23222' stroke-width='1.3'/%3E%3Cpath d='M6.3 9.7 1.5 14.5' stroke='%23222' stroke-width='1.4'/%3E%3C/svg%3E") 12px center no-repeat;padding:0 10px 0 38px;font:14px 'Segoe UI',sans-serif;color:#000;outline:none}
+body[data-theme="win10"] #tb-search::placeholder{color:#444}
+body[data-theme="win10"] #tb-search:focus{border-color:var(--accent,#0078d4)}
+body[data-theme="win10"] #tb-cortana,body[data-theme="win10"] #tb-taskview{display:flex;align-items:center;justify-content:center;width:48px;height:40px;color:#fff;cursor:pointer;flex:0 0 48px}
+body[data-theme="win10"] #tb-cortana:hover,body[data-theme="win10"] #tb-taskview:hover{background:#3a3a3a}
+body[data-theme="win10"] #tb-cortana::after{content:"";width:17px;height:17px;border:2px solid #fff;border-radius:50%}
+body[data-theme="win10"] #tb-taskview i{font-size:16px}
+body[data-theme="win10"] #tb-apps{padding:0;gap:0}
+body[data-theme="win10"] .tb-btn{min-width:48px;width:48px;max-width:48px;height:40px;padding:0;justify-content:center;border-bottom:0;background:transparent;position:relative;opacity:1}
+body[data-theme="win10"] .tb-btn .tbt{display:none}
+body[data-theme="win10"] .tb-btn .tbi{font-size:19px}
+body[data-theme="win10"] .tb-btn .tbi img{width:22px;height:22px}
+body[data-theme="win10"] .tb-btn:not(.tb-pinned)::after,body[data-theme="win10"] .tb-btn.active::after{content:"";position:absolute;left:5px;right:5px;bottom:0;height:2px;background:var(--accent-light)}
+body[data-theme="win10"] .tb-btn.active::after{left:0;right:0}
+body[data-theme="win10"] .tb-btn.active{background:rgba(255,255,255,.16)}
+body[data-theme="win10"] .tb-btn:hover{background:rgba(255,255,255,.12)}
+body[data-theme="win10"] #tb-right{gap:0;padding:0;border:0}
+body[data-theme="win10"] .w10-tray,body[data-theme="win10"] #tray-notif{display:flex;align-items:center;justify-content:center;width:30px;height:40px;color:#fff;font-size:13px;cursor:default}
+body[data-theme="win10"] .w10-tray:hover,body[data-theme="win10"] #tray-notif:hover{background:#3a3a3a}
+body[data-theme="win10"] #tray-notif{width:40px;font-size:16px;cursor:pointer}
+body[data-theme="win10"] #tray-battery{height:40px;color:#fff}
+body[data-theme="win10"] #tb-clock{color:#fff;font-size:12px;line-height:1.35;text-align:center;height:40px;display:flex;flex-direction:column;justify-content:center;padding:0 9px;min-width:70px}
+body[data-theme="win10"] #tb-clock:hover{background:#3a3a3a}
+body[data-theme="win10"][data-color-mode="light"] #taskbar{background:#1c1c1c;border-top:0}
+body[data-theme="win10"][data-color-mode="light"] #tb-clock,body[data-theme="win10"][data-color-mode="light"] #tray-battery,body[data-theme="win10"][data-color-mode="light"] .tb-btn .tbi{color:#fff}
+body[data-theme="win10"] #action-center{right:0;bottom:40px;border-radius:0}
+
+/* Start menu: left rail + app list + tiles */
+#w10-left{display:none}
+body[data-theme="win10"] #start{flex-direction:row;background:var(--st-bg)}
+body[data-theme="win10"] #start-bg-layer,body[data-theme="win10"] #start-pattern-canvas,body[data-theme="win10"] #start-topbar,body[data-theme="win10"] #start-accent-bar{display:none!important}
+body[data-theme="win10"] #w10-left{display:flex;flex:0 0 250px;height:100%;position:relative;z-index:5;background:rgba(0,0,0,.18)}
+body[data-theme="win10"] #start-tiles-scroll{flex:1;padding:12px 8px 12px 10px!important;gap:16px!important}
+body[data-theme="win10"] .tiles-grid{grid-template-columns:repeat(3,80px);grid-auto-rows:80px;gap:4px}
+body[data-theme="win10"] .tile[data-size="wide"],body[data-theme="win10"] .tile[data-size="large"]{grid-column:span 3}
+body[data-theme="win10"] .tile{background-image:none;border:1px solid rgba(255,255,255,.16)}
+body[data-theme="win10"] .tile:hover{border-color:rgba(255,255,255,.55);filter:none}
+body[data-theme="win10"] .tile-group-name{font-size:13px;font-weight:400;letter-spacing:0;text-transform:none;color:#fff;opacity:.85}
+body[data-theme="win10"] .tile-name{font-size:12px}
+.w10-rail{flex:0 0 48px;display:flex;flex-direction:column;align-items:stretch;padding-bottom:0}
+.w10-rail .rb{height:48px;display:flex;align-items:center;justify-content:center;color:#fff;font-size:15px;cursor:pointer}
+.w10-rail .rb:hover{background:rgba(255,255,255,.14)}
+.w10-rail .grow{flex:1}
+.w10-rail .av{width:24px;height:24px;border-radius:50%;background:#8a8f96 center/cover;display:flex;align-items:center;justify-content:center;font-size:12px}
+.w10-list{flex:1;overflow-y:auto;overflow-x:hidden;padding:6px 0 10px;min-width:0}
+.w10-list::-webkit-scrollbar{width:6px}.w10-list::-webkit-scrollbar-thumb{background:rgba(255,255,255,.3)}
+.w10-h{color:#fff;font-size:13px;padding:10px 12px 6px 2px;opacity:.9}
+.w10-h.big{padding-top:6px}
+.w10-app{display:flex;align-items:center;gap:12px;height:36px;padding:0 6px 0 2px;color:#fff;font-size:13px;cursor:pointer;white-space:nowrap}
+.w10-app:hover{background:rgba(255,255,255,.14)}
+.w10-ico{width:24px;height:24px;display:flex;align-items:center;justify-content:center;flex:0 0 24px;margin-left:4px}
+.w10-ico img{width:24px;height:24px;object-fit:contain}.w10-ico i{font-size:18px;color:#fff}
+.w10-app span{overflow:hidden;text-overflow:ellipsis}
+</style>
+<style id="icon-size-parity">
+/* FA glyphs and image icons share one box size on every theme except "defaultnew".
+   The glyph is drawn at 80% of its box so it fills the same visual area as an image of that size. */
+body:not([data-theme="defaultnew"]){--tbi:15px}
+body[data-theme="win11"],body[data-theme="chromeos"]{--tbi:24px}
+body[data-theme="win10"]{--tbi:22px}
+body[data-theme="mac"]{--tbi:calc((var(--tb-h) - 16px)*.68)}
+
+/* taskbar / dock / shelf */
+body:not([data-theme="defaultnew"]) .tb-btn i.tbi{display:inline-flex;align-items:center;justify-content:center;width:var(--tbi);height:var(--tbi);font-size:calc(var(--tbi)*.8)!important;line-height:1}
+body:not([data-theme="defaultnew"]) .tb-btn img.tbi{width:var(--tbi)!important;height:var(--tbi)!important;object-fit:contain}
+
+/* desktop icons: 28px */
+body:not([data-theme="defaultnew"]) .desktop-icon .di-icon-wrap i{display:inline-flex;align-items:center;justify-content:center;width:28px;height:28px;font-size:22px!important;line-height:1}
+body:not([data-theme="defaultnew"]) .desktop-icon .di-icon-wrap img{width:28px!important;height:28px!important;object-fit:contain!important}
+
+/* all-apps grid: 28px */
+body:not([data-theme="defaultnew"]) .ae-icon-wrap i{display:inline-flex;align-items:center;justify-content:center;width:28px;height:28px;font-size:22px!important;line-height:1}
+body:not([data-theme="defaultnew"]) .ae-icon-wrap img{width:28px!important;height:28px!important;object-fit:contain!important}
+body[data-theme="win10"] .w10-ico i{display:inline-flex;align-items:center;justify-content:center;width:24px;height:24px;font-size:19px!important;line-height:1}
+body[data-theme="win10"] .w10-ico img{width:24px!important;height:24px!important;object-fit:contain!important}
+
+/* tiles and launcher icons: image is 36px (22 small, 54 large), glyph box matches */
+body:not([data-theme="defaultnew"]) i.tile-fa{display:inline-flex;align-items:center;justify-content:center;width:36px;height:36px;font-size:29px!important;line-height:1}
+body:not([data-theme="defaultnew"]) .tile[data-size="small"] i.tile-fa{width:22px;height:22px;font-size:18px!important}
+body:not([data-theme="defaultnew"]) .tile[data-size="large"] i.tile-fa{width:54px;height:54px;font-size:43px!important}
+body[data-theme="mac"] .w11-pin-icon i.tile-fa{width:100%;height:100%;font-size:calc(var(--lp-icon)*.5)!important}
+body[data-theme="mac"] .w11-pin-icon img{width:calc(var(--lp-icon)*.62)!important;height:calc(var(--lp-icon)*.62)!important}
+body[data-theme="mac"] .w11-pin-icon i.tile-fa{font-size:calc(var(--lp-icon)*.5)!important}
+</style>
+<style id="win10-start-fix">
+/* the app list's long names were stretching the left column and squeezing the tiles */
+body[data-theme="win10"] #w10-left{flex:0 0 250px;width:250px;min-width:0;max-width:250px;overflow:hidden}
+body[data-theme="win10"] .w10-list{min-width:0;width:0;flex:1 1 0}
+body[data-theme="win10"] .w10-app span{min-width:0;flex:1}
+body[data-theme="win10"] #start-tiles-scroll{min-width:0;flex:1 1 0;flex-direction:column!important;overflow-x:hidden!important;overflow-y:auto!important;align-items:stretch!important}
+body[data-theme="win10"] .tiles-grid{grid-template-columns:repeat(3,80px)!important}
+</style>
+<style id="win10-start-fix2">
+/* the old bottom button row was becoming a tall column next to the tiles; its actions now live in the left rail */
+body[data-theme="win10"] #start-bottom{display:none!important}
+</style>
 </head>
 <body>
 
@@ -1526,7 +1722,7 @@ body.lite .pv img.pv-b{animation-duration:6s!important;animation-timing-function
     <span class="mb-st" style="margin-left:auto"><i class="fa-solid fa-wifi"></i></span>
     <span class="mb-st"><i class="fa-solid fa-magnifying-glass"></i></span>
     <span class="mb-st"><i class="fa-solid fa-sliders"></i></span>
-    <span id="mb-clock"></span>
+    <span id="mb-battery" onclick="toggleActionCenter(event)" style="display:none"></span><span id="mb-clock" onclick="toggleActionCenter(event)"></span>
   </div>
   <!-- Default (new) theme: All apps panel + Menu panel -->
   <div id="dn-all">
@@ -1545,9 +1741,12 @@ body.lite .pv img.pv-b{animation-duration:6s!important;animation-timing-function
   <div id="gn-dock-live"></div>
   <div id="taskbar">
     <div id="start-orb" onclick="toggleStart()" title="Menu"><i class="fa-solid fa-grip"></i></div>
-    <div id="tb-apps"></div>
-    <div id="tb-right"><div id="tray-fs" title="Back to Fullscreen" onclick="goFullscreen()"><i class="fa-solid fa-expand"></i><span>Back to Fullscreen</span></div><div id="tray-crash" title="Stop Window Avalanche" onclick="stopWindowCrash()"><i class="fa-solid fa-bolt"></i></div><div id="tb-clock"></div></div>
+    <input id="tb-search" placeholder="Type here to search" autocomplete="off" spellcheck="false"><div id="tb-cortana" title="Cortana"></div><div id="tb-taskview" title="Task View" onclick="toggleActionCenter(event)"><i class="fa-regular fa-clone"></i></div><div id="tb-apps"></div>
+    <div id="tb-right"><div id="tray-fs" title="Back to Fullscreen" onclick="goFullscreen()"><i class="fa-solid fa-expand"></i><span>Back to Fullscreen</span></div><div id="tray-crash" title="Stop Window Avalanche" onclick="stopWindowCrash()"><i class="fa-solid fa-bolt"></i></div><div class="w10-tray" id="tray-chev"><i class="fa-solid fa-chevron-up"></i></div><div class="w10-tray"><i class="fa-solid fa-cloud"></i></div><div class="w10-tray"><i class="fa-solid fa-desktop"></i></div><div class="w10-tray" onclick="toggleActionCenter(event)"><i class="fa-solid fa-volume-high"></i></div><div id="tray-battery" title="Battery" onclick="toggleActionCenter(event)"><i class="fa-solid fa-battery-full"></i><span></span></div><div id="tb-clock" onclick="toggleActionCenter(event)"></div><div class="w10-tray" id="tray-notif" title="Action center" onclick="toggleActionCenter(event)"><i class="fa-regular fa-message"></i></div></div>
   </div>
+
+  <!-- Action center -->
+  <div id="action-center" onmousedown="event.stopPropagation()"></div>
 </div>
 
 
@@ -2143,6 +2342,8 @@ const SOUND_FILES={
   bounce:        './sounds/bounce.ogg',          // a window hits the floor during Window Avalanche
   menuMove:      './sounds/moveboot.wav',       // boot manager: move selection
   menuSelect:    './sounds/selectboot.wav',     // boot manager: choose an entry
+  charge:        './sounds/charge.ogg',          // charger plugged in
+  lowBattery:    './sounds/low.ogg',             // battery is low (20% / 10% / 5%)
 };
 const SOUND_VOL={ /* e.g. click:.4, unlock:.8 */ };
 
@@ -2301,6 +2502,7 @@ const CURSORS=[
 const CURSOR_SRC=new Map(),CURSOR_PEND=new Set();   // key = id or id+'-click'
 const CURP={id:'default',hue:0,size:32};   // pending choice while Personalize is open
 let CURSOR_CSS='';
+let CURSOR_VALS=null;const CURSOR_FULL=new Map();   // full-size cursor values/dims, for the edge cropping below
 function cursorDef(id){return CURSORS.find(c=>c.id===id)||CURSORS[0];}
 function cursorFallbackSVG(d){   // arrow used if its file cannot be fetched (for example when opened from file://)
   return `<svg version="1.1" xmlns="http://www.w3.org/2000/svg" width="162.06757" height="299.81836" viewBox="0,0,162.06757,299.81836"><g transform="translate(-237.69443,-177.39093)"><g fill="${d.fill}" stroke="${d.stroke}" stroke-width="14" stroke-linecap="round" stroke-miterlimit="10"><path d="M337.69443,398.15623l20,53l-45,17l-20,-55l-48,18v-233l143,188z"/></g></g></svg>`;
@@ -2350,7 +2552,7 @@ function cursorUnits(svg){   // drawing size in its own units, from its viewBox 
   const w=parseFloat(svg.getAttribute('width')),h=parseFloat(svg.getAttribute('height'));
   return (w>0&&h>0)?{w,h}:{w:CURSOR_ARROW_H*CURSOR_ASPECT,h:CURSOR_ARROW_H};
 }
-function cursorBuild(txt,d,h,hue){   // scales an svg so the arrow would be h px tall (the hand uses the same px per unit); hue-shifts color cursors
+function cursorBuild(txt,d,h,hue,crop){   // scales an svg so the arrow would be h px tall (the hand uses the same px per unit); hue-shifts color cursors
   let svg=null;
   try{
     const doc=new DOMParser().parseFromString(txt,'image/svg+xml');
@@ -2371,17 +2573,29 @@ function cursorBuild(txt,d,h,hue){   // scales an svg so the arrow would be h px
       if(/^#([0-9a-f]{3}|[0-9a-f]{6})$/i.test(f))el.setAttribute('fill',cursorTintHex(f,hue));
     });
   }
-  return {uri:'data:image/svg+xml,'+encodeURIComponent(new XMLSerializer().serializeToString(svg)),w:ww,h:hh};
+  let ow2=ww,oh2=hh;
+  if(crop&&(crop.w<ww||crop.h<hh)){   // keep only the top-left cw x ch pixels: shrink the viewBox by the same ratio
+    const vb=(svg.getAttribute('viewBox')||'').trim().split(/[\s,]+/).map(parseFloat);
+    if(vb.length===4&&vb.every(isFinite)){
+      ow2=Math.max(1,Math.min(ww,Math.floor(crop.w)));oh2=Math.max(1,Math.min(hh,Math.floor(crop.h)));
+      svg.setAttribute('viewBox',[vb[0],vb[1],vb[2]*ow2/ww,vb[3]*oh2/hh].join(' '));
+      svg.setAttribute('preserveAspectRatio','none');
+      svg.setAttribute('width',String(ow2));svg.setAttribute('height',String(oh2));
+    }
+  }
+  return {uri:'data:image/svg+xml,'+encodeURIComponent(new XMLSerializer().serializeToString(svg)),w:ow2,h:oh2};
 }
 /* The arrow or click image of a cursor at height h, with its hotspot. Returns null if the click image is missing. */
-function cursorImage(id,hue,h,click){
+function cursorImage(id,hue,h,click,crop){
   const d=cursorDef(id),key=id+(click?'-click':'');
   let txt=CURSOR_SRC.get(key);
   if(txt===undefined){loadCursorSVG(d);if(click)return null;txt=cursorFallbackSVG(d);}
   if(!txt)return null;
-  const o=cursorBuild(txt,d,h,hue);
-  if(click){const t=CURSOR_CLICK_HOT;o.hx=Math.max(0,Math.min(o.w-1,Math.round(t.x*o.w)));o.hy=Math.max(0,Math.min(o.h-1,Math.round(t.y*o.h)));}
-  else{o.hx=0;o.hy=0;}   // the arrow's tip is the top-left corner of its image
+  const full=cursorBuild(txt,d,h,hue);
+  let hx=0,hy=0;   // the arrow's tip is the top-left corner of its image
+  if(click){const t=CURSOR_CLICK_HOT;hx=Math.max(0,Math.min(full.w-1,Math.round(t.x*full.w)));hy=Math.max(0,Math.min(full.h-1,Math.round(t.y*full.h)));}
+  const o=crop?cursorBuild(txt,d,h,hue,crop):full;   // the hotspot always comes from the uncropped image
+  o.fw=full.w;o.fh=full.h;o.hx=Math.min(hx,o.w-1);o.hy=Math.min(hy,o.h-1);
   return o;
 }
 /* The click (hand) cursor: every rule in the page's own stylesheets that sets cursor:pointer gets a matching
@@ -2425,6 +2639,7 @@ function cursorInjectDoc(dc){
         if(t&&(t.tagName==='IFRAME'||t.tagName==='FRAME'))cursorInjectFrame(t);
       },true);
     }
+    cursorHookEdge(dc);
     dc.querySelectorAll('iframe,frame').forEach(cursorInjectFrame);
   }catch(e){/* cross-origin: keeps the system cursor */}
 }
@@ -2442,6 +2657,7 @@ function applyCursor(){
   const arrow=cursorImage(d.id,hue,size,false),hand=cursorImage(d.id,hue,size,true);
   const v=`url("${arrow.uri}") ${arrow.hx} ${arrow.hy},default`;
   const vp=hand?`url("${hand.uri}") ${hand.hx} ${hand.hy},pointer`:v;   // no click image: clicking uses the arrow
+  CURSOR_VALS={v,vp,id:d.id,hue,size,hasHand:!!hand};CURSOR_FULL.clear();
   const cur='var(--mpc-cursor)';
   CURSOR_CSS=`:root{--mpc-cursor:${v};--mpc-cursor-pointer:${vp}}html{cursor:${cur}}button,select,input[type=range],input[type=checkbox],input[type=radio],input[type=color],input[type=file],input[type=button],input[type=submit]{cursor:${cur}}`;
   let st=document.getElementById('mpc-cursor-style');
@@ -2449,6 +2665,62 @@ function applyCursor(){
   st.textContent=CURSOR_CSS;
   st.textContent=cursorCSSFor(document);
   document.querySelectorAll('iframe').forEach(cursorInjectFrame);
+  cursorHookEdge(document);
+}
+/* Edge cropping: browsers swap a custom cursor for the system arrow when the cursor image would hang over the window's
+   right or bottom edge. Near those edges we hand the page a copy of the cursor with the overhanging part cut off. */
+function cursorTopPos(doc,e){
+  let x=e.clientX,y=e.clientY,win=doc.defaultView;
+  try{while(win&&win!==win.top&&win.frameElement){const r=win.frameElement.getBoundingClientRect();x+=r.left;y+=r.top;win=win.parent;}}catch(_){}
+  const w=win||window;
+  return {x,y,W:w.innerWidth,H:w.innerHeight};
+}
+function cursorFullDims(click){
+  const V=CURSOR_VALS;if(!V)return null;
+  const k=(click?'c':'a')+V.id+'|'+V.hue+'|'+V.size;
+  if(CURSOR_FULL.has(k))return CURSOR_FULL.get(k);
+  const o=cursorImage(V.id,V.hue,V.size,click);
+  const r=o?{w:o.w,h:o.h,hx:o.hx,hy:o.hy}:null;
+  CURSOR_FULL.set(k,r);return r;
+}
+function cursorEdgeValue(click,pos){
+  const V=CURSOR_VALS,f=cursorFullDims(click);
+  if(!f)return null;
+  const cw=Math.floor(pos.W-(pos.x-f.hx)),ch=Math.floor(pos.H-(pos.y-f.hy));   // visible part of the image
+  if(cw>=f.w&&ch>=f.h)return null;                                            // fits: no cropping
+  const crop={w:Math.max(f.hx+1,Math.min(f.w,cw)),h:Math.max(f.hy+1,Math.min(f.h,ch))};
+  const key='e'+(click?'c':'a')+V.id+'|'+V.hue+'|'+V.size+'|'+crop.w+'x'+crop.h;
+  let val=CURSOR_FULL.get(key);
+  if(!val){
+    const o=cursorImage(V.id,V.hue,V.size,click,crop);
+    if(!o)return null;
+    val=`url("${o.uri}") ${o.hx} ${o.hy},${click?'pointer':'default'}`;
+    if(CURSOR_FULL.size>400){[...CURSOR_FULL.keys()].filter(x=>x[0]==='e').slice(0,200).forEach(x=>CURSOR_FULL.delete(x));}
+    CURSOR_FULL.set(key,val);
+  }
+  return val;
+}
+function cursorEdgeClear(doc){
+  const r=doc.documentElement;
+  if(r&&r.__mpcCropped){r.style.removeProperty('--mpc-cursor');r.style.removeProperty('--mpc-cursor-pointer');r.__mpcCropped=false;}
+}
+function cursorEdgeMove(doc,e){
+  const root=doc.documentElement;if(!root)return;
+  if(!CURSOR_CSS||!CURSOR_VALS){cursorEdgeClear(doc);return;}
+  const pos=cursorTopPos(doc,e);
+  const a=cursorEdgeValue(false,pos),h=CURSOR_VALS.hasHand?cursorEdgeValue(true,pos):null;
+  if(!a&&!h){cursorEdgeClear(doc);return;}
+  root.style.setProperty('--mpc-cursor',a||CURSOR_VALS.v);
+  root.style.setProperty('--mpc-cursor-pointer',h||(CURSOR_VALS.hasHand?CURSOR_VALS.vp:(a||CURSOR_VALS.v)));
+  root.__mpcCropped=true;
+}
+function cursorHookEdge(doc){
+  try{
+    if(!doc||doc.__mpcEdgeHooked)return;
+    doc.__mpcEdgeHooked=true;
+    doc.addEventListener('mousemove',e=>cursorEdgeMove(doc,e),{passive:true,capture:true});
+    doc.documentElement.addEventListener('mouseleave',()=>cursorEdgeClear(doc));
+  }catch(e){}
 }
 document.addEventListener('load',e=>{if(e.target&&e.target.tagName==='IFRAME')cursorInjectFrame(e.target);},true);
 /* Personalize UI */
@@ -2770,6 +3042,8 @@ function tickClock(){
   const tbc=document.getElementById('tb-clock');
   if(S.theme==='defaultnew'){
     tbc.textContent=n.toLocaleString(undefined,S.clock24?{hourCycle:'h23'}:{hour12:true});
+  }else if(S.theme==='win10'){
+    tbc.innerHTML=`<div>${h}:${m}${apm}</div><div>${n.toLocaleDateString('en-US')}</div>`;
   }else if(S.theme==='gnome'){
     tbc.innerHTML=`<span>${days[n.getDay()].slice(0,3)} ${h}:${m}${apm}</span>`;
   }else{
@@ -2939,6 +3213,7 @@ function showStart(){
     document.getElementById('start-win7-layout').style.display='none';
     document.getElementById('start-tiles-scroll').style.display='flex';
     document.getElementById('start-topbar').style.display='flex';
+    if(S.theme==='win10')renderW10Left();
   }
   
   if(S.theme==='gnome'||S.theme==='chromeos'||S.theme==='mac'){document.getElementById('start-search').value='';LP.page=0;renderLauncherGrid();}
@@ -6213,6 +6488,421 @@ try{
 try{
   if(/[?&]skipclick(=|&|$)/.test(location.search)&&bootPhase==='click')bootStart();
 }catch(e){}
+/* ══════════════════════════════════
+   BATTERY  (Battery Status API: Chromium browsers; hidden everywhere else)
+   Sounds: charge.ogg when a charger is plugged in, low.ogg at 20% / 10% / 5% while discharging.
+══════════════════════════════════ */
+const BAT={b:null,supported:false,warned:{20:false,10:false,5:false},ready:false,
+  async init(){
+    if(!navigator.getBattery)return;
+    try{BAT.b=await navigator.getBattery();}catch(e){return;}
+    if(!BAT.b)return;
+    BAT.supported=true;
+    const b=BAT.b;
+    BAT.lastCharging=b.charging;BAT.lastFull=b.level>=1;
+    BAT.syncWarned();
+    b.addEventListener('chargingchange',BAT.onCharging);
+    b.addEventListener('levelchange',BAT.onLevel);
+    b.addEventListener('chargingtimechange',BAT.render);
+    b.addEventListener('dischargingtimechange',BAT.render);
+    document.getElementById('tray-battery').style.display='flex';
+    document.getElementById('mb-battery').style.display='';
+    BAT.render();
+    setTimeout(()=>{BAT.ready=true;},1500);   // ignore events fired while the page is still starting up
+  },
+  pct(){return Math.round((BAT.b.level||0)*100);},
+  syncWarned(){const p=BAT.pct();[20,10,5].forEach(t=>{BAT.warned[t]=BAT.b.charging||p<=t&&BAT.warned[t]||p<=t;});},
+  icon(){
+    const b=BAT.b,p=BAT.pct();
+    if(b.charging)return 'fa-solid fa-bolt';
+    return p>87?'fa-solid fa-battery-full':p>62?'fa-solid fa-battery-three-quarters':p>37?'fa-solid fa-battery-half':p>12?'fa-solid fa-battery-quarter':'fa-solid fa-battery-empty';
+  },
+  fmt(sec){if(!isFinite(sec)||sec<=0)return '';const h=Math.floor(sec/3600),m=Math.round(sec%3600/60);return (h?h+' h ':'')+m+' min';},
+  status(){
+    const b=BAT.b,p=BAT.pct();
+    if(b.charging){if(p>=100)return 'Fully charged';const t=BAT.fmt(b.chargingTime);return 'Charging'+(t?' · '+t+' until full':'');}
+    const t=BAT.fmt(b.dischargingTime);return 'On battery'+(t?' · '+t+' remaining':'');
+  },
+  render(){
+    if(!BAT.supported)return;
+    const b=BAT.b,p=BAT.pct(),low=!b.charging&&p<=20;
+    const tr=document.getElementById('tray-battery');
+    tr.className=(b.charging?'charging ':'')+(low?'low':'');
+    tr.innerHTML=`<i class="${BAT.icon()}"></i><span>${p}%</span>`;
+    tr.title=`Battery ${p}% · ${BAT.status()}`;
+    const mb=document.getElementById('mb-battery');
+    mb.className=(b.charging?'charging ':'')+(low?'low':'');
+    mb.innerHTML=`<i class="${BAT.icon()}"></i>${p}%`;
+    mb.title=tr.title;
+    if(typeof AC!=='undefined')AC.renderBattery();
+  },
+  onCharging(){
+    const b=BAT.b;
+    BAT.render();
+    if(!BAT.ready)return;
+    if(b.charging&&!BAT.lastCharging){
+      SFX.play('charge');notify('Charger connected · '+BAT.pct()+'%',3200,{silent:true});
+      [20,10,5].forEach(t=>BAT.warned[t]=false);
+    }else if(!b.charging&&BAT.lastCharging){
+      notify('Charger disconnected · '+BAT.pct()+'%',3200,{silent:true});
+      BAT.syncWarned();
+    }
+    BAT.lastCharging=b.charging;
+  },
+  onLevel(){
+    const b=BAT.b,p=BAT.pct();
+    BAT.render();
+    if(!BAT.ready)return;
+    if(b.charging){
+      [20,10,5].forEach(t=>{if(p>t)BAT.warned[t]=false;});
+      if(p>=100&&!BAT.lastFull){SFX.play('charge');notify('Battery full',3200,{silent:true});}
+    }else{
+      [5,10,20].forEach(t=>{
+        if(p<=t&&!BAT.warned[t]){
+          BAT.warned[5]=BAT.warned[10]=BAT.warned[20]=true;
+          if(p>t)return;
+          SFX.play('lowBattery');
+          notify(t<=5?'Battery critically low · '+p+'%':'Battery low · '+p+'%. Plug in your charger.',5000,{silent:true});
+        }
+      });
+      [20,10,5].forEach(t=>{if(p>t)BAT.warned[t]=false;});
+    }
+    BAT.lastFull=p>=100;
+  },
+};
+window.BAT=BAT;
+
+/* ══════════════════════════════════
+   NOTIFICATION HISTORY + DO NOT DISTURB
+══════════════════════════════════ */
+const NHIST=[];
+let DND=false;
+const _notifyBase=notify;
+notify=function(msg,dur,opts){
+  opts=opts||{};
+  NHIST.unshift({msg:String(msg),t:Date.now()});
+  if(NHIST.length>40)NHIST.length=40;
+  if(typeof AC!=='undefined'&&AC.open)AC.renderNotifs();
+  if(DND)return;                       // Do not disturb: logged in the action center, but no toast and no sound
+  if(opts.silent){const prev=SFX.muted;SFX.muted=true;try{_notifyBase(msg,dur);}finally{SFX.muted=prev;}}
+  else _notifyBase(msg,dur);
+};
+window.notify=notify;
+
+/* ══════════════════════════════════
+   ACTION CENTER  (click the clock or the battery)
+══════════════════════════════════ */
+const AC={open:false,calOff:0,
+  el(){return document.getElementById('action-center');},
+  build(){
+    AC.el().innerHTML=`
+      <div class="ac-tabs"><button class="ac-tab on" id="act-main">Overview</button><button class="ac-tab" id="act-clip">Clipboard</button></div>
+      <div class="ac-view" id="ac-view-main">
+      <div class="ac-head"><div class="ac-time" id="ac-time"></div><div class="ac-date" id="ac-date"></div></div>
+      <div class="ac-bat" id="ac-bat"><i class="ac-bat-ico fa-solid fa-battery-full"></i><div class="ac-bat-main"><div class="ac-bat-pct" id="ac-bat-pct"></div><div class="ac-bat-sub" id="ac-bat-sub"></div><div class="ac-bat-bar"><div id="ac-bat-fill"></div></div></div></div>
+      <div class="ac-quick">
+        <button class="ac-q" id="acq-dnd"><i class="fa-solid fa-moon"></i><span>Do not disturb</span></button>
+        <button class="ac-q" id="acq-mute"><i class="fa-solid fa-volume-high"></i><span>Sounds</span></button>
+        <button class="ac-q" id="acq-mode"><i class="fa-solid fa-circle-half-stroke"></i><span>Dark mode</span></button>
+        <button class="ac-q" id="acq-fs"><i class="fa-solid fa-expand"></i><span>Fullscreen</span></button>
+        <button class="ac-q" id="acq-lock"><i class="fa-solid fa-lock"></i><span>Lock</span></button>
+        <button class="ac-q" id="acq-set"><i class="fa-solid fa-sliders"></i><span>Personalize</span></button>
+        <button class="ac-q" id="acq-clip"><i class="fa-solid fa-paste"></i><span>Clipboard</span></button>
+      </div>
+      <div class="ac-vol"><i class="fa-solid fa-volume-low"></i><input type="range" id="ac-vol" min="0" max="100"><i class="fa-solid fa-volume-high"></i></div>
+      <div class="ac-sec"><span>Notifications</span><button id="ac-clear">Clear all</button></div>
+      <div class="ac-list" id="ac-list"></div>
+      <div class="ac-month"><button id="ac-prev">&#9664;</button><span id="ac-mname"></span><button id="ac-next">&#9654;</button></div>
+      <div class="ac-cal" id="ac-cal"></div>
+      </div>
+      <div class="ac-view" id="ac-view-clip" style="display:none">
+        <div class="cl-bar"><button id="cl-paste" title="Read the system clipboard now">Add current clipboard</button><button id="cl-pause" title="Stop recording new copies">Pause</button><button id="cl-clear" title="Remove everything except pinned items">Clear</button></div>
+        <input class="cl-search" id="cl-search" placeholder="Search clipboard history" autocomplete="off">
+        <div class="cl-list" id="cl-list"></div>
+        <div class="cl-hint">Click an item to copy it again. Ctrl+Alt+V opens this tab.</div>
+      </div>`;
+    const $=id=>document.getElementById(id);
+    $('act-main').onclick=()=>AC.tab('main');
+    $('act-clip').onclick=()=>AC.tab('clip');
+    $('cl-paste').onclick=()=>CLIP.readSystem();
+    $('cl-pause').onclick=()=>{CLIP.paused=!CLIP.paused;CLIP.render();};
+    $('cl-clear').onclick=()=>CLIP.clear();
+    $('cl-search').oninput=()=>CLIP.render();
+    $('acq-dnd').onclick=()=>{DND=!DND;document.body.classList.toggle('dnd',DND);AC.renderQuick();};
+    $('acq-mute').onclick=()=>{SFX.set({muted:!SFX.muted});AC.renderQuick();};
+    $('acq-mode').onclick=()=>{
+      let cm=S.colorMode||'dark';
+      if(cm==='system')cm=document.body.dataset.colorMode;
+      S.colorMode=cm==='dark'?'light':'dark';saveS();applyTheme();AC.renderQuick();
+    };
+    $('acq-fs').onclick=()=>{
+      if(document.fullscreenElement){try{document.exitFullscreen();}catch(e){}}else goFullscreen();
+      setTimeout(AC.renderQuick,250);
+    };
+    $('acq-lock').onclick=()=>{AC.close();powerLock();};
+    $('acq-clip').onclick=()=>AC.tab('clip');
+    $('acq-set').onclick=()=>{AC.close();openModal('m-settings');};
+    $('ac-vol').oninput=e=>{SFX.set({vol:e.target.value/100,muted:false});AC.renderQuick();};
+    $('ac-vol').onchange=()=>SFX.play('click');
+    $('ac-clear').onclick=()=>{NHIST.length=0;AC.renderNotifs();};
+    $('ac-prev').onclick=()=>{AC.calOff--;AC.renderCal();};
+    $('ac-next').onclick=()=>{AC.calOff++;AC.renderCal();};
+  },
+  renderTime(){
+    const n=new Date();
+    const m=n.getMinutes().toString().padStart(2,'0');
+    const h=S.clock24?n.getHours().toString().padStart(2,'0'):((n.getHours()%12||12)+'');
+    const apm=S.clock24?'':(n.getHours()>=12?' PM':' AM');
+    const t=document.getElementById('ac-time'),d=document.getElementById('ac-date');
+    if(t)t.textContent=`${h}:${m}${apm}`;
+    if(d)d.textContent=n.toLocaleDateString(undefined,{weekday:'long',month:'long',day:'numeric'});
+  },
+  renderBattery(){
+    const box=document.getElementById('ac-bat');if(!box)return;
+    if(!BAT.supported){box.classList.remove('show');return;}
+    const p=BAT.pct(),b=BAT.b;
+    box.classList.add('show');
+    box.classList.toggle('charging',b.charging);box.classList.toggle('low',!b.charging&&p<=20);
+    box.querySelector('.ac-bat-ico').className='ac-bat-ico '+BAT.icon();
+    document.getElementById('ac-bat-pct').textContent=p+'%';
+    document.getElementById('ac-bat-sub').textContent=BAT.status();
+    document.getElementById('ac-bat-fill').style.width=p+'%';
+  },
+  renderQuick(){
+    const $=id=>document.getElementById(id);if(!$('acq-dnd'))return;
+    $('acq-dnd').classList.toggle('on',DND);
+    const mt=SFX.muted||!SVC.on.sound;
+    $('acq-mute').classList.toggle('on',!mt);
+    $('acq-mute').querySelector('i').className='fa-solid '+(mt?'fa-volume-xmark':'fa-volume-high');
+    const dark=document.body.dataset.colorMode!=='light';
+    $('acq-mode').classList.toggle('on',dark);$('acq-mode').querySelector('span').textContent=dark?'Dark mode':'Light mode';
+    $('acq-fs').classList.toggle('on',!!document.fullscreenElement);
+    $('ac-vol').value=Math.round(SFX.vol*100);
+  },
+  renderNotifs(){
+    const l=document.getElementById('ac-list');if(!l)return;
+    l.innerHTML='';
+    if(!NHIST.length){l.innerHTML='<div class="ac-empty">No new notifications</div>';return;}
+    NHIST.forEach(n=>{
+      const d=document.createElement('div');d.className='ac-n';
+      const t=new Date(n.t);
+      const tm=t.toLocaleTimeString(undefined,{hour:'numeric',minute:'2-digit',hour12:!S.clock24});
+      const a=document.createElement('span');a.textContent=n.msg;
+      const s=document.createElement('small');s.textContent=tm;
+      d.append(a,s);l.appendChild(d);
+    });
+  },
+  renderCal(){
+    const now=new Date(),first=new Date(now.getFullYear(),now.getMonth()+AC.calOff,1);
+    const y=first.getFullYear(),mo=first.getMonth();
+    document.getElementById('ac-mname').textContent=first.toLocaleDateString(undefined,{month:'long',year:'numeric'});
+    const g=document.getElementById('ac-cal');g.innerHTML='';
+    ['Su','Mo','Tu','We','Th','Fr','Sa'].forEach(d=>{const b=document.createElement('b');b.textContent=d;g.appendChild(b);});
+    const start=first.getDay(),dim=new Date(y,mo+1,0).getDate(),prev=new Date(y,mo,0).getDate();
+    for(let i=0;i<42;i++){
+      const sp=document.createElement('span');let d=i-start+1;
+      if(d<1){sp.textContent=prev+d;sp.className='dim';}
+      else if(d>dim){sp.textContent=d-dim;sp.className='dim';}
+      else{sp.textContent=d;if(d===now.getDate()&&mo===now.getMonth()&&y===now.getFullYear())sp.className='today';}
+      g.appendChild(sp);
+    }
+  },
+  tab(t){
+    if(!AC.el().firstChild)AC.build();
+    const clip=t==='clip';
+    document.getElementById('ac-view-main').style.display=clip?'none':'';
+    document.getElementById('ac-view-clip').style.display=clip?'':'none';
+    document.getElementById('act-main').classList.toggle('on',!clip);
+    document.getElementById('act-clip').classList.toggle('on',clip);
+    if(clip){CLIP.render();setTimeout(()=>{const i=document.getElementById('cl-search');if(i)i.focus();},0);}
+  },
+  show(t){
+    if(!AC.el().firstChild)AC.build();
+    AC.tab(t||'main');
+    AC.calOff=0;
+    try{dnSetMenu(false);}catch(e){}
+    if(typeof goDesktop==='function'&&currentView!=='desktop'&&S.theme!=='defaultnew'){const st=document.getElementById('start');if(st&&st.style.display==='flex')goDesktop();}
+    AC.renderTime();AC.renderBattery();AC.renderQuick();AC.renderNotifs();AC.renderCal();
+    AC.el().classList.add('on');AC.open=true;
+  },
+  close(){AC.el().classList.remove('on');AC.open=false;},
+};
+window.AC=AC;
+function toggleActionCenter(e){
+  if(e)e.stopPropagation();
+  if(AC.open)AC.close();
+  else AC.show();
+}
+window.toggleActionCenter=toggleActionCenter;
+document.addEventListener('mousedown',e=>{
+  if(!AC.open)return;
+  if(e.target.closest('#action-center,#tray-battery,#tb-clock,#mb-battery,#mb-clock,#ctx,#overlay'))return;
+  AC.close();
+},true);
+document.addEventListener('keydown',e=>{if(e.key==='Escape'&&AC.open)AC.close();});
+setInterval(()=>{if(AC.open){AC.renderTime();AC.renderQuick();}},1000);
+document.addEventListener('fullscreenchange',()=>{if(AC.open)AC.renderQuick();});
+BAT.init();
+/* ══════════════════════════════════
+   CLIPBOARD HISTORY
+   Records text copied / cut inside mpcsim (desktop and app windows). "Add current clipboard" also reads
+   whatever is on the system clipboard (the browser asks for permission once). Pinned items survive Clear.
+   Saved in this browser only. Password fields are never recorded.
+══════════════════════════════════ */
+const CLIP={items:[],max:30,paused:false,
+  load(){try{const o=JSON.parse(localStorage.getItem('mpc_clip')||'[]');if(Array.isArray(o))CLIP.items=o.filter(x=>x&&typeof x.text==='string').slice(0,60);}catch(e){}},
+  save(){try{localStorage.setItem('mpc_clip',JSON.stringify(CLIP.items));}catch(e){}},
+  add(text){
+    if(CLIP.paused||typeof text!=='string')return;
+    text=text.slice(0,5000);
+    if(!text.trim())return;
+    const old=CLIP.items.find(x=>x.text===text);
+    if(old){CLIP.items=CLIP.items.filter(x=>x!==old);old.t=Date.now();CLIP.items.unshift(old);}
+    else CLIP.items.unshift({id:uid(),text,t:Date.now(),pin:false});
+    // trim: keep pinned items, then the newest unpinned ones up to max
+    let n=0;CLIP.items=CLIP.items.filter(x=>x.pin||(++n<=CLIP.max));
+    CLIP.save();CLIP.render();
+  },
+  grab(e){
+    try{
+      const doc=e.target&&e.target.ownerDocument||document,win=doc.defaultView||window;
+      const a=doc.activeElement;
+      if(a&&a.type==='password')return;
+      let t='';
+      if(a&&(a.tagName==='TEXTAREA'||(a.tagName==='INPUT'&&/^(text|search|url|tel|email|)$/.test(a.type)))&&a.selectionStart!=null&&a.selectionEnd>a.selectionStart){
+        t=a.value.slice(a.selectionStart,a.selectionEnd);
+      }else{
+        const sel=win.getSelection&&win.getSelection();t=sel?sel.toString():'';
+      }
+      if(!t&&e.clipboardData){try{t=e.clipboardData.getData('text/plain');}catch(_){}}
+      CLIP.add(t);
+    }catch(_){}
+  },
+  hook(doc){
+    if(!doc||doc.__clipHooked)return;
+    doc.__clipHooked=true;
+    ['copy','cut'].forEach(ev=>doc.addEventListener(ev,CLIP.grab,true));
+  },
+  hookFrames(){
+    document.querySelectorAll('iframe').forEach(f=>{try{if(f.contentDocument)CLIP.hook(f.contentDocument);}catch(e){}});   // same-origin app windows only
+  },
+  async readSystem(){
+    try{
+      const t=await navigator.clipboard.readText();
+      if(!t||!t.trim()){notify('The system clipboard has no text',2200,{silent:true});return;}
+      const was=CLIP.paused;CLIP.paused=false;CLIP.add(t);CLIP.paused=was;
+    }catch(e){notify('Clipboard access was blocked by the browser',2800,{silent:true});}
+  },
+  async copy(item){
+    try{await navigator.clipboard.writeText(item.text);}
+    catch(e){
+      const ta=document.createElement('textarea');ta.value=item.text;ta.style.cssText='position:fixed;left:-9999px;top:0';
+      document.body.appendChild(ta);ta.select();try{document.execCommand('copy');}catch(_){}ta.remove();
+    }
+    CLIP.items=CLIP.items.filter(x=>x!==item);item.t=Date.now();CLIP.items.unshift(item);CLIP.save();CLIP.render();
+    notify('Copied to clipboard',1800,{silent:true});
+  },
+  clear(){CLIP.items=CLIP.items.filter(x=>x.pin);CLIP.save();CLIP.render();},
+  ago(t){
+    const m=Math.floor((Date.now()-t)/60000);
+    if(m<1)return 'just now';if(m<60)return m+' min ago';
+    const h=Math.floor(m/60);if(h<24)return h+' h ago';return Math.floor(h/24)+' d ago';
+  },
+  render(){
+    const l=document.getElementById('cl-list');if(!l)return;
+    const pb=document.getElementById('cl-pause');
+    if(pb){pb.textContent=CLIP.paused?'Resume':'Pause';pb.classList.toggle('on',CLIP.paused);}
+    const q=((document.getElementById('cl-search')||{}).value||'').toLowerCase();
+    const list=CLIP.items.filter(x=>!q||x.text.toLowerCase().includes(q))
+      .sort((a,b)=>(b.pin-a.pin)||(b.t-a.t));
+    l.innerHTML='';
+    if(!list.length){l.innerHTML='<div class="ac-empty">'+(q?'No matches':'Nothing copied yet. Copy some text and it will show up here.')+'</div>';return;}
+    list.forEach(it=>{
+      const d=document.createElement('div');d.className='cl-item'+(it.pin?' pin':'');
+      const b=document.createElement('div');b.className='cl-body';
+      const tx=document.createElement('div');tx.className='cl-text';tx.textContent=it.text;
+      const mt=document.createElement('div');mt.className='cl-meta';mt.textContent=CLIP.ago(it.t)+' · '+it.text.length+' chars';
+      b.append(tx,mt);
+      const a=document.createElement('div');a.className='cl-act';
+      const pin=document.createElement('button');pin.className='cl-pin';pin.title=it.pin?'Unpin':'Pin';pin.innerHTML='<i class="fa-solid fa-thumbtack"></i>';
+      pin.onclick=e=>{e.stopPropagation();it.pin=!it.pin;CLIP.save();CLIP.render();};
+      const del=document.createElement('button');del.title='Delete';del.innerHTML='<i class="fa-solid fa-xmark"></i>';
+      del.onclick=e=>{e.stopPropagation();CLIP.items=CLIP.items.filter(x=>x!==it);CLIP.save();CLIP.render();};
+      a.append(pin,del);
+      d.onclick=()=>CLIP.copy(it);
+      d.append(b,a);l.appendChild(d);
+    });
+  },
+};
+window.CLIP=CLIP;
+CLIP.load();CLIP.hook(document);CLIP.hookFrames();
+setInterval(CLIP.hookFrames,2000);
+document.addEventListener('keydown',e=>{
+  if(e.ctrlKey&&e.altKey&&!e.shiftKey&&(e.key==='v'||e.key==='V'||e.code==='KeyV')){
+    e.preventDefault();
+    if(AC.open&&document.getElementById('ac-view-clip').style.display!=='none')AC.close();else AC.show('clip');
+  }
+});
+/* ══════════════════════════════════
+   WINDOWS 10 START MENU (left rail + app list) and taskbar search
+══════════════════════════════════ */
+function renderW10Left(filter){
+  const st=document.getElementById('start');
+  let L=document.getElementById('w10-left');
+  if(!L){
+    L=document.createElement('div');L.id='w10-left';
+    L.innerHTML='<div class="w10-rail"></div><div class="w10-list" id="w10-list"></div>';
+    st.insertBefore(L,st.firstChild);
+    const r=L.querySelector('.w10-rail');
+    const rb=(ico,title,fn,html)=>{const d=document.createElement('div');d.className='rb';d.title=title;d.innerHTML=html||`<i class="${ico}"></i>`;d.onclick=fn;r.appendChild(d);return d;};
+    rb('fa-solid fa-bars','Start',()=>{});
+    const g=document.createElement('div');g.className='grow';r.appendChild(g);
+    rb('','User',()=>openModal('m-settings'),'<div class="av" id="w10-av"><i class="fa-solid fa-user" style="font-size:12px;color:#fff"></i></div>');
+    rb('fa-regular fa-file','Documents',()=>{try{const a=S.apps.find(x=>/file|explor|document/i.test(x.name));if(a){goDesktop();launchApp(a,false);}}catch(e){}});
+    rb('fa-regular fa-image','Pictures',()=>{try{const a=S.apps.find(x=>/photo|picture|image/i.test(x.name));if(a){goDesktop();launchApp(a,false);}}catch(e){}});
+    rb('fa-solid fa-plus','Add tile',()=>addTileDialog());
+    rb('fa-solid fa-folder-plus','New group',()=>addGroupDialog());
+    rb('fa-solid fa-gear','Personalize / Settings',()=>{goDesktop();openModal('m-settings');});
+    rb('fa-solid fa-power-off','Power',e=>{e.stopPropagation();dnPowerMenu(e);});
+  }
+  const av=document.getElementById('w10-av');
+  if(av&&S.profilePic){av.style.backgroundImage=`url("${S.profilePic}")`;av.innerHTML='';}
+  const list=document.getElementById('w10-list');list.innerHTML='';
+  const q=(filter||'').toLowerCase().trim();
+  const apps=S.apps.filter(a=>!q||a.name.toLowerCase().includes(q)).sort((a,b)=>a.name.localeCompare(b.name,undefined,{sensitivity:'base'}));
+  const row=a=>{
+    const d=document.createElement('div');d.className='w10-app';
+    const w=document.createElement('div');w.className='w10-ico';
+    try{w.appendChild(makeIconEl(a,'ae',()=>{}));}catch(e){}
+    const n=document.createElement('span');n.textContent=a.name;
+    d.append(w,n);
+    d.onclick=()=>{goDesktop();launchApp(a,true);};
+    d.oncontextmenu=e=>{e.preventDefault();showAppCtx(e,a);};
+    return d;
+  };
+  const head=(t,big)=>{const h=document.createElement('div');h.className='w10-h'+(big?' big':'');h.textContent=t;list.appendChild(h);};
+  if(!q&&apps.length){head('Recently added',true);list.appendChild(row(S.apps[S.apps.length-1]));}
+  let cur='';
+  apps.forEach(a=>{
+    const c=/[a-z]/i.test(a.name[0]||'')?a.name[0].toUpperCase():'#';
+    if(c!==cur){cur=c;head(c);}
+    list.appendChild(row(a));
+  });
+  if(!apps.length){const e=document.createElement('div');e.className='w10-h';e.textContent='No apps found';list.appendChild(e);}
+}
+(function(){
+  const inp=document.getElementById('tb-search');if(!inp)return;
+  const open=()=>{if(S.theme!=='win10')return;const st=document.getElementById('start');if(st.style.display!=='flex'||st.classList.contains('start-leaving')){SFX.play('startOpen');showStart();}};
+  inp.addEventListener('focus',open);
+  inp.addEventListener('click',open);
+  inp.addEventListener('input',()=>{open();renderW10Left(inp.value);});
+  inp.addEventListener('keydown',e=>{
+    if(e.key==='Enter'){const f=document.querySelector('#w10-list .w10-app');if(f){f.click();inp.value='';inp.blur();}}
+    if(e.key==='Escape'){inp.value='';inp.blur();}
+    e.stopPropagation();
+  });
+  document.getElementById('tb-search').closest('#taskbar').addEventListener('mousedown',e=>{if(e.target!==inp&&inp.value){inp.value='';}});
+})();
 </script>
 </body>
 </html>
