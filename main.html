@@ -402,6 +402,8 @@ body[data-theme="win11"] #apps-btn,body[data-theme="chromeos"] #apps-btn,body[da
 .w11-pin-item{display:flex;flex-direction:column;align-items:center;gap:6px;padding:10px 4px;border-radius:8px;cursor:pointer;width:100%}
 .w11-pin-item:hover{background:rgba(255,255,255,.08)}
 .w11-pin-icon{width:40px;height:40px;border-radius:8px;display:flex;align-items:center;justify-content:center;overflow:hidden}
+.w11-pin-icon i.tile-fa{display:inline-flex;align-items:center;justify-content:center;width:32px;height:32px;font-size:26px!important;line-height:1}
+.w11-pin-icon img{width:32px!important;height:32px!important;object-fit:contain!important}
 .w11-pin-name{color:#fff;font-size:11px;text-align:center;line-height:1.25;max-width:76px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .w11-recent-row{display:flex;flex-direction:column;gap:2px}
 .w11-recent-chip{display:flex;align-items:center;gap:10px;padding:8px;border-radius:6px;cursor:pointer;color:#fff;font-size:12px}
@@ -410,6 +412,8 @@ body[data-theme="win11"] #apps-btn,body[data-theme="chromeos"] #apps-btn,body[da
 /* ChromeOS launcher: more columns, rounder icons, no groups */
 body[data-theme="chromeos"] .w11-pin-grid{grid-template-columns:repeat(5,1fr)}
 body[data-theme="chromeos"] .w11-pin-icon{border-radius:50%;width:44px;height:44px}
+body[data-theme="chromeos"] .w11-pin-icon i.tile-fa{width:35px;height:35px;font-size:28px!important}
+body[data-theme="chromeos"] .w11-pin-icon img{width:35px!important;height:35px!important}
 body[data-theme="chromeos"] .w11-pin-head,body[data-theme="chromeos"] .w11-all-btn{font-family:'Google Sans','Roboto',sans-serif}
 
 /* GNOME overview: fullscreen, large centered icon grid, no "pinned" chrome */
@@ -428,6 +432,8 @@ body[data-theme="gnome"] #start-tiles-scroll{overflow-y:auto;overflow-x:hidden;a
 body[data-theme="gnome"] .w11-pin-panel{max-width:860px;margin:0 auto}
 body[data-theme="gnome"] .w11-pin-grid{grid-template-columns:repeat(6,1fr);gap:20px 6px}
 body[data-theme="gnome"] .w11-pin-icon{width:64px;height:64px;border-radius:16px}
+body[data-theme="gnome"] .w11-pin-icon i.tile-fa{width:50px;height:50px;font-size:40px!important}
+body[data-theme="gnome"] .w11-pin-icon img{width:50px!important;height:50px!important}
 body[data-theme="gnome"] .w11-pin-item{padding:14px 4px 10px;border-radius:14px;gap:8px}
 body[data-theme="gnome"] .w11-pin-name{font-size:13px;max-width:110px}
 body[data-theme="gnome"] .tb-pinned{display:none}
@@ -444,6 +450,8 @@ body.svc-nopanel #gn-dock-live{display:none!important}
 .gn-di{position:relative;width:58px;height:58px;border-radius:14px;display:flex;align-items:center;justify-content:center;cursor:pointer;flex-shrink:0}
 .gn-di:hover{background:rgba(255,255,255,.12)}
 .gn-di .w11-pin-icon{width:44px;height:44px;border-radius:12px;pointer-events:none}
+.gn-di .w11-pin-icon i.tile-fa{width:35px;height:35px;font-size:28px!important}
+.gn-di .w11-pin-icon img{width:35px!important;height:35px!important}
 .gn-di.running::after{content:'';position:absolute;bottom:2px;left:50%;width:6px;height:6px;margin-left:-3px;border-radius:50%;background:#fff}
 .gn-di.lg-over{background:rgba(255,255,255,.25)}
 .gn-di.lg-drag{opacity:.35}
@@ -461,8 +469,10 @@ body[data-theme="win11"] #taskbar{height:48px;background:rgba(32,32,32,.82);back
 body[data-theme="win11"] #taskbar::before{content:'';flex:1}
 body[data-theme="win11"] #tb-apps{flex:0 1 auto}
 body[data-theme="win11"] #tb-right{flex:1;justify-content:flex-end}
-body[data-theme="win11"] #start-orb{width:42px;height:40px;border-radius:6px}
-body[data-theme="win11"] #start-orb i{color:#60cdff;font-size:20px}
+body[data-theme="win11"] #start-orb{width:42px;height:40px;border-radius:6px;font-size:0}
+body[data-theme="win11"] #start-orb i{display:none}
+/* real Windows 11 Start glyph: four separate rounded-corner tiles, not the old flat flag */
+body[data-theme="win11"] #start-orb::before{content:'';width:19px;height:19px;background-repeat:no-repeat;background-size:contain;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 20 20'%3E%3Cpath d='M2 0H9V9H0V2A2 2 0 0 1 2 0Z' fill='%2360cdff'/%3E%3Cpath d='M11 0H18A2 2 0 0 1 20 2V9H11V0Z' fill='%2360cdff'/%3E%3Cpath d='M0 11H9V20H2A2 2 0 0 1 0 18V11Z' fill='%2360cdff'/%3E%3Cpath d='M11 11H20V18A2 2 0 0 1 18 20H11V11Z' fill='%2360cdff'/%3E%3C/svg%3E")}
 body[data-theme="win11"] .tb-btn{height:40px;min-width:44px;padding:0;background:transparent;border-radius:6px;border-bottom:0}
 body[data-theme="win11"] .tb-btn:hover{background:rgba(255,255,255,.1)}
 body[data-theme="win11"] .tb-btn.active{background:linear-gradient(var(--accent),var(--accent)) center calc(100% - 2px)/16px 3px no-repeat,rgba(255,255,255,.1)}
@@ -472,6 +482,24 @@ body[data-theme="win11"] .app-win{border:1px solid rgba(255,255,255,.14);border-
 body[data-theme="win11"] .win-tb{background:#202020;height:32px}
 body[data-theme="win11"] .win-title{color:#fff}
 body[data-theme="win11"] .win-ctrl{width:46px;height:32px;color:#fff}
+/* ── Closer-to-real-Windows-11 pass: search box, pinned-icon chips, footer ── */
+body[data-theme="win11"] #start-logo{display:none}
+body[data-theme="win11"] #start-topbar{padding:16px 16px 12px;gap:0;background:transparent}
+body[data-theme="win11"] #start-search{max-width:none;width:100%;flex:1;margin:0;background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.1);border-radius:4px;padding:9px 14px 9px 36px;font-size:13px;font-family:var(--font);background-repeat:no-repeat;background-position:12px center;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 16 16'%3E%3Ccircle cx='7' cy='7' r='5' fill='none' stroke='%23ffffff' stroke-opacity='.6' stroke-width='1.4'/%3E%3Cpath d='M10.8 10.8 15 15' stroke='%23ffffff' stroke-opacity='.6' stroke-width='1.4'/%3E%3C/svg%3E")}
+body[data-theme="win11"] #start-search:focus{background-color:rgba(255,255,255,.1);border-color:rgba(255,255,255,.3)}
+body[data-theme="win11"] #start-search::placeholder{color:rgba(255,255,255,.55)}
+/* real Win11 pinned icons are the plain app glyph, no colour-tile backdrop */
+body[data-theme="win11"] .w11-pin-icon{background:transparent!important}
+body[data-theme="win11"] .w11-pin-icon i{font-size:28px!important;color:#fff!important}
+/* footer: account chip on the left, round icon-only power button on the right */
+#start-footer-user{display:none}
+body[data-theme="win11"] #start-bottom{justify-content:flex-start;padding:10px 16px;background:rgba(255,255,255,.04);border-top:1px solid rgba(255,255,255,.08)}
+body[data-theme="win11"] #start-bottom button:not(.btn-power){display:none}
+body[data-theme="win11"] #start-footer-user{display:flex;align-items:center;gap:10px;margin-right:auto;color:#fff;font-size:13px;cursor:default}
+body[data-theme="win11"] #start-footer-user i{font-size:26px}
+body[data-theme="win11"] #start-bottom .btn-power{margin-left:0;width:36px;height:36px;padding:0;border-radius:50%;border:none;background:transparent;font-size:0}
+body[data-theme="win11"] #start-bottom .btn-power i{font-size:15px}
+body[data-theme="win11"] #start-bottom .btn-power:hover{background:rgba(255,255,255,.1)}
 
 /* ───────── Windows 10 ───────── */
 body[data-theme="win10"]{--off-bot:40px;--fs-bot:40px;--tc:6;
@@ -1033,6 +1061,14 @@ body[data-color-mode="light"][data-theme="win7"] .btn-p:not([style]){background:
 /* Start screen / launchers */
 body[data-color-mode="light"] #start-logo,
 body[data-color-mode="light"] #start-username{color:#212121}
+body[data-color-mode="light"][data-theme="win11"] #start-search{background-color:rgba(0,0,0,.05);border-color:rgba(0,0,0,.12);color:#212121;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 16 16'%3E%3Ccircle cx='7' cy='7' r='5' fill='none' stroke='%23000000' stroke-opacity='.55' stroke-width='1.4'/%3E%3Cpath d='M10.8 10.8 15 15' stroke='%23000000' stroke-opacity='.55' stroke-width='1.4'/%3E%3C/svg%3E")}
+body[data-color-mode="light"][data-theme="win11"] #start-search:focus{background-color:rgba(0,0,0,.08);border-color:rgba(0,0,0,.3)}
+body[data-color-mode="light"][data-theme="win11"] #start-search::placeholder{color:rgba(0,0,0,.5)}
+body[data-color-mode="light"][data-theme="win11"] .w11-pin-icon i{color:#1b1b1b!important}
+body[data-color-mode="light"][data-theme="win11"] .w11-pin-name{color:#1b1b1b}
+body[data-color-mode="light"][data-theme="win11"] #start-bottom{background:rgba(0,0,0,.03);border-top-color:rgba(0,0,0,.08)}
+body[data-color-mode="light"][data-theme="win11"] #start-footer-user{color:#1b1b1b}
+body[data-color-mode="light"][data-theme="win11"] #start-bottom .btn-power:hover{background:rgba(0,0,0,.08)}
 body[data-color-mode="light"][data-theme="default"] #start-topbar{background:rgba(0,0,0,.06)}
 body[data-color-mode="light"] #start-search::placeholder{color:rgba(0,0,0,.5)}
 body[data-color-mode="light"] #start-search:focus{border-color:#212121}
@@ -1668,6 +1704,7 @@ body[data-theme="win10"] #start-bottom{display:none!important}
   </div>
   <div id="start-tiles-scroll"></div>
   <div id="start-bottom">
+    <span id="start-footer-user"><i class="fa-solid fa-circle-user"></i><b id="start-footer-username">User</b></span>
     <button onclick="openModal('m-settings')"><i class="fa fa-sliders"></i> Personalize</button>
     <button onclick="addTileDialog()"><i class="fa fa-plus"></i> Add tile</button>
     <button onclick="addGroupDialog()"><i class="fa fa-folder-plus"></i> Group</button>
@@ -2946,6 +2983,7 @@ function applyTheme(){
   db.style.backgroundSize='cover';db.style.backgroundPosition='center';
   document.getElementById('start-username').textContent=S.username||'User';
   if(document.getElementById('start-user-name'))document.getElementById('start-user-name').textContent=S.username||'User';
+  if(document.getElementById('start-footer-username'))document.getElementById('start-footer-username').textContent=S.username||'User';
   // update lockscreen bg
   const ls=document.getElementById('lockscreen');
   ls.style.backgroundColor=S.startBgColor;

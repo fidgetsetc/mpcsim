@@ -1,11 +1,15 @@
 // MPCSIM FILE ROUTER
 // Injects a shared save/open destination prompt into mpcsim app windows.
-// mpcsim Files uses localStorage; OS-file choices defer to the browser's native picker/download UI.
+// mpcsim Files now stores file contents in IndexedDB (previously localStorage, which
+// choked on anything but tiny files once content was base64-encoded into a data URL).
+// OS-file choices still defer to the browser's native picker/download UI.
 // Install as a custom plugin and run it. Only works in apps whose iframe is same-origin.
 
 (() => {
   const PLUGIN_ID = 'mpcsim-file-router';
-  const STORE_KEY = 'mpcsim_virtual_files_v1';
+  const DB_NAME = 'mpcsim_file_router';
+  const DB_VERSION = 1;
+  const STORE_NAME = 'files';
   const STYLE_ID = 'mpcsim-file-router-style';
   const DIALOG_ID = 'mpcsim-file-router-dialog';
   const patched = new WeakSet();
@@ -15,28 +19,76 @@
   let z = 2147483000;
 
   const safeName = (s) => String(s || 'Untitled').replace(/[\\/:*?"<>|]/g, '_').slice(0, 180) || 'Untitled';
-  const readFiles = () => {
-    try { return JSON.parse(localStorage.getItem(STORE_KEY) || '[]'); }
-    catch (_) { return []; }
-  };
-  const writeFiles = (files) => localStorage.setItem(STORE_KEY, JSON.stringify(files));
-  const bytesToDataURL = (blob) => new Promise((resolve, reject) => {
-    const r = new FileReader();
-    r.onload = () => resolve(r.result);
-    r.onerror = () => reject(r.error || new Error('Could not read file'));
-    r.readAsDataURL(blob);
-  });
-  const dataURLToBlob = async (url) => {
-    const r = await fetch(url);
-    return r.blob();
-  };
-  const fileToRecord = async (file, name) => ({
+
+  // ── IndexedDB-backed file store ──────────────────────────────────────────
+  // Records are {id, name, type, size, modified, blob}; the blob is stored
+  // directly (IndexedDB supports Blobs natively), so there's no base64 bloat
+  // and no practical size ceiling like localStorage had.
+  let filesCache = [];
+  let dbPromise = null;
+
+  function openDB() {
+    if (dbPromise) return dbPromise;
+    dbPromise = new Promise((resolve, reject) => {
+      let req;
+      try { req = indexedDB.open(DB_NAME, DB_VERSION); }
+      catch (e) { reject(e); return; }
+      req.onupgradeneeded = () => {
+        const db = req.result;
+        if (!db.objectStoreNames.contains(STORE_NAME)) db.createObjectStore(STORE_NAME, { keyPath: 'id' });
+      };
+      req.onsuccess = () => resolve(req.result);
+      req.onerror = () => reject(req.error || new Error('Could not open file store'));
+    });
+    return dbPromise;
+  }
+
+  function withStore(mode, fn) {
+    return openDB().then(db => new Promise((resolve, reject) => {
+      const tx = db.transaction(STORE_NAME, mode);
+      const store = tx.objectStore(STORE_NAME);
+      const result = fn(store);
+      tx.oncomplete = () => resolve(result);
+      tx.onerror = () => reject(tx.error || new Error('File store transaction failed'));
+      tx.onabort = () => reject(tx.error || new Error('File store transaction aborted'));
+    }));
+  }
+
+  // Resolves once the on-disk records have been loaded into filesCache.
+  // readFiles() can be called before this settles (it just returns [] / the
+  // last-known list until then); call sites that need the current contents
+  // (the file browser) await dbReady first.
+  const dbReady = withStore('readonly', store => new Promise((resolve, reject) => {
+    const req = store.getAll();
+    req.onsuccess = () => { filesCache = req.result || []; resolve(); };
+    req.onerror = () => reject(req.error);
+  })).catch(e => { mpc.log && mpc.log('File store load failed: ' + e.message); filesCache = []; });
+
+  const readFiles = () => filesCache;
+
+  async function putFile(record) {
+    filesCache = filesCache.filter(f => f.name !== record.name);
+    filesCache.push(record);
+    try { await withStore('readwrite', store => store.put(record)); }
+    catch (e) { mpc.log && mpc.log('File store save failed: ' + e.message); }
+    return record;
+  }
+
+  async function removeFileByName(name) {
+    const rec = filesCache.find(f => f.name === name);
+    filesCache = filesCache.filter(f => f.name !== name);
+    if (!rec) return;
+    try { await withStore('readwrite', store => store.delete(rec.id)); }
+    catch (e) { mpc.log && mpc.log('File store delete failed: ' + e.message); }
+  }
+
+  const fileToRecord = (file, name) => ({
     id: 'f' + Date.now().toString(36) + Math.random().toString(36).slice(2, 8),
     name: safeName(name || file.name),
     type: file.type || 'application/octet-stream',
     size: file.size,
     modified: Date.now(),
-    data: await bytesToDataURL(file)
+    blob: file
   });
 
   function installStyle(doc) {
@@ -102,7 +154,8 @@
     activeRequest = {kind, details, handlers};
   }
 
-  function showFileBrowser(mode, request, done) {
+  async function showFileBrowser(mode, request, done) {
+    await dbReady;
     const d = dialogDoc();
     closeDialog();
     const overlay = d.createElement('div');
@@ -137,15 +190,12 @@
           if (!selected) { mpc.notify('Select a file first.'); return; }
           const record = readFiles().find(f => f.id === selected);
           if (!record) throw new Error('That file no longer exists.');
-          const blob = await dataURLToBlob(record.data);
-          const file = new File([blob], record.name, {type: record.type, lastModified: record.modified});
+          const file = new File([record.blob], record.name, {type: record.type, lastModified: record.modified});
           closeDialog(); done(file, record);
         } else {
           const name = safeName(overlay.querySelector('#fr-name').value || request.name || 'Untitled.txt');
           const blob = await request.getBlob();
-          const record = await fileToRecord(new File([blob], name, {type: blob.type || request.type || 'application/octet-stream'}), name);
-          const all = readFiles().filter(f => f.name !== name);
-          all.push(record); writeFiles(all);
+          const record = await putFile(fileToRecord(new File([blob], name, {type: blob.type || request.type || 'application/octet-stream'}), name));
           closeDialog();
           mpc.notify('Saved to mpcsim Files: ' + name);
           done && done(record);
@@ -278,10 +328,10 @@
                   abort: async () => { chunks=[]; }
                 }),
                 getFile: async () => {
+                  await dbReady;
                   const r = readFiles().find(x => x.name === name);
                   if (!r) throw new DOMException('File not found', 'NotFoundError');
-                  const b = await dataURLToBlob(r.data);
-                  return new File([b], r.name, {type:r.type,lastModified:r.modified});
+                  return new File([r.blob], r.name, {type:r.type,lastModified:r.modified});
                 }
               };
               resolve(handle);
@@ -327,17 +377,26 @@
   }
 
   // Public helper for other plugins/apps to access the virtual file store.
+  // list()/get() wait for the IndexedDB load to finish; put()/remove() are
+  // async since they now go through an IndexedDB transaction.
   window.MPCSIM_FILES = {
-    list: () => readFiles().map(({id,name,type,size,modified}) => ({id,name,type,size,modified})),
+    async list() {
+      await dbReady;
+      return readFiles().map(({id,name,type,size,modified}) => ({id,name,type,size,modified}));
+    },
     async get(name) {
+      await dbReady;
       const f = readFiles().find(x => x.name === name);
-      return f ? new File([await dataURLToBlob(f.data)], f.name, {type:f.type,lastModified:f.modified}) : null;
+      return f ? new File([f.blob], f.name, {type:f.type,lastModified:f.modified}) : null;
     },
     async put(name, blob) {
-      const r = await fileToRecord(blob, name);
-      const all = readFiles().filter(f => f.name !== r.name); all.push(r); writeFiles(all); return r;
+      await dbReady;
+      return putFile(fileToRecord(blob, name));
     },
-    remove(name) { writeFiles(readFiles().filter(f => f.name !== name)); }
+    async remove(name) {
+      await dbReady;
+      return removeFileByName(name);
+    }
   };
 
   scan();

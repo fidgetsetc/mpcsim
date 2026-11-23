@@ -849,7 +849,7 @@ const DEFAULT_APPS = [
     url: './fnaf/1.html',
     icon: 'gamepad',
     cat: 'Games',
-    iconUrl: './fnaf/index.jpg',
+    iconUrl: './fnaf/1.webp',
     resolution: 100
   },
   {
@@ -858,7 +858,7 @@ const DEFAULT_APPS = [
     url: './fnaf/2.html',
     icon: 'gamepad',
     cat: 'Games',
-    iconUrl: './fnaf/index.jpg',
+    iconUrl: './fnaf/2.webp',
     resolution: 100
   },
   {
@@ -867,7 +867,7 @@ const DEFAULT_APPS = [
     url: './fnaf/index.html#3.html',
     icon: 'gamepad',
     cat: 'Games',
-    iconUrl: './fnaf/index.jpg',
+    iconUrl: './fnaf/3.webp',
     resolution: 100
   },
   {
@@ -876,7 +876,7 @@ const DEFAULT_APPS = [
     url: './fnaf/index.html#4.html',
     icon: 'gamepad',
     cat: 'Games',
-    iconUrl: './fnaf/index.jpg',
+    iconUrl: './fnaf/4.webp',
     resolution: 100
   },
   {
@@ -891,7 +891,7 @@ const DEFAULT_APPS = [
   {
     id: 'app-l2f2',
     name: 'Learn 2 Fly 2',
-    url: './gplay-tmp/duckget#/class/learn-2-fly-2',
+    url: './dm#/class/learn-2-fly-2',
     icon: 'gamepad',
     cat: 'Games',
     iconUrl: 'https://duckmath.com/lessons/learntofly2.webp',
