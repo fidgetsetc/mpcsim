@@ -52,7 +52,121 @@ function openMain() {
 
   frame.addEventListener("load", function () {
     try { frame.contentWindow.focus(); } catch (e) {}
+
+    // Check the browser's fullscreen state first. The size check is a
+    // fallback for browsers that do not expose a usable fullscreen flag.
+    function isFullscreen() {
+      var fullscreenElement =
+        document.fullscreenElement ||
+        document.webkitFullscreenElement ||
+        document.mozFullScreenElement ||
+        document.msFullscreenElement;
+
+      if (fullscreenElement) return fullscreenElement === frame;
+
+      return Math.abs(window.innerWidth - screen.width) <= 5 &&
+             Math.abs(window.innerHeight - screen.height) <= 5;
+    }
+
+    if (!isFullscreen()) {
+      showFullscreenPrompt();
+    }
   });
+
+  function showFullscreenPrompt() {
+    // Avoid stacking prompts if the iframe load event fires more than once.
+    if (document.getElementById("fullscreen-return-prompt")) return;
+
+    var overlay = document.createElement("div");
+    overlay.id = "fullscreen-return-prompt";
+    overlay.style.cssText =
+      "position:fixed;inset:0;z-index:2147483647;" +
+      "display:flex;align-items:center;justify-content:center;" +
+      "padding:20px;box-sizing:border-box;background:rgba(0,0,0,.62);" +
+      "font:14px Arial,sans-serif;color:#f5f5f5;";
+
+    var panel = document.createElement("div");
+    panel.style.cssText =
+      "width:min(360px,100%);padding:24px;box-sizing:border-box;" +
+      "border-radius:12px;background:#242424;color:#f5f5f5;" +
+      "box-shadow:0 8px 32px rgba(0,0,0,.45);text-align:center;";
+
+    var heading = document.createElement("div");
+    heading.textContent = "Fullscreen is off";
+    heading.style.cssText =
+      "font-size:18px;font-weight:600;margin-bottom:10px;";
+
+    var message = document.createElement("div");
+    message.textContent =
+      "This page is usually viewed in fullscreen. Would you like to go back into fullscreen?";
+    message.style.cssText = "line-height:1.5;margin-bottom:20px;";
+
+    var actions = document.createElement("div");
+    actions.style.cssText =
+      "display:flex;justify-content:center;gap:10px;flex-wrap:wrap;";
+
+    function makeButton(label, primary) {
+      var button = document.createElement("button");
+      button.type = "button";
+      button.textContent = label;
+      button.style.cssText =
+        "padding:10px 16px;border:0;border-radius:7px;cursor:pointer;" +
+        "font:500 14px Arial,sans-serif;" +
+        (primary
+          ? "background:#8ab4f8;color:#202124;"
+          : "background:#3c4043;color:#f5f5f5;");
+      return button;
+    }
+
+    var returnButton = makeButton("Go fullscreen", true);
+    var dismissButton = makeButton("No thanks", false);
+
+    returnButton.addEventListener("click", function () {
+      var request = frame && (
+        frame.requestFullscreen ||
+        frame.webkitRequestFullscreen ||
+        frame.mozRequestFullScreen ||
+        frame.msRequestFullscreen
+      );
+
+      if (!request) {
+        heading.textContent = "Fullscreen unavailable";
+        message.textContent =
+          "This browser does not support requesting fullscreen here.";
+        return;
+      }
+
+      try {
+        var result = request.call(frame);
+        if (result && typeof result.catch === "function") {
+          result.catch(function (error) {
+            console.warn("Fullscreen request was not accepted:", error);
+            heading.textContent = "Fullscreen was not enabled";
+            message.textContent =
+              "The browser did not allow fullscreen. You can dismiss this message and continue.";
+          });
+        }
+        overlay.remove();
+      } catch (error) {
+        console.warn("Fullscreen request failed:", error);
+        heading.textContent = "Fullscreen was not enabled";
+        message.textContent =
+          "The browser did not allow fullscreen. You can dismiss this message and continue.";
+      }
+    });
+
+    dismissButton.addEventListener("click", function () {
+      overlay.remove();
+    });
+
+    actions.appendChild(returnButton);
+    actions.appendChild(dismissButton);
+    panel.appendChild(heading);
+    panel.appendChild(message);
+    panel.appendChild(actions);
+    overlay.appendChild(panel);
+    document.body.appendChild(overlay);
+  }
 }
 
   function closeMain() {
