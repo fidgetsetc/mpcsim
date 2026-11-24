@@ -5,42 +5,58 @@ on:
     branches: [main]
   workflow_dispatch:
 
+env:
+  BATCH_SIZE: 10
+
 jobs:
-  # Reads domains.txt (skipping blank lines and # comments) into a JSON array
+  # Reads domains.txt (skipping blank lines and # comments) and splits it into batches
   read-domains:
     runs-on: ubuntu-latest
     outputs:
-      domains: ${{ steps.parse.outputs.domains }}
+      batches: ${{ steps.parse.outputs.batches }}
     steps:
       - uses: actions/checkout@v4
 
-      - name: Parse domains.txt
+      - name: Parse domains.txt into batches
         id: parse
         run: |
           if [ ! -f domains.txt ]; then
             echo "❌ Error: domains.txt not found in repo root"
             exit 1
           fi
-          domains=$(tr -d '\r' < domains.txt \
+          batches=$(tr -d '\r' < domains.txt \
             | sed 's/^[[:space:]]*//;s/[[:space:]]*$//' \
             | grep -vE '^(#|$)' \
-            | jq -R . | jq -sc .)
-          echo "Domains: $domains"
-          echo "domains=$domains" >> "$GITHUB_OUTPUT"
+            | jq -R . | jq -sc --argjson size "$BATCH_SIZE" '
+                . as $d
+                | [range(0; length; $size) as $i
+                   | {n: ($i / $size + 1), domains: $d[$i:$i + $size]}]')
+          if [ "$batches" = "[]" ]; then
+            echo "❌ Error: no domains found in domains.txt"
+            exit 1
+          fi
+          echo "Batches: $batches"
+          echo "batches=$batches" >> "$GITHUB_OUTPUT"
 
-  # One parallel job per domain; a failure on one doesn't cancel the others
+  # One job per batch, run strictly one after another.
+  # Within a batch, all domains deploy in parallel.
   deploy:
+    name: Batch ${{ matrix.batch.n }}
     needs: read-domains
     runs-on: ubuntu-latest
     strategy:
-      fail-fast: false
+      fail-fast: false   # a failed batch doesn't cancel later batches
+      max-parallel: 1    # next batch starts only after the previous finishes
       matrix:
-        domain: ${{ fromJson(needs.read-domains.outputs.domains) }}
+        batch: ${{ fromJson(needs.read-domains.outputs.batches) }}
     env:
-      DOMAIN: ${{ matrix.domain }}
+      DOMAINS_JSON: ${{ toJson(matrix.batch.domains) }}
       SURGE_LOGIN: ${{ secrets.SURGE_LOGIN }}
       SURGE_TOKEN: ${{ secrets.SURGE_TOKEN }}
       WEBHOOK_URL: ${{ secrets.DEPLOY_WEBHOOK_URL }}
+      MAX_RETRIES: 5        # rate-limit retries per domain
+      DEFAULT_WAIT: 60      # seconds to wait if no wait time can be parsed
+      MAX_WAIT: 1800        # give up if the requested wait exceeds this (seconds)
     steps:
       - uses: actions/checkout@v4
 
@@ -53,19 +69,78 @@ jobs:
           npm install -g surge@latest
           surge --version
 
-      - name: Deploy to ${{ matrix.domain }}
-        run: surge --project . --domain "$DOMAIN"
-
-      - name: Notify success
-        if: success() && env.WEBHOOK_URL != ''
+      - name: Write deploy script
         run: |
-          curl -sS -H "Content-Type: application/json" -X POST \
-            -d "$(jq -n --arg c "Deployed latest commit to $DOMAIN" '{content: $c}')" \
-            "$WEBHOOK_URL" > /dev/null
+          cat > "$RUNNER_TEMP/deploy_one.sh" <<'EOF'
+          #!/usr/bin/env bash
+          DOMAIN="$1"
+          log=$(mktemp)
 
-      - name: Notify failure
-        if: failure() && env.WEBHOOK_URL != ''
+          notify() {
+            [ -z "$WEBHOOK_URL" ] && return 0
+            curl -sS -H "Content-Type: application/json" -X POST \
+              -d "$(jq -n --arg c "$1" '{content: $c}')" \
+              "$WEBHOOK_URL" > /dev/null || true
+          }
+
+          # Prints seconds to wait, parsed from surge's output
+          parse_wait() {
+            local text="$1" m n unit
+            # "Retry-After: 120" style
+            m=$(grep -oiE 'retry-after:? *[0-9]+' <<<"$text" | grep -oE '[0-9]+' | head -1)
+            if [ -n "$m" ]; then echo "$m"; return; fi
+            # "try again in 5 minutes" / "30 seconds" / "1 hour" style
+            m=$(grep -oiE '[0-9]+ *(hours?|hrs?|minutes?|mins?|seconds?|secs?)\b' <<<"$text" | head -1)
+            if [ -n "$m" ]; then
+              n=$(grep -oE '^[0-9]+' <<<"$m")
+              unit=$(grep -oiE '[a-z]+$' <<<"$m" | tr 'A-Z' 'a-z')
+              case "$unit" in
+                h*)  echo $((n * 3600)) ;;
+                m*)  echo $((n * 60)) ;;
+                *)   echo "$n" ;;
+              esac
+              return
+            fi
+            echo "$DEFAULT_WAIT"
+          }
+
+          attempt=0
+          while :; do
+            attempt=$((attempt + 1))
+            echo "[$DOMAIN] Deploying (attempt $attempt)..."
+            if surge --project . --domain "$DOMAIN" > "$log" 2>&1; then status=0; else status=$?; fi
+            sed 's/\x1b\[[0-9;]*[A-Za-z]//g' "$log" > "$log.clean"
+            sed "s|^|[$DOMAIN] |" "$log.clean"
+
+            if [ "$status" -eq 0 ]; then
+              notify "Deployed latest commit to $DOMAIN"
+              exit 0
+            fi
+
+            if grep -qiE 'rate.?limit|too many requests|\b429\b' "$log.clean" \
+               && [ "$attempt" -le "$MAX_RETRIES" ]; then
+              wait_s=$(( $(parse_wait "$(cat "$log.clean")") + 5 ))
+              if [ "$wait_s" -gt "$MAX_WAIT" ]; then
+                echo "[$DOMAIN] ⚠️ Rate limited, requested wait (${wait_s}s) exceeds MAX_WAIT (${MAX_WAIT}s). Giving up."
+                break
+              fi
+              echo "[$DOMAIN] ⏳ Rate limited. Waiting ${wait_s}s before retrying..."
+              sleep "$wait_s"
+              continue
+            fi
+            break
+          done
+
+          echo "[$DOMAIN] ❌ Deploy failed"
+          notify "Couldn't deploy latest commit to $DOMAIN"
+          exit 1
+          EOF
+          chmod +x "$RUNNER_TEMP/deploy_one.sh"
+
+      - name: Deploy batch ${{ matrix.batch.n }}
         run: |
-          curl -sS -H "Content-Type: application/json" -X POST \
-            -d "$(jq -n --arg c "Couldn't deploy latest commit to $DOMAIN" '{content: $c}')" \
-            "$WEBHOOK_URL" > /dev/null
+          rc=0
+          jq -r '.[]' <<<"$DOMAINS_JSON" \
+            | xargs -P "$BATCH_SIZE" -n 1 "$RUNNER_TEMP/deploy_one.sh" || rc=$?
+          # xargs exits 123 if any invocation failed
+          exit $rc
