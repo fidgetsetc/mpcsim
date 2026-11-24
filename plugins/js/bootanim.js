@@ -30,11 +30,13 @@ const OPTIONS = {
     { id: 'default', name: 'Default loop video', path: './boot_loop.mp4' },
     { id: 'alt1',    name: 'Default start video', path: './boot_start.mp4' },
     { id: 'alt2',    name: 'Default end video', path: './boot_end.mp4' },
+     { id: 'alt3',    name: 'Apple TV 1st gen boot v1.0', path: './plugins/js/boot/atv1.mp4' },
   ],
   end: [
     { id: 'default', name: 'Default end video', path: './boot_end.mp4' },
     { id: 'alt1',    name: 'Default start video', path: './boot_start.mp4' },
     { id: 'alt2',    name: 'Default loop video', path: './boot_loop.mp4' },
+     { id: 'alt3',    name: 'Apple TV 1st gen boot v1.0', path: './plugins/js/boot/atv1.mp4' },
   ],
 };
 

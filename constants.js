@@ -698,7 +698,7 @@ const DEFAULT_APPS = [
   {
     id: 'app-cricket',
     name: 'Google Cricket',
-    url: './gplay-tmp/html/c/resize/index.html',
+    url: './gplay-tmp/html/c/index.html',
     icon: 'gamepad',
     cat: 'Games',
     iconUrl: './gplay-tmp/img/c.png',
@@ -924,7 +924,33 @@ const DEFAULT_APPS = [
     iconUrl: './cam/index.png',
     resolution: 100
   },
-
+  {
+    id: 'app-rb',
+    name: 'Retro Bowl',
+    url: './rb/index.html',
+    icon: 'gear',
+    cat: 'Tools',
+    iconUrl: './rb/index.webp',
+    resolution: 100
+  },
+  {
+    id: 'app-rbc',
+    name: 'Retro Bowl College',
+    url: './rb/college.html',
+    icon: 'gear',
+    cat: 'Tools',
+    iconUrl: './rb/college.webp',
+    resolution: 100
+  },
+  {
+    id: 'app-60sa',
+    name: '60 Seconds Reatomized',
+    url: './60sa/index.html',
+    icon: 'gear',
+    cat: 'Tools',
+    iconUrl: './60sa/index.webp',
+    resolution: 100
+  },
 ];
 const DEFAULT_TILES = [
   {id:'tl0',appId:'app-suggest', size:'small',   group:'Apps',        color:'#2d7d9a'},
