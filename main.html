@@ -525,97 +525,8 @@ body[data-theme="win7"]{--off-bot:40px;--fs-bot:40px;--tc:4;--tile-r:3px;--st-r:
   --ui-bg:#f0f0f0;--ui-head:linear-gradient(#e6effa,#c9dbf0);--ui-hbd:#8fa8c8;--ui-fg:#000;--ui-sub:#333;--ui-inp:#fff;--ui-bd:#8e8f8f;--ui-hov:#dbe8f6;--ui-sb:linear-gradient(#f2f2f2 45%,#dcdcdc 50%,#cfcfcf);--ui-sbf:#000;--ui-sbb:#707070;--ui-r:7px;--ui-ir:2px;--ui-br:3px;--ui-bt:1px;--ui-btc:#4c6b94;--ui-border:1px solid #4c6b94;--ui-sh:0 8px 30px rgba(0,0,0,.5);
   --ctx-bg:#f1f1f1;--ctx-fg:#000;--ctx-hov:linear-gradient(#e8f2fc,#c7ddf3);--ctx-hfg:#000;--ctx-pad:2px;--ctx-ip:6px 28px;--ctx-fs:12px;--ctx-sep:#d7d7d7;--ctx-bd:1px solid #979797;--ctx-bt:1px;--ctx-btc:#979797;--ctx-sh:2px 2px 4px rgba(0,0,0,.4);
   --nt-bg:rgba(30,40,60,.95);--nt-fg:#fff;--nt-r:6px;--nt-bl:0px;
-  --mn-l:0px;--mn-b:40px;--mn-w:min(440px,var(--vw,100vw));--mn-h:min(560px,calc(var(--vh,100vh) - 60px));--mn-r:8px 8px 0 0;--mn-sh:0 0 20px rgba(0,0,0,.6);--mn-bd:1px solid rgba(255,255,255,.55);
+  --mn-l:0px;--mn-b:40px;--mn-w:min(400px,var(--vw,100vw));--mn-h:min(484px,calc(var(--vh,100vh) - 70px));--mn-r:8px 8px 0 0;--mn-sh:none;--mn-bd:none;
   --st-bg:linear-gradient(rgba(130,175,225,.95),rgba(40,70,120,.98));--st-blur:0px;--ap-bg:linear-gradient(rgba(60,100,155,.99),rgba(25,45,85,.99))}
-
-/* 7.css integration for modal dialogs */
-body[data-theme="win7"] .modal {
-  background: #eceff4 !important;
-  border: 2px solid;
-  border-color: #dfdfdf #808080 #808080 #dfdfdf;
-  box-shadow: 1px 1px 0 0 white inset, -1px -1px 0 0 #dfdfdf inset;
-}
-body[data-theme="win7"] .modal-head {
-  background: linear-gradient(to right, #0a246a, #4a90e2) !important;
-  border: none;
-  padding: 2px;
-  color: white;
-}
-body[data-theme="win7"] .modal-head h2 {
-  color: white !important;
-  font-weight: bold;
-  font-size: 14px;
-  padding: 2px 4px;
-}
-body[data-theme="win7"] .modal-foot {
-  background: linear-gradient(to bottom, #dfdfdf, #c0bfbf) !important;
-  border-top: 1px solid #ffffff;
-  padding: 4px;
-  display: flex;
-  justify-content: flex-end;
-  gap: 4px;
-}
-body[data-theme="win7"] .f-label {
-  color: #000 !important;
-  font-size: 11px;
-  font-weight: bold;
-}
-body[data-theme="win7"] .f-inp,
-body[data-theme="win7"] .f-sel {
-  background: white !important;
-  color: #000 !important;
-  border: 2px solid;
-  border-color: #dfdfdf #808080 #808080 #dfdfdf;
-  font-size: 11px;
-  font-family: 'MS Sans Serif', sans-serif;
-}
-body[data-theme="win7"] .f-inp:focus,
-body[data-theme="win7"] .f-sel:focus {
-  outline: 1px dotted #000;
-  outline-offset: -4px;
-}
-body[data-theme="win7"] .btn-p {
-  background: linear-gradient(to bottom, #f0f0f0, #e0e0e0);
-  border: 2px solid;
-  border-color: #ffffff #808080 #808080 #ffffff;
-  color: #000;
-  font-weight: bold;
-  font-size: 11px;
-  padding: 4px 12px;
-  min-width: 75px;
-  cursor: pointer;
-}
-body[data-theme="win7"] .btn-p:active {
-  border-color: #808080 #ffffff #ffffff #808080;
-}
-body[data-theme="win7"] .btn-s {
-  background: linear-gradient(to bottom, #f0f0f0, #e0e0e0);
-  border: 2px solid;
-  border-color: #ffffff #808080 #808080 #ffffff;
-  color: #000;
-  font-size: 11px;
-  padding: 4px 12px;
-  cursor: pointer;
-}
-body[data-theme="win7"] .btn-s:active {
-  border-color: #808080 #ffffff #ffffff #808080;
-}
-
-body[data-theme="win7"] #taskbar{height:40px;background:linear-gradient(to bottom,rgba(200,225,245,.5),rgba(70,110,160,.72) 50%,rgba(40,75,125,.85));backdrop-filter:blur(8px);border-top:1px solid rgba(255,255,255,.5);padding-left:2px}
-body[data-theme="win7"] #start-orb{width:44px;height:44px;border-radius:50%;margin:-2px 6px 0 2px;background:radial-gradient(circle at 50% 30%,#8fd0ff,#1f6fd0 55%,#0b3d91);box-shadow:0 0 0 2px rgba(255,255,255,.55),0 0 10px rgba(80,170,255,.8)}
-body[data-theme="win7"] #start-orb:hover{filter:brightness(1.2)}
-body[data-theme="win7"] .tb-btn{min-width:54px;height:34px;padding:0;border-radius:3px;border:1px solid rgba(255,255,255,.45);border-bottom-color:rgba(255,255,255,.45)!important;background:linear-gradient(rgba(255,255,255,.25),rgba(255,255,255,.05))}
-body[data-theme="win7"] .tb-btn:hover{background:linear-gradient(rgba(255,255,255,.45),rgba(255,255,255,.15))}
-body[data-theme="win7"] .tb-btn.active{background:linear-gradient(rgba(255,255,255,.55),rgba(255,255,255,.2));box-shadow:0 0 8px rgba(160,210,255,.8)}
-body[data-theme="win7"] #tb-right{border-left:1px solid rgba(255,255,255,.3);padding-left:10px}
-body[data-theme="win7"] #tb-clock{text-align:center;color:#fff;text-shadow:0 0 4px rgba(0,0,0,.6)}
-body[data-theme="win7"] .app-win{border:1px solid rgba(0,0,0,.65);border-top-width:0;border-radius:8px 8px 0 0;overflow:hidden;background:linear-gradient(rgba(140,180,225,.92),rgba(95,140,195,.94));box-shadow:inset 0 0 0 1px rgba(255,255,255,.5),0 8px 30px rgba(0,0,0,.55)}
-body[data-theme="win7"] .win-tb{background:transparent;height:30px}
-body[data-theme="win7"] .win-title{color:#000;text-shadow:0 0 8px #fff,0 0 4px #fff}
-body[data-theme="win7"] .win-frame-wrap,body[data-theme="win7"] .term-body{margin:0 7px 7px}
-body[data-theme="win7"] .win-ctrl{height:20px;width:30px;align-self:flex-start;border:1px solid rgba(0,0,0,.5);border-top:none;border-radius:0 0 4px 4px;margin-left:-1px;color:#222;background:linear-gradient(rgba(255,255,255,.7),rgba(180,205,230,.6) 50%,rgba(120,160,205,.7))}
-body[data-theme="win7"] .win-ctrl:hover{filter:brightness(1.15);background:linear-gradient(rgba(255,255,255,.7),rgba(180,205,230,.6) 50%,rgba(120,160,205,.7));color:#000}
-body[data-theme="win7"] .win-ctrl.wc-close,body[data-theme="win7"] .win-ctrl.wc-close:hover{width:46px;color:#fff;background:linear-gradient(#e8a090,#c8402a 50%,#a82010)}
 
 /* ───────── macOS ───────── */
 body[data-theme="mac"]{--font:-apple-system,BlinkMacSystemFont,'SF Pro Text','Helvetica Neue',sans-serif;--off-top:24px;--off-bot:88px;--fs-top:24px;--fs-bot:0px;--tile-r:18px;--st-r:8px;
@@ -1581,6 +1492,189 @@ body[data-theme="win10"] .tiles-grid{grid-template-columns:repeat(3,80px)!import
 /* the old bottom button row was becoming a tall column next to the tiles; its actions now live in the left rail */
 body[data-theme="win10"] #start-bottom{display:none!important}
 </style>
+
+<style id="win7-aero">
+/* ═══════════ Windows 7 (Aero) — accuracy pass ═══════════ */
+body[data-theme="win7"][data-color-mode]{--font:'Segoe UI',Tahoma,Arial,sans-serif}
+
+/* ── Taskbar ── */
+body[data-theme="win7"][data-color-mode] #taskbar{height:40px;padding:0 0 0 4px;gap:0;align-items:center;
+  background:
+   linear-gradient(rgba(255,255,255,.2),rgba(255,255,255,.04) 48%,rgba(0,0,0,.14) 52%,rgba(0,0,0,.24)),
+   linear-gradient(rgba(82,128,184,.9),rgba(30,66,114,.95));
+  backdrop-filter:blur(8px) saturate(1.5);-webkit-backdrop-filter:blur(8px) saturate(1.5);
+  border-top:1px solid rgba(0,0,0,.6);box-shadow:inset 0 1px 0 rgba(255,255,255,.45)}
+body[data-theme="win7"][data-color-mode] #tb-apps{gap:2px;padding:0 4px;align-items:center}
+
+/* ── Start orb (real sprite: normal / hover / pressed) ── */
+body[data-theme="win7"][data-color-mode] #start-orb{position:relative;flex:0 0 54px;width:54px;height:54px;margin:0 8px -2px 0;align-self:flex-end;border-radius:50%;
+  background:none;box-shadow:none;font-size:0;color:transparent;transition:none;overflow:visible;cursor:pointer;filter:none}
+body[data-theme="win7"][data-color-mode] #start-orb:hover{background:none;filter:none}
+body[data-theme="win7"][data-color-mode] #start-orb i{display:none}
+body[data-theme="win7"][data-color-mode] #start-orb::before,body[data-theme="win7"][data-color-mode] #start-orb::after{content:'';position:absolute;left:50%;top:50%;width:90px;height:90px;margin:-45px 0 0 -45px;
+  background-image:url("./orbs/windows7.png");background-repeat:no-repeat;
+  background-size:100% 300%;   /* sprite is 3 stacked frames: normal / hover / pressed */
+  pointer-events:none}
+body[data-theme="win7"][data-color-mode] #start-orb::before{background-position:center top}      /* normal  */
+body[data-theme="win7"][data-color-mode] #start-orb::after{background-position:center 50%;opacity:0;transition:opacity .3s ease}  /* hover */
+body[data-theme="win7"][data-color-mode] #start-orb:hover::after{opacity:1}
+body[data-theme="win7"][data-color-mode].start-open #start-orb::after,body[data-theme="win7"][data-color-mode] #start-orb:active::after{background-position:center bottom;opacity:1;transition:none}  /* pressed */
+
+/* ── Taskbar buttons ── */
+body[data-theme="win7"][data-color-mode] .tb-btn{width:56px;min-width:56px;max-width:56px;height:38px;padding:0;margin:0 1px;border-radius:4px;justify-content:center;
+  border:1px solid transparent!important;background:transparent;box-shadow:none;opacity:1;color:#fff;animation:none;transition:background .2s,box-shadow .2s}
+body[data-theme="win7"][data-color-mode] .tb-btn.tb-pinned{opacity:1}
+body[data-theme="win7"][data-color-mode] .tb-btn .tbi{font-size:20px;filter:drop-shadow(0 1px 2px rgba(0,0,0,.6))}
+body[data-theme="win7"][data-color-mode] .tb-btn .tbi img{width:28px;height:28px}
+body[data-theme="win7"][data-color-mode] .tb-btn:not(.tb-pinned){border-color:rgba(12,22,40,.75)!important;
+  background:linear-gradient(rgba(255,255,255,.36),rgba(255,255,255,.13) 48%,rgba(255,255,255,.04) 50%,rgba(255,255,255,.2));
+  box-shadow:inset 0 0 0 1px rgba(255,255,255,.4)}
+body[data-theme="win7"][data-color-mode] .tb-btn:hover{border-color:rgba(12,22,40,.75)!important;
+  background:radial-gradient(ellipse at 50% 0,rgba(255,255,255,.6),rgba(255,255,255,0) 75%),linear-gradient(rgba(255,255,255,.34),rgba(255,255,255,.1) 48%,rgba(255,255,255,.04) 50%,rgba(255,255,255,.2));
+  box-shadow:inset 0 0 0 1px rgba(255,255,255,.55)}
+body[data-theme="win7"][data-color-mode] .tb-btn.active{border-color:rgba(8,16,32,.85)!important;
+  background:linear-gradient(rgba(255,255,255,.58),rgba(255,255,255,.3) 48%,rgba(255,255,255,.14) 50%,rgba(255,255,255,.34));
+  box-shadow:inset 0 0 0 1px rgba(255,255,255,.65),0 0 7px rgba(150,200,255,.55)}
+
+/* ── Notification area ── */
+body[data-theme="win7"][data-color-mode] #tb-right{gap:0;padding:0;height:40px;align-self:stretch;border-left:0}
+body[data-theme="win7"][data-color-mode] .w10-tray,body[data-theme="win7"][data-color-mode] #tray-notif{display:flex;align-items:center;justify-content:center;width:24px;height:40px;color:#fff;font-size:12px;cursor:default;filter:drop-shadow(0 1px 1px rgba(0,0,0,.7))}
+body[data-theme="win7"][data-color-mode] .w10-tray:hover,body[data-theme="win7"][data-color-mode] #tray-notif:hover{background:rgba(255,255,255,.2)}
+body[data-theme="win7"][data-color-mode] #tb-right>.w10-tray:nth-child(4){display:none}
+body[data-theme="win7"][data-color-mode] #tray-chev{order:1}
+body[data-theme="win7"][data-color-mode] #tray-notif{order:2}
+body[data-theme="win7"][data-color-mode] #tray-notif i{display:none}
+body[data-theme="win7"][data-color-mode] #tray-notif::before{content:"\f024";font-family:"Font Awesome 6 Free";font-weight:900;font-size:12px}
+body[data-theme="win7"][data-color-mode] #tb-right>.w10-tray:nth-child(5){order:3}
+body[data-theme="win7"][data-color-mode] #tb-right>.w10-tray:nth-child(6){order:4}
+body[data-theme="win7"][data-color-mode] #tray-battery{order:5;color:#fff}
+body[data-theme="win7"][data-color-mode] #tb-clock{order:6;font-size:12px;line-height:1.25;padding:0 9px;margin:0;color:#fff;text-align:center;text-shadow:0 0 4px rgba(0,0,0,.85);align-self:center}
+body[data-theme="win7"][data-color-mode] #tray-fs,body[data-theme="win7"][data-color-mode] #tray-crash{order:0}
+body[data-theme="win7"][data-color-mode] #w7-showdesk{display:block;order:7;width:15px;align-self:stretch;margin-left:3px;cursor:default;
+  border-left:1px solid rgba(0,0,0,.5);box-shadow:inset 1px 0 0 rgba(255,255,255,.55);
+  background:linear-gradient(rgba(255,255,255,.3),rgba(255,255,255,.06) 50%,rgba(255,255,255,.14))}
+body[data-theme="win7"][data-color-mode] #w7-showdesk:hover{background:linear-gradient(rgba(255,255,255,.6),rgba(180,215,255,.3) 50%,rgba(255,255,255,.35))}
+#w7-showdesk{display:none}
+
+/* ── Desktop icons ── */
+body[data-theme="win7"][data-color-mode] .desktop-icon{border-radius:3px}
+body[data-theme="win7"][data-color-mode] .desktop-icon:hover{background:linear-gradient(rgba(255,255,255,.34),rgba(255,255,255,.12));border-color:rgba(255,255,255,.5);box-shadow:inset 0 0 0 1px rgba(255,255,255,.28)}
+body[data-theme="win7"][data-color-mode] .desktop-icon.selected{background:linear-gradient(rgba(150,190,240,.5),rgba(90,140,210,.4));border-color:rgba(255,255,255,.6);box-shadow:inset 0 0 0 1px rgba(255,255,255,.35)}
+body[data-theme="win7"][data-color-mode] .desktop-icon .di-label{font-size:12px;text-shadow:0 0 3px #000,0 1px 3px #000}
+
+/* ── Aero glass windows ── */
+body[data-theme="win7"][data-color-mode] .app-win{border:1px solid rgba(0,0,0,.72);border-top:1px solid rgba(0,0,0,.72)!important;border-radius:8px 8px 0 0;overflow:hidden;
+  background:linear-gradient(rgba(196,218,242,.62),rgba(120,166,216,.7));
+  backdrop-filter:blur(10px) saturate(1.5);-webkit-backdrop-filter:blur(10px) saturate(1.5);
+  box-shadow:inset 0 0 0 1px rgba(255,255,255,.55),0 6px 26px rgba(0,0,0,.55)}
+body[data-theme="win7"][data-color-mode] .app-win::before{content:'';position:absolute;inset:0;pointer-events:none;z-index:0;
+  background:linear-gradient(113deg,rgba(255,255,255,.3) 0,rgba(255,255,255,.3) 20%,rgba(255,255,255,0) 20%,rgba(255,255,255,0) 34%,rgba(255,255,255,.16) 34%,rgba(255,255,255,.16) 46%,rgba(255,255,255,0) 46%)}
+body[data-theme="win7"][data-color-mode] .app-win>.win-tb,body[data-theme="win7"][data-color-mode] .app-win>.win-frame-wrap,body[data-theme="win7"][data-color-mode] .app-win>.term-body,body[data-theme="win7"][data-color-mode] .app-win>.tm-body{position:relative;z-index:1}
+body[data-theme="win7"][data-color-mode] .app-win.win-fs{border-radius:0}
+body[data-theme="win7"][data-color-mode] .win-tb{background:transparent;height:30px;padding:0 6px 0 8px;gap:6px;align-items:flex-start}
+body[data-theme="win7"][data-color-mode] .win-ico-wrap{align-self:center}
+body[data-theme="win7"][data-color-mode] .win-title{align-self:center;font-size:12px;color:#000;text-shadow:0 0 10px #fff,0 0 6px #fff,0 0 3px #fff}
+body[data-theme="win7"][data-color-mode] .win-frame-wrap,body[data-theme="win7"][data-color-mode] .term-body,body[data-theme="win7"][data-color-mode] .tm-body{margin:0 8px 8px;box-shadow:0 0 0 1px rgba(0,0,0,.55)}
+body[data-theme="win7"][data-color-mode] .win-ctrl{height:19px;width:28px;margin:0 0 0 -1px;align-self:flex-start;position:relative;font-size:0;color:#000;
+  border:1px solid rgba(8,16,30,.7);border-top:none;border-radius:0;
+  background:linear-gradient(rgba(255,255,255,.62),rgba(222,234,248,.4) 46%,rgba(150,180,215,.35) 50%,rgba(200,220,240,.5));
+  box-shadow:inset 0 0 0 1px rgba(255,255,255,.55);transition:none}
+body[data-theme="win7"][data-color-mode] .win-ctrl:hover{color:#000;filter:none;
+  background:linear-gradient(rgba(230,250,255,.9),rgba(150,225,250,.75) 46%,rgba(60,190,240,.7) 50%,rgba(150,235,252,.85));
+  box-shadow:inset 0 0 0 1px rgba(255,255,255,.7),0 0 6px rgba(120,220,255,.9)}
+body[data-theme="win7"][data-color-mode] .win-ctrl:first-of-type{border-bottom-left-radius:5px}
+body[data-theme="win7"][data-color-mode] .win-ctrl::before{content:'';position:absolute;left:50%;top:50%;box-sizing:border-box}
+body[data-theme="win7"][data-color-mode] .win-ctrl[title="Minimize"]::before{width:11px;height:5px;margin:-1px 0 0 -5.5px;background:#fff;border:1px solid #2a3a50;border-radius:1px}
+body[data-theme="win7"][data-color-mode] .win-ctrl[title="Maximize"]::before{width:12px;height:9px;margin:-4.5px 0 0 -6px;border:2px solid #fff;border-top-width:3px;box-shadow:0 0 0 1px #2a3a50,inset 0 0 0 1px #2a3a50}
+body[data-theme="win7"][data-color-mode] .win-ctrl.wc-close,body[data-theme="win7"][data-color-mode] .win-ctrl.wc-close:hover{width:47px;font-size:12px;font-weight:700;color:#fff;border-bottom-right-radius:5px;
+  text-shadow:0 0 3px rgba(60,0,0,.9),0 0 1px #000;
+  background:linear-gradient(#f0b8a8,#d9694f 46%,#bb2a10 50%,#d95f36);
+  box-shadow:inset 0 0 0 1px rgba(255,255,255,.45)}
+body[data-theme="win7"][data-color-mode] .win-ctrl.wc-close:hover{background:linear-gradient(#ffd6c8,#f0856a 46%,#d9381a 50%,#f58a52);box-shadow:inset 0 0 0 1px rgba(255,255,255,.6),0 0 8px rgba(255,110,80,.9)}
+body[data-theme="win7"][data-color-mode] .win-ctrl.wc-close::before{display:none}
+
+/* ── Dialogs (Aero glass frame, flat #f0f0f0 client) ── */
+body[data-theme="win7"][data-color-mode] .modal{background:linear-gradient(rgba(196,218,242,.8),rgba(120,166,216,.85))!important;
+  backdrop-filter:blur(10px) saturate(1.5);-webkit-backdrop-filter:blur(10px) saturate(1.5);
+  border:1px solid rgba(0,0,0,.72);border-radius:8px;padding:0 8px 8px;position:relative;overflow:hidden;
+  box-shadow:inset 0 0 0 1px rgba(255,255,255,.55),0 8px 30px rgba(0,0,0,.55)}
+body[data-theme="win7"][data-color-mode] .modal::before{content:'';position:absolute;inset:0;pointer-events:none;z-index:0;
+  background:linear-gradient(113deg,rgba(255,255,255,.3) 0,rgba(255,255,255,.3) 20%,rgba(255,255,255,0) 20%,rgba(255,255,255,0) 34%,rgba(255,255,255,.16) 34%,rgba(255,255,255,.16) 46%,rgba(255,255,255,0) 46%)}
+body[data-theme="win7"][data-color-mode] .modal>*{position:relative;z-index:1}
+body[data-theme="win7"][data-color-mode] .modal-head{background:transparent!important;border:0;height:30px;padding:0 4px}
+body[data-theme="win7"][data-color-mode] .modal-head h2{font-size:12px;font-weight:400;color:#000!important;padding:0;text-shadow:0 0 10px #fff,0 0 6px #fff,0 0 3px #fff}
+body[data-theme="win7"][data-color-mode] .modal-body{background:#f0f0f0;color:#000;padding:14px 16px;border:1px solid rgba(0,0,0,.55);border-bottom:0}
+body[data-theme="win7"][data-color-mode] .modal-foot{background:#f0f0f0!important;border:1px solid rgba(0,0,0,.55);border-top:1px solid #dfdfdf;padding:10px 12px;gap:8px}
+body[data-theme="win7"][data-color-mode] .f-label{color:#000!important;font-size:12px;font-weight:400;text-transform:none;letter-spacing:0}
+body[data-theme="win7"][data-color-mode] .f-inp,body[data-theme="win7"][data-color-mode] .f-sel{background:#fff!important;color:#000!important;font:12px 'Segoe UI',Tahoma,sans-serif;
+  border:1px solid #abadb3;border-top-color:#e2e3ea;border-radius:2px;padding:4px 5px}
+body[data-theme="win7"][data-color-mode] .f-inp:focus,body[data-theme="win7"][data-color-mode] .f-sel:focus{border-color:#3d7bad;border-top-color:#5794bf;outline:none;box-shadow:0 0 3px rgba(61,123,173,.6)}
+body[data-theme="win7"][data-color-mode] .btn-p,body[data-theme="win7"][data-color-mode] .btn-p:not([style]),body[data-theme="win7"][data-color-mode] .btn-s{font:12px 'Segoe UI',Tahoma,sans-serif;font-weight:400;color:#000!important;min-width:75px;padding:3px 14px;
+  border:1px solid #707070!important;border-radius:3px;cursor:default;
+  background:linear-gradient(#f2f2f2 0,#ebebeb 49%,#ddd 50%,#cfcfcf 100%)!important;
+  box-shadow:inset 0 0 0 1px rgba(255,255,255,.75)}
+body[data-theme="win7"][data-color-mode] .btn-p,body[data-theme="win7"][data-color-mode] .btn-p:not([style]){border-color:#3c7fb1!important;box-shadow:inset 0 0 0 1px rgba(55,215,255,.75)}
+body[data-theme="win7"][data-color-mode] .btn-p:hover,body[data-theme="win7"][data-color-mode] .btn-p:not([style]):hover,body[data-theme="win7"][data-color-mode] .btn-s:hover{filter:none;border-color:#3c7fb1!important;
+  background:linear-gradient(#eaf6fd 0,#d9f0fc 49%,#bee6fd 50%,#a7d9f5 100%)!important;box-shadow:inset 0 0 0 1px rgba(255,255,255,.7)}
+body[data-theme="win7"][data-color-mode] .btn-p:active,body[data-theme="win7"][data-color-mode] .btn-p:not([style]):active,body[data-theme="win7"][data-color-mode] .btn-s:active{border-color:#2c628b!important;
+  background:linear-gradient(#e5f4fc 0,#c4e5f6 49%,#98d1ef 50%,#68b3db 100%)!important;box-shadow:inset 1px 1px 2px rgba(0,0,0,.3)}
+
+/* ── Context menus ── */
+body[data-theme="win7"][data-color-mode] #ctx{background:#f1f1f1;border:1px solid #979797;border-radius:0;padding:2px;box-shadow:2px 2px 4px rgba(0,0,0,.4)}
+body[data-theme="win7"][data-color-mode] #ctx div{font-size:12px;color:#000;border:1px solid transparent;border-radius:3px;padding:5px 26px}
+body[data-theme="win7"][data-color-mode] #ctx div:hover{background:linear-gradient(#f6fbfe,#d7e9fa);border-color:#a8d2fd;color:#000}
+
+/* ── Start menu ── */
+body[data-theme="win7"][data-color-mode] #start-bg-layer,body[data-theme="win7"][data-color-mode] #start-pattern-canvas,body[data-theme="win7"][data-color-mode] #start-topbar,body[data-theme="win7"][data-color-mode] #start-accent-bar,body[data-theme="win7"][data-color-mode] #start-tiles-scroll{display:none!important}
+body[data-theme="win7"][data-color-mode] #start-bottom,body[data-theme="win7"][data-color-mode] #gn-dock{display:none!important}
+body[data-theme="win7"][data-color-mode] #start{overflow:visible;padding:5px 5px 17px;flex-direction:column;
+  background:
+   linear-gradient(rgba(255,255,255,.22),rgba(255,255,255,.03) 38%,rgba(0,0,0,.1)),
+   linear-gradient(rgba(74,120,176,.9),rgba(22,52,94,.95));
+  backdrop-filter:blur(10px) saturate(1.5);-webkit-backdrop-filter:blur(10px) saturate(1.5);
+  border:1px solid rgba(0,0,0,.72);border-radius:8px 8px 0 0;
+  box-shadow:inset 0 0 0 1px rgba(255,255,255,.4),0 0 18px rgba(0,0,0,.55)}
+body[data-theme="win7"][data-color-mode] #start-win7-layout{position:relative;flex:1;min-height:0;gap:6px;font:12px 'Segoe UI',Tahoma,sans-serif}
+body[data-theme="win7"][data-color-mode] #w7-left{flex:0 0 63%;display:flex;flex-direction:column;min-height:0;overflow:hidden;background:#fff;color:#000;
+  border:1px solid rgba(0,0,0,.5);border-radius:4px;box-shadow:inset 0 0 0 1px rgba(255,255,255,.9),0 0 0 1px rgba(255,255,255,.14)}
+body[data-theme="win7"][data-color-mode] #start-left-pinned-view,body[data-theme="win7"][data-color-mode] #start-left-allprograms-view{flex:1;min-height:0;flex-direction:column}
+body[data-theme="win7"][data-color-mode] #start-left-pinned-view{display:flex}
+body[data-theme="win7"][data-color-mode] #start-left-items,body[data-theme="win7"][data-color-mode] #start-all-apps-list{flex:1;min-height:0;overflow-y:auto;overflow-x:hidden;padding:4px 3px}
+body[data-theme="win7"][data-color-mode] .w7-item{display:flex;align-items:center;gap:6px;height:36px;padding:0 6px;border:1px solid transparent;border-radius:3px;cursor:default;color:#000;font-size:12px;white-space:nowrap}
+body[data-theme="win7"][data-color-mode] .w7-item span{overflow:hidden;text-overflow:ellipsis;flex:1;pointer-events:none}
+body[data-theme="win7"][data-color-mode] .w7-item:hover{border-color:#b8d6fb;background:linear-gradient(#f9fcff,#e3f0fd);box-shadow:inset 0 0 0 1px rgba(255,255,255,.85)}
+body[data-theme="win7"][data-color-mode] .w7-ico{width:32px;height:32px;flex:0 0 32px;display:flex;align-items:center;justify-content:center;pointer-events:none}
+body[data-theme="win7"][data-color-mode] .w7-ico img{width:32px;height:32px;object-fit:contain}
+body[data-theme="win7"][data-color-mode] .w7-ico-fa{background:var(--accent,#0078d4);border-radius:5px;color:#fff;font-size:17px;box-shadow:inset 0 0 0 1px rgba(255,255,255,.35),inset 0 8px 8px rgba(255,255,255,.18)}
+body[data-theme="win7"][data-color-mode] .w7-sm{height:22px}
+body[data-theme="win7"][data-color-mode] .w7-sm .w7-ico{width:16px;height:16px;flex-basis:16px;font-size:9px;border-radius:3px}
+body[data-theme="win7"][data-color-mode] .w7-sm .w7-ico img{width:16px;height:16px}
+body[data-theme="win7"][data-color-mode] .w7-tri{width:0;height:0;margin:0 7px 0 9px;border-left:5px solid #222;border-top:4px solid transparent;border-bottom:4px solid transparent;flex:0 0 auto}
+body[data-theme="win7"][data-color-mode] .w7-tri.back{border-left:0;border-right:5px solid #222}
+body[data-theme="win7"][data-color-mode] #w7-allprog-wrap{padding:3px 3px;border-top:1px solid #dde4ec;flex:0 0 auto}
+body[data-theme="win7"][data-color-mode] #w7-allprog-wrap .w7-item{height:26px}
+body[data-theme="win7"][data-color-mode] #w7-search{position:relative;flex:0 0 auto;padding:6px 6px 7px;border-top:1px solid #dde4ec;background:linear-gradient(#fff,#f1f5fa)}
+body[data-theme="win7"][data-color-mode] #start-win7-search{width:100%;height:23px;padding:0 26px 0 6px;font:12px 'Segoe UI',Tahoma,sans-serif;color:#000;background:#fff;
+  border:1px solid #8a9bb0;border-top-color:#aebccc;border-radius:3px;outline:none}
+body[data-theme="win7"][data-color-mode] #start-win7-search::placeholder{color:#6d6d6d}
+body[data-theme="win7"][data-color-mode] #start-win7-search:focus{border-color:#3d7bad;box-shadow:0 0 3px rgba(61,123,173,.55)}
+body[data-theme="win7"][data-color-mode] #w7-search i{position:absolute;right:14px;top:50%;margin-top:-6px;font-size:12px;color:#3b6ea6;pointer-events:none}
+body[data-theme="win7"][data-color-mode] #w7-right{flex:1;min-width:0;display:flex;flex-direction:column;padding:34px 0 7px 2px;color:#fff}
+body[data-theme="win7"][data-color-mode] .w7-r{display:flex;align-items:center;height:28px;padding:0 10px;border:1px solid transparent;border-radius:3px;cursor:default;color:#fff;font-size:12px;white-space:nowrap;text-shadow:0 0 3px rgba(0,0,0,.35)}
+body[data-theme="win7"][data-color-mode] .w7-r:hover{background:linear-gradient(rgba(255,255,255,.36),rgba(255,255,255,.12) 50%,rgba(255,255,255,.2));border-color:rgba(255,255,255,.5);box-shadow:inset 0 0 0 1px rgba(255,255,255,.22)}
+body[data-theme="win7"][data-color-mode] #w7-rspacer{flex:1}
+body[data-theme="win7"][data-color-mode] #w7-shutdown{display:flex;height:24px;margin:0 4px;border:1px solid rgba(0,0,0,.7);border-radius:3px;cursor:default;color:#fff;
+  background:linear-gradient(rgba(255,255,255,.3),rgba(255,255,255,.08) 48%,rgba(0,0,0,.12) 50%,rgba(255,255,255,.08));box-shadow:inset 0 0 0 1px rgba(255,255,255,.35)}
+body[data-theme="win7"][data-color-mode] #w7-shutdown:hover{background:linear-gradient(rgba(255,255,255,.55),rgba(180,215,255,.22) 48%,rgba(60,120,200,.25) 50%,rgba(255,255,255,.25))}
+body[data-theme="win7"][data-color-mode] #w7-shutdown span{flex:1;display:flex;align-items:center;justify-content:center;padding:0 8px;pointer-events:none}
+body[data-theme="win7"][data-color-mode] #w7-shutdown b{width:22px;display:flex;align-items:center;justify-content:center;border-left:1px solid rgba(0,0,0,.5);box-shadow:inset 1px 0 0 rgba(255,255,255,.3);pointer-events:none}
+body[data-theme="win7"][data-color-mode] #w7-shutdown b::after{content:'';border-left:4px solid #fff;border-top:4px solid transparent;border-bottom:4px solid transparent}
+body[data-theme="win7"][data-color-mode] #start-profile-pic{position:absolute;right:14px;top:-30px;width:48px;height:48px;z-index:3;padding:3px;border-radius:5px;box-sizing:border-box;overflow:hidden;
+  display:flex;align-items:center;justify-content:center;color:#fff;font-size:22px;
+  background:linear-gradient(rgba(255,255,255,.6),rgba(150,190,235,.5));border:1px solid rgba(0,0,0,.65);box-shadow:inset 0 0 0 1px rgba(255,255,255,.65),0 1px 4px rgba(0,0,0,.5)}
+body[data-theme="win7"][data-color-mode] #start-profile-pic img{border-radius:2px}
+body[data-theme="win7"][data-color-mode] #start-profile-pic i{width:100%;height:100%;display:flex;align-items:center;justify-content:center;border-radius:2px;background:linear-gradient(#ffd070,#ee6a2c);color:#fff}
+</style>
 </head>
 <body>
 
@@ -1661,45 +1755,32 @@ body[data-theme="win10"] #start-bottom{display:none!important}
   </div>
   <div id="start-accent-bar"></div>
   <!-- Windows 7 Start Menu Layout -->
-  <div id="start-win7-layout" style="display:none;flex:1;overflow:hidden;display:flex;background:linear-gradient(to right,#1e395b 280px,#6b8db5 280px);">
-    <!-- Left sidebar with pinned items and search -->
-    <div id="start-left-panel" style="width:280px;background:linear-gradient(to right,#1e395b,#2d5a8c);display:flex;flex-direction:column;padding:0;overflow:hidden;border-right:1px solid rgba(255,255,255,.2);">
-      <!-- Pinned apps view -->
-      <div id="start-left-pinned-view" style="flex:1;overflow-y:auto;padding:0;display:flex;flex-direction:column;">
-        <div id="start-left-items" style="flex:0 0 auto;padding:0;"></div>
-        <div style="border-top:1px solid rgba(255,255,255,.3);padding:8px;background:rgba(0,0,0,.1);">
-          <input id="start-win7-search" type="text" placeholder="Search programs and files" style="width:100%;padding:4px 6px;border:1px solid #7a9bbe;background:#fff;color:#000;font-size:11px;font-family:Segoe UI,sans-serif;">
-        </div>
+  <div id="start-win7-layout" style="display:none">
+    <div id="start-profile-pic"><i class="fa-solid fa-user"></i></div>
+    <div id="w7-left">
+      <div id="start-left-pinned-view">
+        <div id="start-left-items"></div>
+        <div id="w7-allprog-wrap"><div class="w7-item" id="w7-allprog"><div class="w7-tri"></div><span>All Programs</span></div></div>
       </div>
-      
-      <!-- All Programs view (hidden by default) -->
-      <div id="start-left-allprograms-view" style="flex:1;overflow-y:auto;padding:0;display:none;flex-direction:column;">
-        <div style="padding:8px;background:rgba(0,0,0,.15);border-bottom:1px solid rgba(255,255,255,.2);flex-shrink:0;display:flex;align-items:center;gap:8px;cursor:pointer;color:#fff;font-size:11px;font-weight:bold;z-index:11;position:relative;" id="back-btn">
-          <i class="fa-solid fa-arrow-left" style="font-size:12px;pointer-events:none;"></i>
-          <span style="pointer-events:none;">Back</span>
-        </div>
-        <div id="start-all-apps-list" style="flex:1;overflow-y:auto;padding:0;"></div>
+      <div id="start-left-allprograms-view" style="display:none">
+        <div id="start-all-apps-list"></div>
+        <div class="w7-allprog-wrap" style="padding:3px;border-top:1px solid #dde4ec"><div class="w7-item" id="back-btn"><div class="w7-tri back"></div><span>Back</span></div></div>
       </div>
+      <div id="w7-search"><input id="start-win7-search" type="text" placeholder="Search programs and files" autocomplete="off" spellcheck="false"><i class="fa-solid fa-magnifying-glass"></i></div>
     </div>
-    <!-- Right side with user info and recent programs -->
-    <div id="start-right-panel" style="flex:1;background:linear-gradient(to bottom,#6b8db5,#5a7a9a);padding:12px;display:flex;flex-direction:column;overflow-y:auto;">
-      <div id="start-user-section" style="border-bottom:1px solid rgba(255,255,255,.3);padding-bottom:12px;margin-bottom:12px;display:flex;gap:10px;">
-        <div id="start-profile-pic" style="width:48px;height:48px;border-radius:4px;background:#fff;display:flex;align-items:center;justify-content:center;color:#000;font-size:24px;flex-shrink:0;overflow:hidden;">
-          <i class="fa-solid fa-user"></i>
-        </div>
-        <div style="flex:1;display:flex;flex-direction:column;justify-content:center;">
-          <div id="start-user-name" style="color:#fff;font-weight:bold;font-size:13px;">User</div>
-          <div style="color:rgba(255,255,255,.8);font-size:11px;">Local Account</div>
-        </div>
-      </div>
-      <div id="start-recent-section" style="flex:1;">
-        <div style="color:rgba(255,255,255,.7);font-size:11px;font-weight:bold;margin-bottom:6px;letter-spacing:.5px;text-transform:uppercase;">Pinned Programs</div>
-        <div id="start-pinned-list"></div>
-      </div>
-      <div style="border-top:1px solid rgba(255,255,255,.3);padding-top:8px;display:flex;gap:4px;">
-        <button onclick="openModal('m-settings')" style="flex:1;background:linear-gradient(to bottom,#f0f0f0,#e0e0e0);border:2px solid;border-color:#ffffff #808080 #808080 #ffffff;color:#000;font-size:11px;padding:4px;cursor:pointer;">Settings</button>
-        <button onclick="dnPowerMenu(event)" style="flex:1;background:linear-gradient(to bottom,#f0f0f0,#e0e0e0);border:2px solid;border-color:#ffffff #808080 #808080 #ffffff;color:#000;font-size:11px;padding:4px;cursor:pointer;">Power</button>
-      </div>
+    <div id="w7-right">
+      <div class="w7-r" id="start-user-name" onclick="w7Open('settings')">User</div>
+      <div class="w7-r" onclick="w7Open('Documents')">Documents</div>
+      <div class="w7-r" onclick="w7Open('Pictures')">Pictures</div>
+      <div class="w7-r" onclick="w7Open('Music')">Music</div>
+      <div class="w7-r" onclick="w7Open('Games')">Games</div>
+      <div class="w7-r" onclick="w7Open('Computer')">Computer</div>
+      <div class="w7-r" onclick="w7Open('settings')">Control Panel</div>
+      <div class="w7-r" onclick="w7Open('settings')">Devices and Printers</div>
+      <div class="w7-r" onclick="w7Open('settings')">Default Programs</div>
+      <div class="w7-r" onclick="w7Open('help')">Help and Support</div>
+      <div id="w7-rspacer"></div>
+      <div id="w7-shutdown" onclick="dnPowerMenu(event)"><span>Shut down</span><b></b></div>
     </div>
   </div>
   <div id="start-tiles-scroll"></div>
@@ -1779,7 +1860,7 @@ body[data-theme="win10"] #start-bottom{display:none!important}
   <div id="taskbar">
     <div id="start-orb" onclick="toggleStart()" title="Menu"><i class="fa-solid fa-grip"></i></div>
     <input id="tb-search" placeholder="Type here to search" autocomplete="off" spellcheck="false"><div id="tb-cortana" title="Cortana"></div><div id="tb-taskview" title="Task View" onclick="toggleActionCenter(event)"><i class="fa-regular fa-clone"></i></div><div id="tb-apps"></div>
-    <div id="tb-right"><div id="tray-fs" title="Back to Fullscreen" onclick="goFullscreen()"><i class="fa-solid fa-expand"></i><span>Back to Fullscreen</span></div><div id="tray-crash" title="Stop Window Avalanche" onclick="stopWindowCrash()"><i class="fa-solid fa-bolt"></i></div><div class="w10-tray" id="tray-chev"><i class="fa-solid fa-chevron-up"></i></div><div class="w10-tray"><i class="fa-solid fa-cloud"></i></div><div class="w10-tray"><i class="fa-solid fa-desktop"></i></div><div class="w10-tray" onclick="toggleActionCenter(event)"><i class="fa-solid fa-volume-high"></i></div><div id="tray-battery" title="Battery" onclick="toggleActionCenter(event)"><i class="fa-solid fa-battery-full"></i><span></span></div><div id="tb-clock" onclick="toggleActionCenter(event)"></div><div class="w10-tray" id="tray-notif" title="Action center" onclick="toggleActionCenter(event)"><i class="fa-regular fa-message"></i></div></div>
+    <div id="tb-right"><div id="tray-fs" title="Back to Fullscreen" onclick="goFullscreen()"><i class="fa-solid fa-expand"></i><span>Back to Fullscreen</span></div><div id="tray-crash" title="Stop Window Avalanche" onclick="stopWindowCrash()"><i class="fa-solid fa-bolt"></i></div><div class="w10-tray" id="tray-chev"><i class="fa-solid fa-chevron-up"></i></div><div class="w10-tray"><i class="fa-solid fa-cloud"></i></div><div class="w10-tray"><i class="fa-solid fa-desktop"></i></div><div class="w10-tray" onclick="toggleActionCenter(event)"><i class="fa-solid fa-volume-high"></i></div><div id="tray-battery" title="Battery" onclick="toggleActionCenter(event)"><i class="fa-solid fa-battery-full"></i><span></span></div><div id="tb-clock" onclick="toggleActionCenter(event)"></div><div class="w10-tray" id="tray-notif" title="Action center" onclick="toggleActionCenter(event)"><i class="fa-regular fa-message"></i></div><div id="w7-showdesk" title="Show desktop" onclick="w7ShowDesktop(event)"></div></div>
   </div>
 
   <!-- Action center -->
@@ -3083,6 +3164,8 @@ function tickClock(){
     tbc.textContent=n.toLocaleString(undefined,S.clock24?{hourCycle:'h23'}:{hour12:true});
   }else if(S.theme==='win10'){
     tbc.innerHTML=`<div>${h}:${m}${apm}</div><div>${n.toLocaleDateString('en-US')}</div>`;
+  }else if(S.theme==='win7'){
+    tbc.innerHTML=`<div>${h}:${m}${apm}</div><div>${n.getMonth()+1}/${n.getDate()}/${n.getFullYear()}</div>`;
   }else if(S.theme==='gnome'){
     tbc.innerHTML=`<span>${days[n.getDay()].slice(0,3)} ${h}:${m}${apm}</span>`;
   }else{
@@ -3106,118 +3189,59 @@ function unlock(){
   ls.classList.add('unlocking');ls.style.pointerEvents='none';
   setTimeout(()=>{ls.style.display='none';(S.theme==='defaultnew'||BOOT.oneApp)?goDesktop():showStart();},460);
 }
+function w7Icon(app,small){
+  const wrap=document.createElement('div');wrap.className='w7-ico';
+  if(app&&app.iconUrl){
+    const img=document.createElement('img');
+    iconFallback(img,()=>{const f=document.createElement('i');f.className=faForKey((app&&app.icon)||'globe');return f;});
+    img.src=getCachedAsset(app.iconUrl);
+    wrap.appendChild(img);
+  }else{
+    wrap.classList.add('w7-ico-fa');
+    const ico=document.createElement('i');ico.className=faForKey((app&&app.icon)||'globe');wrap.appendChild(ico);
+  }
+  return wrap;
+}
+function w7Row(app,small){
+  const row=document.createElement('div');row.className='w7-item'+(small?' w7-sm':'');
+  row.appendChild(w7Icon(app,small));
+  const label=document.createElement('span');label.textContent=app.name;row.appendChild(label);
+  row.addEventListener('click',e=>{e.stopPropagation();launchApp(app,false);});
+  return row;
+}
+// right-hand column: open a matching app if there is one, otherwise Personalize / a short notice
+function w7Open(what){
+  if(what==='settings'){goDesktop();openModal('m-settings');return;}
+  if(what==='help'){goDesktop();notify('Help and Support is not available in this simulator.');return;}
+  const re={Documents:/doc|file|explor|note/i,Pictures:/photo|picture|gallery|paint/i,Music:/music|spotify|player|media|sound/i,Games:/game|solitaire|chess|mine/i,Computer:/file|explor|computer|task/i}[what];
+  const app=re&&S.apps.find(a=>re.test(a.name));
+  if(app){launchApp(app,false);return;}
+  goDesktop();notify(what+' is not available in this simulator.');
+}
+function w7ShowDesktop(e){
+  if(e)e.stopPropagation();
+  goDesktop();
+  const open=S.openWins.filter(w=>!w.minimized);
+  if(open.length)open.forEach(w=>minWin(w.id));
+  else S.openWins.filter(w=>w.minimized).forEach(w=>toggleWin(w.id));
+}
 function renderWin7StartMenu(){
   const leftPanel=document.getElementById('start-left-items');
-  const pinnedList=document.getElementById('start-pinned-list');
   const allAppsList=document.getElementById('start-all-apps-list');
-  leftPanel.innerHTML='';
-  pinnedList.innerHTML='';
-  allAppsList.innerHTML='';
-  
-  // Left panel: pinned tiles (from Start menu tiles, not taskbar)
-  const pinnedTiles=S.tiles.slice(0,6); // Show first 6 tiles on left
-  pinnedTiles.forEach(tile=>{
-    const app=getApp(tile.appId);
-    if(!app)return;
-    
-    const item=document.createElement('div');
-    item.style.cssText='padding:10px;border-bottom:1px solid rgba(255,255,255,.1);cursor:pointer;display:flex;align-items:center;gap:12px;color:#fff;font-size:12px;transition:background .15s;z-index:10;position:relative;';
-    item.onmouseover=()=>item.style.background='rgba(255,255,255,.1)';
-    item.onmouseout=()=>item.style.background='transparent';
-    
-    // App icon (larger)
-    const iconWrap=document.createElement('div');
-    iconWrap.style.cssText='width:32px;height:32px;flex-shrink:0;display:flex;align-items:center;justify-content:center;pointer-events:none;';
-    if(app.iconUrl){
-      const img=document.createElement('img');
-      iconFallback(img,()=>{const f=document.createElement('i');f.className=faForKey(app.icon||'globe');f.style.cssText='font-size:20px;color:#fff;pointer-events:none;';return f;});
-      img.src=getCachedAsset(app.iconUrl);
-      img.style.cssText='width:100%;height:100%;object-fit:contain;pointer-events:none;';
-      iconWrap.appendChild(img);
-    }else{
-      const ico=document.createElement('i');
-      ico.className=faForKey(app.icon||'globe');
-      ico.style.cssText='font-size:20px;color:#fff;pointer-events:none;';
-      iconWrap.appendChild(ico);
-    }
-    item.appendChild(iconWrap);
-    
-    // App name
-    const label=document.createElement('span');
-    label.textContent=app.name;
-    label.style.cssText='flex:1;pointer-events:none;';
-    item.appendChild(label);
-    
-    item.addEventListener('click',(e)=>{e.stopPropagation();launchApp(app,false);});
-    leftPanel.appendChild(item);
+  if(!leftPanel||!allAppsList)return;
+  leftPanel.innerHTML='';allAppsList.innerHTML='';
+  const q=document.getElementById('start-win7-search');if(q)q.value='';
+  // left: pinned programs (the first Start tiles)
+  S.tiles.slice(0,9).forEach(tile=>{
+    const app=getApp(tile.appId);if(!app)return;
+    const row=w7Row(app,false);
+    row.oncontextmenu=e=>{e.preventDefault();e.stopPropagation();showCtx(e,[{label:'Open',ico:'fa-solid fa-arrow-up-right-from-square',fn:()=>launchApp(app,false)}]);};
+    leftPanel.appendChild(row);
   });
-  
-  // Add "All Programs" button
-  const allAppsBtn=document.createElement('div');
-  allAppsBtn.style.cssText='padding:10px;border-top:1px solid rgba(255,255,255,.2);cursor:pointer;display:flex;align-items:center;gap:12px;color:#fff;font-size:12px;font-weight:bold;transition:background .15s;background:rgba(0,0,0,.2);z-index:10;position:relative;';
-  allAppsBtn.onmouseover=()=>allAppsBtn.style.background='rgba(0,0,0,.35)';
-  allAppsBtn.onmouseout=()=>allAppsBtn.style.background='rgba(0,0,0,.2)';
-  const allAppsIcon=document.createElement('i');
-  allAppsIcon.className='fa-solid fa-th';
-  allAppsIcon.style.cssText='font-size:16px;pointer-events:none;';
-  allAppsBtn.appendChild(allAppsIcon);
-  const allAppsLabel=document.createElement('span');
-  allAppsLabel.textContent='All Programs';
-  allAppsLabel.style.cssText='pointer-events:none;';
-  allAppsBtn.appendChild(allAppsLabel);
-  allAppsBtn.addEventListener('click',(e)=>{e.stopPropagation();showAllProgramsView();});
-  leftPanel.appendChild(allAppsBtn);
-  
-  // Populate all apps list for the submenu
-  const allApps=S.apps.slice().sort((a,b)=>a.name.localeCompare(b.name));
-  allApps.forEach(app=>{
-    const item=document.createElement('div');
-    item.style.cssText='padding:6px 8px;border-bottom:1px solid rgba(255,255,255,.08);cursor:pointer;display:flex;align-items:center;gap:8px;color:#fff;font-size:11px;transition:background .12s;z-index:10;position:relative;';
-    item.onmouseover=()=>item.style.background='rgba(255,255,255,.12)';
-    item.onmouseout=()=>item.style.background='transparent';
-    
-    // Small icon
-    const iconWrap=document.createElement('div');
-    iconWrap.style.cssText='width:16px;height:16px;flex-shrink:0;display:flex;align-items:center;justify-content:center;pointer-events:none;';
-    if(app.iconUrl){
-      const img=document.createElement('img');
-      iconFallback(img,()=>{const f=document.createElement('i');f.className=faForKey(app.icon||'globe');f.style.fontSize='10px';f.style.pointerEvents='none';return f;});
-      img.src=getCachedAsset(app.iconUrl);
-      img.style.cssText='width:100%;height:100%;object-fit:contain;pointer-events:none;';
-      iconWrap.appendChild(img);
-    }else{
-      const ico=document.createElement('i');
-      ico.className=faForKey(app.icon||'globe');
-      ico.style.fontSize='10px';
-      ico.style.pointerEvents='none';
-      iconWrap.appendChild(ico);
-    }
-    item.appendChild(iconWrap);
-    
-    // App name
-    const label=document.createElement('span');
-    label.textContent=app.name;
-    label.style.cssText='flex:1;pointer-events:none;';
-    item.appendChild(label);
-    
-    item.onclick=(e)=>{launchApp(app,false);};
-    allAppsList.appendChild(item);
-  });
-  
-  // Right panel: pinned programs list (from taskbar pins)
-  const tbPinnedApps=S.apps.filter(a=>S.tbPins.includes(a.id));
-  tbPinnedApps.forEach(app=>{
-    const item=document.createElement('div');
-    item.style.cssText='padding:6px 0;cursor:pointer;color:#fff;font-size:12px;transition:opacity .15s;border-bottom:1px solid rgba(255,255,255,.15);z-index:10;position:relative;';
-    item.style.opacity='0.9';
-    item.onmouseover=()=>item.style.opacity='1';
-    item.onmouseout=()=>item.style.opacity='0.9';
-    item.textContent=app.name;
-    item.addEventListener('click',(e)=>{e.stopPropagation();launchApp(app,false);});
-    pinnedList.appendChild(item);
-  });
-  
-  // Update user name and profile pic
+  document.getElementById('w7-allprog').onclick=e=>{e.stopPropagation();showAllProgramsView();};
+  // All Programs list
+  S.apps.slice().sort((a,b)=>a.name.localeCompare(b.name)).forEach(app=>allAppsList.appendChild(w7Row(app,true)));
+  // user name + picture
   document.getElementById('start-user-name').textContent=S.username||'User';
   const profileEl=document.getElementById('start-profile-pic');
   if(S.profilePic){
@@ -3230,6 +3254,7 @@ function renderWin7StartMenu(){
   }else{
     profileEl.innerHTML='<i class="fa-solid fa-user"></i>';
   }
+  goBackToPinned();
 }
 
 function showStart(){
@@ -3274,6 +3299,11 @@ function goDesktop(){
   if(wasHidden){d.classList.add('desk-entering');setTimeout(()=>d.classList.remove('desk-entering'),220);}
   hideApps();updateDockHide();
 }
+(function(){
+  const st=document.getElementById('start');if(!st)return;
+  const sync=()=>document.body.classList.toggle('start-open',st.style.display==='flex'&&!st.classList.contains('start-leaving'));
+  new MutationObserver(sync).observe(st,{attributes:true,attributeFilter:['style','class']});
+})();
 function toggleStart(){
   if(S.theme==='defaultnew'){dnSetMenu(!document.body.classList.contains('dn-open'));return;}
   const s=document.getElementById('start');
@@ -3953,14 +3983,13 @@ function renderAppsGrid(filter){
 }
 document.getElementById('apps-search-inp').addEventListener('input',e=>renderAppsGrid(e.target.value));
 
-// Win7 search in start menu - debounced to avoid issues
+// Win7 search in start menu: typing swaps the pinned list for a filtered program list
 document.addEventListener('input',e=>{
   if(e.target.id==='start-win7-search'){
-    const q=e.target.value.toLowerCase();
-    const items=document.querySelectorAll('#start-all-apps-list > div');
-    items.forEach(item=>{
-      const name=item.textContent.toLowerCase();
-      item.style.display=!q||name.includes(q)?'flex':'none';
+    const q=e.target.value.trim().toLowerCase();
+    if(q)showAllProgramsView();else goBackToPinned();
+    document.querySelectorAll('#start-all-apps-list > div').forEach(item=>{
+      item.style.display=!q||item.textContent.toLowerCase().includes(q)?'flex':'none';
     });
   }
 });
