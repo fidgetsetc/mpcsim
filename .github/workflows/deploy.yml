@@ -1,0 +1,71 @@
+name: Deploy to Surge
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+jobs:
+  # Reads domains.txt (skipping blank lines and # comments) into a JSON array
+  read-domains:
+    runs-on: ubuntu-latest
+    outputs:
+      domains: ${{ steps.parse.outputs.domains }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Parse domains.txt
+        id: parse
+        run: |
+          if [ ! -f domains.txt ]; then
+            echo "❌ Error: domains.txt not found in repo root"
+            exit 1
+          fi
+          domains=$(tr -d '\r' < domains.txt \
+            | sed 's/^[[:space:]]*//;s/[[:space:]]*$//' \
+            | grep -vE '^(#|$)' \
+            | jq -R . | jq -sc .)
+          echo "Domains: $domains"
+          echo "domains=$domains" >> "$GITHUB_OUTPUT"
+
+  # One parallel job per domain; a failure on one doesn't cancel the others
+  deploy:
+    needs: read-domains
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        domain: ${{ fromJson(needs.read-domains.outputs.domains) }}
+    env:
+      DOMAIN: ${{ matrix.domain }}
+      SURGE_LOGIN: ${{ secrets.SURGE_LOGIN }}
+      SURGE_TOKEN: ${{ secrets.SURGE_TOKEN }}
+      WEBHOOK_URL: ${{ secrets.DEPLOY_WEBHOOK_URL }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Install latest Surge
+        run: |
+          npm install -g surge@latest
+          surge --version
+
+      - name: Deploy to ${{ matrix.domain }}
+        run: surge --project . --domain "$DOMAIN"
+
+      - name: Notify success
+        if: success() && env.WEBHOOK_URL != ''
+        run: |
+          curl -sS -H "Content-Type: application/json" -X POST \
+            -d "$(jq -n --arg c "Deployed latest commit to $DOMAIN" '{content: $c}')" \
+            "$WEBHOOK_URL" > /dev/null
+
+      - name: Notify failure
+        if: failure() && env.WEBHOOK_URL != ''
+        run: |
+          curl -sS -H "Content-Type: application/json" -X POST \
+            -d "$(jq -n --arg c "Couldn't deploy latest commit to $DOMAIN" '{content: $c}')" \
+            "$WEBHOOK_URL" > /dev/null
