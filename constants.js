@@ -451,16 +451,16 @@ const DEFAULT_APPS = [
   {
     id: 'app-dm',
     name: 'DuckMath',
-    url: './dm/index.html?back=1',
+    url: './dm/sug.html?back=1',
     icon: 'gear',
     cat: 'Games',
     iconUrl: 'https://avatars.fastly.steamstatic.com/6323b1e849243967b1c201993581ce6065e1b740_full.jpg',
     resolution: 100
   },
   {
-    id: 'app-dm',
+    id: 'app-gn',
     name: 'GNMath',
-    url: './gn/index.html?back=1',
+    url: './gn/sug.html?back=1',
     icon: 'gear',
     cat: 'Games',
     iconUrl: './gn/index.png',
