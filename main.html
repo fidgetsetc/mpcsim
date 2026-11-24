@@ -2380,6 +2380,7 @@ const SOUND_FILES={
   menuMove:      './sounds/moveboot.wav',       // boot manager: move selection
   menuSelect:    './sounds/selectboot.wav',     // boot manager: choose an entry
   charge:        './sounds/charge.ogg',          // charger plugged in
+  discharge:     './sounds/discharge.ogg',       // charger unplugged
   lowBattery:    './sounds/low.ogg',             // battery is low (20% / 10% / 5%)
 };
 const SOUND_VOL={ /* e.g. click:.4, unlock:.8 */ };
@@ -6528,7 +6529,7 @@ try{
 }catch(e){}
 /* ══════════════════════════════════
    BATTERY  (Battery Status API: Chromium browsers; hidden everywhere else)
-   Sounds: charge.ogg when a charger is plugged in, low.ogg at 20% / 10% / 5% while discharging.
+   Sounds: charge.ogg when a charger is plugged in, discharge.ogg when it is unplugged, low.ogg at 20% / 10% / 5% while discharging.
 ══════════════════════════════════ */
 const BAT={b:null,supported:false,warned:{20:false,10:false,5:false},ready:false,
   async init(){
@@ -6582,6 +6583,7 @@ const BAT={b:null,supported:false,warned:{20:false,10:false,5:false},ready:false
       SFX.play('charge');notify('Charger connected · '+BAT.pct()+'%',3200,{silent:true});
       [20,10,5].forEach(t=>BAT.warned[t]=false);
     }else if(!b.charging&&BAT.lastCharging){
+      SFX.play('discharge');
       notify('Charger disconnected · '+BAT.pct()+'%',3200,{silent:true});
       BAT.syncWarned();
     }
