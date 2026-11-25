@@ -929,7 +929,7 @@ const DEFAULT_APPS = [
     name: 'Retro Bowl',
     url: './rb/index.html',
     icon: 'gear',
-    cat: 'Tools',
+    cat: 'Games',
     iconUrl: './rb/index.webp',
     resolution: 100
   },
@@ -938,7 +938,7 @@ const DEFAULT_APPS = [
     name: 'Retro Bowl College',
     url: './rb/college.html',
     icon: 'gear',
-    cat: 'Tools',
+    cat: 'Games',
     iconUrl: './rb/college.webp',
     resolution: 100
   },
@@ -947,8 +947,17 @@ const DEFAULT_APPS = [
     name: '60 Seconds Reatomized',
     url: './60sa/index.html',
     icon: 'gear',
-    cat: 'Tools',
+    cat: 'Games',
     iconUrl: './60sa/index.webp',
+    resolution: 100
+  },
+  {
+    id: 'app-pb2d',
+    name: 'PhysicsBox2D',
+    url: './pb2d/index.html',
+    icon: 'gear',
+    cat: 'Games',
+    iconUrl: '',
     resolution: 100
   },
 ];
