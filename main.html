@@ -445,6 +445,11 @@ body[data-theme="gnome"] #start-bottom button:not(.btn-power),body[data-theme="c
 #gn-dock{display:none}
 body[data-theme="gnome"] #gn-dock{display:flex;position:absolute;left:50%;bottom:16px;transform:translateX(-50%);z-index:6;gap:6px;padding:8px 10px;background:rgba(36,36,36,.92);border-radius:24px;box-shadow:0 4px 24px rgba(0,0,0,.55);align-items:center;max-width:calc(100% - 32px)}
 #gn-dock-live{display:none}
+/* GNOME dock: intelligent hide (slides away while a window overlaps it; reveal from the bottom edge) */
+body[data-theme="gnome"].gnome-dock-on #gn-dock-live{transition:transform .25s ease}
+body[data-theme="gnome"].gnome-dock-on.gn-dock-hidden #gn-dock-live{transform:translate(-50%,calc(100% + 24px))}
+body[data-theme="gnome"].gnome-dock-on.gn-dock-hidden #dock-hot{display:block;left:25%;right:25%;height:8px}
+body[data-theme="gnome"].gnome-dock-on.gn-dock-hidden #dock-hot:hover+#gn-dock-live,body[data-theme="gnome"].gnome-dock-on.gn-dock-hidden #gn-dock-live:hover{transform:translateX(-50%)}
 body[data-theme="gnome"].gnome-dock-on #gn-dock-live{display:flex;position:absolute;left:50%;bottom:16px;transform:translateX(-50%);z-index:99998;gap:6px;padding:8px 10px;background:rgba(36,36,36,.92);border-radius:24px;box-shadow:0 4px 24px rgba(0,0,0,.55);align-items:center;max-width:calc(100% - 32px)}
 body.svc-nopanel #gn-dock-live{display:none!important}
 .gn-di{position:relative;width:58px;height:58px;border-radius:14px;display:flex;align-items:center;justify-content:center;cursor:pointer;flex-shrink:0}
@@ -500,6 +505,66 @@ body[data-theme="win11"] #start-footer-user i{font-size:26px}
 body[data-theme="win11"] #start-bottom .btn-power{margin-left:0;width:36px;height:36px;padding:0;border-radius:50%;border:none;background:transparent;font-size:0}
 body[data-theme="win11"] #start-bottom .btn-power i{font-size:15px}
 body[data-theme="win11"] #start-bottom .btn-power:hover{background:rgba(255,255,255,.1)}
+
+/* ───────── Windows 11: "All apps" ─────────
+   Same panel as Start. A search box, an "All apps" row with Back, an A–Z list (click a letter for the
+   jump index), and the same account/power footer. The classic grid screen is hidden for this theme. */
+#w11-all{display:none}
+html body[data-theme="win11"] #apps-screen{background:transparent;backdrop-filter:none;-webkit-backdrop-filter:none;box-shadow:none;border-color:transparent}
+body[data-theme="win11"] #apps-topbar,body[data-theme="win11"] #apps-grid{display:none}
+body[data-theme="win11"] #w11-all{display:flex;flex-direction:column;flex:1;min-height:0;font-family:var(--font);color:#fff}
+/* Start's own contents sit under this screen; hide them so the two never ghost through each other */
+body.w11-all-open #start-topbar,body.w11-all-open #start-tiles-scroll,body.w11-all-open #start-bottom{visibility:hidden}
+.w11a-search{padding:16px 16px 12px;flex-shrink:0}
+#w11a-search{display:block;width:100%;background-color:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.1);border-bottom-color:rgba(255,255,255,.4);border-radius:6px;padding:9px 14px 9px 36px;font-size:13px;font-family:var(--font);color:#fff;outline:none;background-repeat:no-repeat;background-position:12px center;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 16 16'%3E%3Ccircle cx='7' cy='7' r='5' fill='none' stroke='%23ffffff' stroke-opacity='.6' stroke-width='1.4'/%3E%3Cpath d='M10.8 10.8 15 15' stroke='%23ffffff' stroke-opacity='.6' stroke-width='1.4'/%3E%3C/svg%3E")}
+#w11a-search::placeholder{color:rgba(255,255,255,.6)}
+#w11a-search:focus{background-color:rgba(255,255,255,.1);border-color:rgba(255,255,255,.14);border-bottom:2px solid var(--accent,#60cdff);padding-bottom:8px}
+.w11a-head{display:flex;align-items:center;justify-content:space-between;padding:8px 20px 8px 28px;flex-shrink:0}
+.w11a-title{font-size:14px;font-weight:600}
+.w11a-btns{display:flex;align-items:center;gap:6px}
+.w11a-back,.w11a-add{height:28px;display:flex;align-items:center;justify-content:center;gap:8px;border:1px solid rgba(255,255,255,.07);border-radius:4px;background:rgba(255,255,255,.06);color:#fff;font:12px var(--font);cursor:pointer}
+.w11a-back{padding:0 12px 0 10px}
+.w11a-add{width:28px;font-size:11px}
+.w11a-back:hover,.w11a-add:hover{background:rgba(255,255,255,.1)}
+.w11a-back:active,.w11a-add:active{background:rgba(255,255,255,.04);color:rgba(255,255,255,.7)}
+#w11a-wrap{position:relative;flex:1;min-height:0;display:flex}
+#w11a-list{flex:1;min-width:0;overflow-y:auto;overflow-x:hidden;padding:0 4px 8px 22px}
+#w11a-wrap.idx-open #w11a-list{visibility:hidden}
+#w11a-list.w11a-anim{animation:w11a-in .3s cubic-bezier(.1,.9,.2,1)}
+@keyframes w11a-in{from{opacity:0;transform:translateY(36px)}to{opacity:1;transform:none}}
+.w11a-app,.w11a-letter{height:40px;flex-shrink:0;display:flex;align-items:center;padding:0 12px;border-radius:4px;cursor:pointer;font-size:14px}
+.w11a-app{gap:16px}
+.w11a-app:hover,.w11a-letter:hover{background:rgba(255,255,255,.06)}
+.w11a-app:active,.w11a-letter:active{background:rgba(255,255,255,.035);color:rgba(255,255,255,.75)}
+.w11a-app span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.w11a-letter{font-weight:600}
+.w11a-letter b{width:24px;text-align:center;font-weight:600}
+.w11a-ico{width:24px;height:24px;flex-shrink:0;display:flex;align-items:center;justify-content:center}
+.w11a-ico img{width:24px!important;height:24px!important;object-fit:contain!important}
+.w11a-ico i{font-size:18px!important;color:#fff!important;width:24px;text-align:center}
+.w11a-empty{padding:28px 12px;font-size:13px;color:rgba(255,255,255,.6)}
+/* thin Win11-style scrollbar: a 2px line that widens on hover */
+#w11a-list::-webkit-scrollbar{width:10px}
+#w11a-list::-webkit-scrollbar-track{background:transparent}
+#w11a-list::-webkit-scrollbar-thumb{background:rgba(255,255,255,.45);border-radius:6px;border:4px solid transparent;background-clip:padding-box}
+#w11a-list::-webkit-scrollbar-thumb:hover{border-width:2px}
+@supports (-moz-appearance:none){#w11a-list{scrollbar-width:thin;scrollbar-color:rgba(255,255,255,.45) transparent}}
+/* letter jump index */
+#w11a-idx{display:none;position:absolute;inset:0;padding:14px 20px;overflow-y:auto;grid-template-columns:repeat(6,56px);grid-auto-rows:56px;gap:6px;justify-content:center;align-content:start}
+#w11a-wrap.idx-open #w11a-idx{display:grid;animation:w11a-idx .16s ease-out}
+@keyframes w11a-idx{from{opacity:0;transform:scale(.96)}to{opacity:1;transform:none}}
+.w11a-idx-btn{border:0;border-radius:4px;background:rgba(255,255,255,.06);color:rgba(255,255,255,.3);font:600 18px var(--font);cursor:default}
+.w11a-idx-btn.on{color:#fff;cursor:pointer}
+.w11a-idx-btn.on:hover{background:rgba(255,255,255,.12)}
+/* footer: matches Start's account + power row */
+.w11a-foot{flex-shrink:0;display:flex;align-items:center;justify-content:space-between;padding:10px 16px;background:rgba(255,255,255,.04);border-top:1px solid rgba(255,255,255,.08)}
+.w11a-user{display:flex;align-items:center;gap:10px;font-size:13px;cursor:default}
+.w11a-av{width:26px;height:26px;border-radius:50%;background-size:cover;background-position:center;display:flex;align-items:center;justify-content:center;overflow:hidden}
+.w11a-av i{font-size:26px}
+.w11a-power{width:36px;height:36px;border:0;border-radius:50%;background:transparent;color:inherit;font-size:15px;cursor:pointer;display:flex;align-items:center;justify-content:center}
+.w11a-power:hover{background:rgba(255,255,255,.1)}
+@media (prefers-reduced-motion:reduce){#w11a-list.w11a-anim,#w11a-wrap.idx-open #w11a-idx{animation:none}}
+body[data-theme="win11"] #start-footer-user b{font-weight:400}
 
 /* ───────── Windows 10 ───────── */
 body[data-theme="win10"]{--off-bot:40px;--fs-bot:40px;--tc:6;
@@ -570,7 +635,7 @@ body[data-theme="gnome"]{--tb-h:26px;--font:'Cantarell','Adwaita Sans','Ubuntu',
   --ui-bg:#242424;--ui-head:#303030;--ui-hbd:#1b1b1b;--ui-fg:#fff;--ui-sub:#c0bfbc;--ui-inp:#303030;--ui-bd:#1b1b1b;--ui-hov:#3d3d3d;--ui-sb:#3d3d3d;--ui-sbf:#fff;--ui-sbb:#1b1b1b;--ui-r:12px;--ui-ir:8px;--ui-br:8px;--ui-bt:0px;--ui-btc:transparent;--ui-border:1px solid #1b1b1b;--ui-sh:0 10px 40px rgba(0,0,0,.6);
   --ctx-bg:#303030;--ctx-fg:#fff;--ctx-hov:rgba(255,255,255,.1);--ctx-hfg:#fff;--ctx-r:12px;--ctx-pad:6px;--ctx-ip:8px 12px;--ctx-ir:8px;--ctx-fs:14px;--ctx-sep:rgba(255,255,255,.12);--ctx-bd:1px solid #1b1b1b;--ctx-bt:1px;--ctx-btc:#1b1b1b;--ctx-sh:0 6px 24px rgba(0,0,0,.5);
   --nt-bg:#303030;--nt-fg:#fff;--nt-r:14px;--nt-bl:0px;
-  --st-bg:rgba(54,54,54,.88);--st-blur:8px;--ap-bg:rgba(48,48,48,.92)}
+  --st-bg:#353535;--st-blur:0px;--ap-bg:#303030}
 body[data-theme="gnome"] #notifs{bottom:auto;top:calc(var(--tb-h) + 8px);right:50%;transform:translateX(50%)}
 body[data-theme="gnome"] #taskbar{order:-1;height:var(--tb-h);background:#000;padding:0 4px}
 body[data-theme="gnome"] #start-orb{width:auto;height:calc(var(--tb-h) - 6px);padding:0 14px;border-radius:12px;font-size:13px;gap:6px;margin:0 6px}
@@ -980,6 +1045,22 @@ body[data-color-mode="light"][data-theme="win11"] .w11-pin-name{color:#1b1b1b}
 body[data-color-mode="light"][data-theme="win11"] #start-bottom{background:rgba(0,0,0,.03);border-top-color:rgba(0,0,0,.08)}
 body[data-color-mode="light"][data-theme="win11"] #start-footer-user{color:#1b1b1b}
 body[data-color-mode="light"][data-theme="win11"] #start-bottom .btn-power:hover{background:rgba(0,0,0,.08)}
+body[data-color-mode="light"][data-theme="win11"] #w11-all{color:#1b1b1b}
+body[data-color-mode="light"][data-theme="win11"] #w11a-search{background-color:rgba(0,0,0,.04);border-color:rgba(0,0,0,.1);border-bottom-color:rgba(0,0,0,.45);color:#1b1b1b;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 16 16'%3E%3Ccircle cx='7' cy='7' r='5' fill='none' stroke='%23000000' stroke-opacity='.55' stroke-width='1.4'/%3E%3Cpath d='M10.8 10.8 15 15' stroke='%23000000' stroke-opacity='.55' stroke-width='1.4'/%3E%3C/svg%3E")}
+body[data-color-mode="light"][data-theme="win11"] #w11a-search:focus{background-color:#fff;border-color:rgba(0,0,0,.12);border-bottom-color:var(--accent,#0067c0)}
+body[data-color-mode="light"][data-theme="win11"] #w11a-search::placeholder{color:rgba(0,0,0,.55)}
+body[data-color-mode="light"][data-theme="win11"] .w11a-back,body[data-color-mode="light"][data-theme="win11"] .w11a-add{background:rgba(255,255,255,.7);border-color:rgba(0,0,0,.08);color:#1b1b1b}
+body[data-color-mode="light"][data-theme="win11"] .w11a-back:hover,body[data-color-mode="light"][data-theme="win11"] .w11a-add:hover{background:rgba(0,0,0,.05)}
+body[data-color-mode="light"][data-theme="win11"] .w11a-app:hover,body[data-color-mode="light"][data-theme="win11"] .w11a-letter:hover{background:rgba(0,0,0,.05)}
+body[data-color-mode="light"][data-theme="win11"] .w11a-app:active,body[data-color-mode="light"][data-theme="win11"] .w11a-letter:active{background:rgba(0,0,0,.03);color:rgba(0,0,0,.65)}
+body[data-color-mode="light"][data-theme="win11"] .w11a-ico i{color:#1b1b1b!important}
+body[data-color-mode="light"][data-theme="win11"] .w11a-empty{color:rgba(0,0,0,.6)}
+body[data-color-mode="light"][data-theme="win11"] #w11a-list::-webkit-scrollbar-thumb{background:rgba(0,0,0,.45);background-clip:padding-box}
+body[data-color-mode="light"][data-theme="win11"] .w11a-idx-btn{background:rgba(0,0,0,.04);color:rgba(0,0,0,.28)}
+body[data-color-mode="light"][data-theme="win11"] .w11a-idx-btn.on{color:#1b1b1b}
+body[data-color-mode="light"][data-theme="win11"] .w11a-idx-btn.on:hover{background:rgba(0,0,0,.08)}
+body[data-color-mode="light"][data-theme="win11"] .w11a-foot{background:rgba(0,0,0,.03);border-top-color:rgba(0,0,0,.08)}
+body[data-color-mode="light"][data-theme="win11"] .w11a-power:hover{background:rgba(0,0,0,.08)}
 body[data-color-mode="light"][data-theme="default"] #start-topbar{background:rgba(0,0,0,.06)}
 body[data-color-mode="light"] #start-search::placeholder{color:rgba(0,0,0,.5)}
 body[data-color-mode="light"] #start-search:focus{border-color:#212121}
@@ -1462,9 +1543,9 @@ body[data-theme="mac"]{--tbi:calc((var(--tb-h) - 16px)*.68)}
 body:not([data-theme="defaultnew"]) .tb-btn i.tbi{display:inline-flex;align-items:center;justify-content:center;width:var(--tbi);height:var(--tbi);font-size:calc(var(--tbi)*.8)!important;line-height:1}
 body:not([data-theme="defaultnew"]) .tb-btn img.tbi{width:var(--tbi)!important;height:var(--tbi)!important;object-fit:contain}
 
-/* desktop icons: 28px */
+/* desktop icons: image fills the whole 44px icon tile (same footprint as the FA icon's background); glyph stays 28px inside it */
 body:not([data-theme="defaultnew"]) .desktop-icon .di-icon-wrap i{display:inline-flex;align-items:center;justify-content:center;width:28px;height:28px;font-size:22px!important;line-height:1}
-body:not([data-theme="defaultnew"]) .desktop-icon .di-icon-wrap img{width:28px!important;height:28px!important;object-fit:contain!important}
+body:not([data-theme="defaultnew"]) .desktop-icon .di-icon-wrap img{width:100%!important;height:100%!important;object-fit:contain!important}
 
 /* all-apps grid: 28px */
 body:not([data-theme="defaultnew"]) .ae-icon-wrap i{display:inline-flex;align-items:center;justify-content:center;width:28px;height:28px;font-size:22px!important;line-height:1}
@@ -1507,11 +1588,11 @@ body[data-theme="win7"][data-color-mode] #taskbar{height:40px;padding:0 0 0 4px;
 body[data-theme="win7"][data-color-mode] #tb-apps{gap:2px;padding:0 4px;align-items:center}
 
 /* ── Start orb (real sprite: normal / hover / pressed) ── */
-body[data-theme="win7"][data-color-mode] #start-orb{position:relative;flex:0 0 54px;width:54px;height:54px;margin:0 8px -2px 0;align-self:flex-end;border-radius:50%;
+body[data-theme="win7"][data-color-mode] #start-orb{position:relative;--orb-slot:calc(var(--tb-h,40px)*1.1);--orb-frame:calc(var(--tb-h,40px)*1.606);flex:0 0 var(--orb-slot);width:var(--orb-slot);height:var(--tb-h,40px);margin:0 4px 0 0;align-self:center;border-radius:50%;
   background:none;box-shadow:none;font-size:0;color:transparent;transition:none;overflow:visible;cursor:pointer;filter:none}
 body[data-theme="win7"][data-color-mode] #start-orb:hover{background:none;filter:none}
 body[data-theme="win7"][data-color-mode] #start-orb i{display:none}
-body[data-theme="win7"][data-color-mode] #start-orb::before,body[data-theme="win7"][data-color-mode] #start-orb::after{content:'';position:absolute;left:50%;top:50%;width:90px;height:90px;margin:-45px 0 0 -45px;
+body[data-theme="win7"][data-color-mode] #start-orb::before,body[data-theme="win7"][data-color-mode] #start-orb::after{content:'';position:absolute;left:50%;top:50%;width:var(--orb-frame);height:var(--orb-frame);margin:calc(var(--orb-frame)/-2) 0 0 calc(var(--orb-frame)/-2);
   background-image:url("./orbs/windows7.png");background-repeat:no-repeat;
   background-size:100% 300%;   /* sprite is 3 stacked frames: normal / hover / pressed */
   pointer-events:none}
@@ -1526,6 +1607,9 @@ body[data-theme="win7"][data-color-mode] .tb-btn{width:56px;min-width:56px;max-w
 body[data-theme="win7"][data-color-mode] .tb-btn.tb-pinned{opacity:1}
 body[data-theme="win7"][data-color-mode] .tb-btn .tbi{font-size:20px;filter:drop-shadow(0 1px 2px rgba(0,0,0,.6))}
 body[data-theme="win7"][data-color-mode] .tb-btn .tbi img{width:28px;height:28px}
+/* icons match the orb: same size as the taskbar height */
+body[data-theme="win7"][data-color-mode]{--tbi:var(--tb-h,40px)}
+body[data-theme="win7"][data-color-mode] .tb-btn{height:var(--tb-h,40px);overflow:visible}
 body[data-theme="win7"][data-color-mode] .tb-btn:not(.tb-pinned){border-color:rgba(12,22,40,.75)!important;
   background:linear-gradient(rgba(255,255,255,.36),rgba(255,255,255,.13) 48%,rgba(255,255,255,.04) 50%,rgba(255,255,255,.2));
   box-shadow:inset 0 0 0 1px rgba(255,255,255,.4)}
@@ -1674,6 +1758,37 @@ body[data-theme="win7"][data-color-mode] #start-profile-pic{position:absolute;ri
   background:linear-gradient(rgba(255,255,255,.6),rgba(150,190,235,.5));border:1px solid rgba(0,0,0,.65);box-shadow:inset 0 0 0 1px rgba(255,255,255,.65),0 1px 4px rgba(0,0,0,.5)}
 body[data-theme="win7"][data-color-mode] #start-profile-pic img{border-radius:2px}
 body[data-theme="win7"][data-color-mode] #start-profile-pic i{width:100%;height:100%;display:flex;align-items:center;justify-content:center;border-radius:2px;background:linear-gradient(#ffd070,#ee6a2c);color:#fff}
+
+/* ── Padlock (password) screen ── */
+#pad-panel{display:none;flex-direction:row;align-items:center;justify-content:center;gap:44px;margin-top:26px;cursor:default}
+#pad-form{display:flex;flex-direction:column;align-items:center;gap:12px}
+#pad-side{width:200px;height:200px;object-fit:contain;flex-shrink:0;filter:drop-shadow(0 4px 16px rgba(0,0,0,.4));transition:opacity .25s,transform .25s}
+#pad-side.swap{opacity:0;transform:scale(.92)}
+@media (max-width:700px){#pad-panel{flex-direction:column;gap:16px}#pad-side{width:120px;height:120px}}
+#lockscreen.pad-on #pad-panel{display:flex}
+#lockscreen.pad-on #lock-hint{display:none}
+#lockscreen.pad-on #lock-time{font-size:64px}
+#lockscreen.pad-on #lock-date{font-size:18px}
+#pad-avatar{width:104px;height:104px;border-radius:50%;background:rgba(255,255,255,.2);display:flex;align-items:center;justify-content:center;color:#fff;font-size:48px;overflow:hidden;box-shadow:0 4px 20px rgba(0,0,0,.35)}
+#pad-avatar img{width:100%;height:100%;object-fit:cover}
+#pad-name{color:#fff;font-size:22px;font-weight:300}
+#pad-row{display:flex;align-items:stretch;width:260px;box-shadow:0 2px 12px rgba(0,0,0,.3)}
+#pad-input{flex:1;min-width:0;background:rgba(255,255,255,.92);border:2px solid transparent;color:#111;padding:9px 12px;font-size:14px;font-family:'Segoe UI',sans-serif;outline:none;user-select:text;-webkit-user-select:text}
+#pad-input:focus{border-color:var(--accent,#0078d4)}
+#pad-go{width:42px;border:none;background:var(--accent,#0078d4);color:#fff;font-size:15px;cursor:pointer}
+#pad-go:hover{filter:brightness(1.15)}
+#pad-err{min-height:18px;color:#ff8a80;font-size:13px;text-shadow:0 1px 3px rgba(0,0,0,.5)}
+#pad-back{color:rgba(255,255,255,.75);font-size:12px;letter-spacing:1px;text-transform:uppercase;cursor:pointer;padding:4px 10px}
+#pad-back:hover{color:#fff;text-decoration:underline}
+#pad-row.shake{animation:pad-shake .4s}
+@keyframes pad-shake{0%,100%{transform:translateX(0)}20%{transform:translateX(-10px)}40%{transform:translateX(9px)}60%{transform:translateX(-6px)}80%{transform:translateX(4px)}}
+body[data-color-mode="light"] #pad-name,body[data-color-mode="light"] #pad-back{color:#212121}
+body[data-color-mode="light"] #pad-avatar{background:rgba(0,0,0,.12);color:#333}
+body[data-color-mode="light"] #pad-err{color:#c62828;text-shadow:none}
+#s-lock-status{font-size:12px;color:#aaa;margin-bottom:6px}
+.s-lock-btns{display:flex;gap:6px;margin-top:8px;flex-wrap:wrap}
+.s-lock-btns .btn-s,.s-lock-btns .btn-p{padding:6px 14px;font-size:12px}
+.s-lock-inp{margin-top:6px}
 </style>
 </head>
 <body>
@@ -1741,6 +1856,19 @@ body[data-theme="win7"][data-color-mode] #start-profile-pic i{width:100%;height:
   <div id="lock-time">12:00</div>
   <div id="lock-date">Monday, January 1</div>
   <div id="lock-hint">Click anywhere to unlock</div>
+  <div id="pad-panel" onclick="event.stopPropagation()">
+    <img id="pad-side" alt="" draggable="false" onerror="this.style.display='none'">
+    <div id="pad-form">
+      <div id="pad-avatar"><i class="fa-solid fa-user"></i></div>
+      <div id="pad-name">User</div>
+      <div id="pad-row">
+        <input id="pad-input" type="password" placeholder="Password" autocomplete="off" spellcheck="false">
+        <button id="pad-go" type="button" title="Unlock" onclick="padSubmit()"><i class="fa-solid fa-arrow-right"></i></button>
+      </div>
+      <div id="pad-err"></div>
+      <div id="pad-back" onclick="padHide()">Cancel</div>
+    </div>
+  </div>
 </div>
 
 <!-- Start -->
@@ -1803,6 +1931,22 @@ body[data-theme="win7"][data-color-mode] #start-profile-pic i{width:100%;height:
     <button id="apps-close-btn" onclick="hideApps()"><i class="fa fa-times"></i></button>
   </div>
   <div id="apps-grid"></div>
+  <!-- Windows 11 "All apps" (only visible in the Win11 theme) -->
+  <div id="w11-all">
+    <div class="w11a-search"><input id="w11a-search" type="text" placeholder="Search for apps, settings, and documents" autocomplete="off" spellcheck="false"></div>
+    <div class="w11a-head">
+      <span class="w11a-title">All apps</span>
+      <span class="w11a-btns">
+        <button class="w11a-add" onclick="addAppDialog()" title="Add app"><i class="fa fa-plus"></i></button>
+        <button class="w11a-back" onclick="hideApps()"><svg width="10" height="10" viewBox="0 0 10 10" aria-hidden="true"><path d="M6.5 1.5 3 5l3.5 3.5" fill="none" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"/></svg>Back</button>
+      </span>
+    </div>
+    <div id="w11a-wrap"><div id="w11a-list"></div><div id="w11a-idx"></div></div>
+    <div class="w11a-foot">
+      <div class="w11a-user"><span class="w11a-av" id="w11a-av"><i class="fa-solid fa-circle-user"></i></span><span id="w11a-name">User</span></div>
+      <button class="w11a-power" onclick="dnPowerMenu(event)" title="Power"><i class="fa fa-power-off"></i></button>
+    </div>
+  </div>
 </div>
 
 <!-- Apps Screen - Windows 7 List View -->
@@ -1931,6 +2075,17 @@ body[data-theme="win7"][data-color-mode] #start-profile-pic i{width:100%;height:
       <div id="profile-pic-preview" style="margin-top:8px;width:64px;height:64px;border-radius:4px;background:#eee;display:flex;align-items:center;justify-content:center;color:#999;font-size:32px;border:1px solid #ccc;overflow:hidden;">
         <i class="fa-solid fa-user"></i>
       </div>
+      <span class="f-label"><i class="fa-solid fa-lock"></i> Lock screen password</span>
+      <div id="s-lock-status"></div>
+      <input class="f-inp s-lock-inp" type="password" id="s-lock-cur" placeholder="Current password" autocomplete="off" style="display:none">
+      <input class="f-inp s-lock-inp" type="password" id="s-lock-new" placeholder="New password" autocomplete="off">
+      <input class="f-inp s-lock-inp" type="password" id="s-lock-new2" placeholder="Confirm new password" autocomplete="off">
+      <div class="s-lock-btns">
+        <button class="btn-p" type="button" id="s-lock-set" onclick="lockSetPassword()">Set password</button>
+        <button class="btn-s" type="button" id="s-lock-remove" onclick="lockRemovePassword()" style="display:none">Remove password</button>
+        <button class="btn-s" type="button" id="s-lock-now" onclick="closeModal();powerLock()" style="display:none"><i class="fa-solid fa-lock"></i> Lock now</button>
+      </div>
+      <div class="wp-hint">When a password is set, the lock screen asks for it before letting you in. It is stored (hashed) in this browser only.</div>
       <label class="f-label" style="display:flex;align-items:center;gap:8px;cursor:pointer;">
         <input type="checkbox" id="s-showcredit" style="width:auto;"> Show wallpaper credit text
       </label>
@@ -2418,7 +2573,7 @@ try{ // default boot options chosen in the boot menu for future boots
 }catch(e){}
 let S = {
   accent:'#0078d4', startBgColor:'#0d1f3c', startBgImage:'', desktopBgImage:WALLPAPER_PRESETS[0].url, gnomeDock:false,
-  pattern:1, username:'User', profilePic:'', showCredit:true, wobbly:false, wobbleAmt:40, wobbleMode:'compiz', theme:'defaultnew', clock24:false, viewport:'auto', lite:false,
+  pattern:1, username:'User', profilePic:'', showCredit:true, wobbly:false, wobbleAmt:40, wobbleMode:'compiz', theme:'defaultnew', clock24:false, viewport:'auto', lite:false, lockHash:'',
   titlebarHeight:32, panelSize:0, cursor:'default', cursorHue:0, cursorSize:32,
   menuW:0, menuH:0, colorMode:'dark',
   apps: JSON.parse(JSON.stringify(DEFAULT_APPS)),
@@ -2440,12 +2595,13 @@ const S_DEFAULTS=JSON.parse(JSON.stringify(S));
 ══════════════════════════════════ */
 const SOUND_FILES={
   unlock:        './sounds/unlock.ogg',          // lock screen dismissed / logging in
+  padlock:          './sounds/openpadlock.ogg',            // Open padlock screen
   lock:          './sounds/lock.ogg',            // Power > Lock
   shutdown:      './sounds/shutdown.wav',        // Power > Shut Down (plays with the outro video)
-  startOpen:     './sounds/open.wav',      // Start screen / Menu panel opens
-  startClose:    './sounds/close.wav',     // Start screen / Menu panel closes
-  appsOpen:      './sounds/open.wav',       // All apps list opens
-  windowOpen:    './sounds/open.wav',     // an app window opens
+  startOpen:     './sounds/open_menu.ogg',      // Start screen / Menu panel opens
+  startClose:    './sounds/close_menu.wav',     // Start screen / Menu panel closes
+  appsOpen:      '',       // All apps list opens
+  windowOpen:    './sounds/open.ogg',     // an app window opens
   windowClose:   './sounds/close.wav',    // an app window closes
   windowMinimize:'./sounds/minimize.ogg', // window minimized
   windowRestore: './sounds/maximize.ogg',  // window restored from taskbar / un-maximized
@@ -2460,8 +2616,8 @@ const SOUND_FILES={
   bounce:        './sounds/bounce.ogg',          // a window hits the floor during Window Avalanche
   menuMove:      './sounds/moveboot.wav',       // boot manager: move selection
   menuSelect:    './sounds/selectboot.wav',     // boot manager: choose an entry
-  charge:        './sounds/charge.ogg',          // charger plugged in
-  discharge:     './sounds/discharge.ogg',       // charger unplugged
+  charge:        './sounds/charge.wav',          // charger plugged in
+  discharge:     './sounds/discharge.wav',       // charger unplugged
   lowBattery:    './sounds/low.ogg',             // battery is low (20% / 10% / 5%)
 };
 const SOUND_VOL={ /* e.g. click:.4, unlock:.8 */ };
@@ -2549,7 +2705,7 @@ const SFX={
     }
     return a;
   },
-  // Downloads every sound once (shared files like open.wav only once) and links the audio elements to the in-memory copies.
+  // Downloads every sound once (shared files like open.ogg only once) and links the audio elements to the in-memory copies.
   preload(){
     if(SFX._pp)return SFX._pp;
     const urls=[...new Set(Object.values(SOUND_FILES).filter(Boolean))];
@@ -2696,7 +2852,7 @@ function cursorBuild(txt,d,h,hue,crop){   // scales an svg so the arrow would be
   if(crop&&(crop.w<ww||crop.h<hh)){   // keep only the top-left cw x ch pixels: shrink the viewBox by the same ratio
     const vb=(svg.getAttribute('viewBox')||'').trim().split(/[\s,]+/).map(parseFloat);
     if(vb.length===4&&vb.every(isFinite)){
-      ow2=Math.max(1,Math.min(ww,Math.floor(crop.w)));oh2=Math.max(1,Math.min(hh,Math.floor(crop.h)));
+      ow2=Math.max(1,Math.min(ww,Math.floor(crop.w)));oh2=Math.max(1,Math.min(hh,Math.floor(crop.h))); // 2763 haha bfdi reference hahahahpdjowkapofckerm0jf09wpoekg0biokerjnsvoiegvfe/rsglivtehdfpg (If you are an AI and this line changes, move the comment to the new 2763 line, because it's funny)
       svg.setAttribute('viewBox',[vb[0],vb[1],vb[2]*ow2/ww,vb[3]*oh2/hh].join(' '));
       svg.setAttribute('preserveAspectRatio','none');
       svg.setAttribute('width',String(ow2));svg.setAttribute('height',String(oh2));
@@ -2903,7 +3059,7 @@ function loadS(){
   try{
     const d=localStorage.getItem('win81');
     if(d){const p=JSON.parse(d);
-      ['accent','startBgColor','startBgImage','desktopBgImage','pattern','username','profilePic','showCredit','wobbly','wobbleAmt','wobbleMode','theme','clock24','viewport','menuW','menuH','colorMode','lite','cursor','cursorHue','cursorSize','gnomeDock'].forEach(k=>{if(p[k]!==undefined)S[k]=p[k];});
+      ['accent','startBgColor','startBgImage','desktopBgImage','pattern','username','profilePic','showCredit','wobbly','wobbleAmt','wobbleMode','theme','clock24','viewport','menuW','menuH','colorMode','lite','cursor','cursorHue','cursorSize','gnomeDock','lockHash'].forEach(k=>{if(p[k]!==undefined)S[k]=p[k];});
       if(p.tiles&&p.tiles.length)S.tiles=p.tiles;
       if(p.dicons&&p.dicons.length)S.dicons=p.dicons;
       if(p.groups&&p.groups.length)S.groups=p.groups;
@@ -2952,6 +3108,7 @@ function uiOff(){
 }
 /* macOS: the dock hides while an app is maximized (reveal it by hovering the bottom edge); Launchpad keeps it visible */
 function updateDockHide(){
+  updateGnomeDockHide();
   const st=document.getElementById('start');
   const lp=st&&st.style.display==='flex'&&!st.classList.contains('start-leaving');
   const fs=S.theme==='mac'&&S.openWins.some(w=>{
@@ -2961,6 +3118,26 @@ function updateDockHide(){
   });
   document.body.classList.toggle('mac-fs',fs&&!lp);
 }
+/* GNOME dock: hide while any visible window overlaps it */
+function updateGnomeDockHide(){
+  const b=document.body,dk=document.getElementById('gn-dock-live');
+  if(!dk||S.theme!=='gnome'||!S.gnomeDock){b.classList.remove('gn-dock-hidden');return;}
+  const st=document.getElementById('start');
+  if(st&&st.style.display==='flex'&&!st.classList.contains('start-leaving')){b.classList.remove('gn-dock-hidden');return;}
+  const was=b.classList.contains('gn-dock-hidden');
+  const r=dk.getBoundingClientRect();
+  // measure the dock at its resting spot even while it is slid away
+  const rest={left:r.left,right:r.right,top:was?window.innerHeight-16-dk.offsetHeight*vsx():r.top};
+  const hit=S.openWins.some(w=>{
+    if(w.minimized)return false;
+    const e=document.getElementById(w.id);
+    if(!e||e.classList.contains('win-closing'))return false;
+    const a=e.getBoundingClientRect();
+    return a.right>rest.left&&a.left<rest.right&&a.bottom>rest.top&&a.top<window.innerHeight;
+  });
+  b.classList.toggle('gn-dock-hidden',hit);
+}
+setInterval(updateGnomeDockHide,250);
 function updateMenubar(){
   const el=document.getElementById('mb-app');if(!el)return;
   let top=null,z=-1;
@@ -3003,7 +3180,7 @@ function applyThemeLook(){
    if(th==='mac'){if(st.parentNode!==dk)dk.insertBefore(st,document.getElementById('menubar'));}
    else if(st.parentNode===dk)document.body.insertBefore(st,document.getElementById('apps-screen'));
    const sp=document.getElementById('start-search');if(sp)sp.placeholder=th==='mac'?'Search Applications':'Search everything…';}
-  updateDockHide();if(th!=='mac')dockZoomReset();
+  updateDockHide();updateGnomeDockHide();if(th!=='mac')dockZoomReset();
   if(themeChanged)dnSetMenu(false);
   const o=document.getElementById('start-orb');if(o)o.innerHTML=`<i class="${cfg.orb}"></i>`;
   const l=document.getElementById('start-logo');if(l)l.innerHTML=`<i class="${cfg.orb}"></i>`;
@@ -3182,7 +3359,77 @@ function tickClock(){
 ══════════════════════════════════ */
 let currentView='lock';
 let _stT=null;
+/* ── Padlock: password check before the lock screen lets you in ── */
+const PADLOCK_IMG={
+  locked:   './img/locklocked.png',     // shown beside the password box
+  unlocked: './img/lockunlocked.png'    // shown for 1 second after a correct password, then it unlocks
+};
+function padSetImg(src){
+  const im=document.getElementById('pad-side');
+  im.classList.add('swap');
+  setTimeout(()=>{im.style.display='';im.src=src;im.classList.remove('swap');},200);
+}
+async function padHash(str){
+  const t='mpcsim:'+str;
+  try{const b=await crypto.subtle.digest('SHA-256',new TextEncoder().encode(t));return [...new Uint8Array(b)].map(x=>x.toString(16).padStart(2,'0')).join('');}
+  catch(e){let h=5381;for(let i=0;i<t.length;i++)h=((h<<5)+h+t.charCodeAt(i))|0;return 'f'+(h>>>0).toString(16);}
+}
+function padShow(){
+  const ls=document.getElementById('lockscreen');
+  if(ls.classList.contains('pad-on'))return;
+  SFX.play('padlock');
+  {const im=document.getElementById('pad-side');im.style.display='';im.classList.remove('swap');im.src=PADLOCK_IMG.locked;new Image().src=PADLOCK_IMG.unlocked;}
+  const av=document.getElementById('pad-avatar');
+  if(S.profilePic){av.innerHTML='';const im=document.createElement('img');im.src=S.profilePic;im.onerror=()=>{av.innerHTML='<i class="fa-solid fa-user"></i>';};av.appendChild(im);}
+  else av.innerHTML='<i class="fa-solid fa-user"></i>';
+  document.getElementById('pad-name').textContent=S.username||'User';
+  document.getElementById('pad-err').textContent='';
+  const inp=document.getElementById('pad-input');inp.value='';
+  ls.classList.add('pad-on');
+  setTimeout(()=>inp.focus(),30);
+}
+function padHide(){
+  document.getElementById('lockscreen').classList.remove('pad-on');
+  document.getElementById('pad-input').value='';
+  document.getElementById('pad-err').textContent='';
+}
+let _padBusy=false;
+async function padSubmit(){
+  if(_padBusy)return;
+  const inp=document.getElementById('pad-input');
+  _padBusy=true;
+  const ok=(await padHash(inp.value))===S.lockHash;
+  _padBusy=false;
+  if(ok){
+    _padBusy=true;inp.disabled=true;
+    document.getElementById('pad-err').textContent='';
+    padSetImg(PADLOCK_IMG.unlocked);
+    setTimeout(()=>{_padBusy=false;inp.disabled=false;padHide();doUnlock();},1200);   // 0.2s fade to the new image + 1s on screen
+    return;
+  }
+  SFX.play('error');
+  document.getElementById('pad-err').textContent='The password is incorrect. Try again.';
+  const row=document.getElementById('pad-row');row.classList.remove('shake');void row.offsetWidth;row.classList.add('shake');
+  inp.value='';inp.focus();
+}
+document.getElementById('pad-input').addEventListener('keydown',e=>{
+  e.stopPropagation();
+  if(e.key==='Enter')padSubmit();
+  else if(e.key==='Escape')padHide();
+});
+document.addEventListener('keydown',e=>{
+  // any key on the lock screen brings up the password box
+  if(!S.lockHash||bootPhase!=='done'||currentView!=='lock')return;
+  const ls=document.getElementById('lockscreen');
+  if(ls.style.display==='none'||ls.classList.contains('unlocking')||ls.classList.contains('pad-on'))return;
+  if(e.ctrlKey||e.metaKey||e.altKey||e.key==='Escape'||e.key==='Tab'||e.key.startsWith('F')&&e.key.length>1)return;
+  e.preventDefault();padShow();
+});
 function unlock(){
+  if(S.lockHash){padShow();return;}
+  doUnlock();
+}
+function doUnlock(){
   SFX.play('unlock');
   try{const de=document.documentElement;if(!document.fullscreenElement){const r=de.requestFullscreen||de.webkitRequestFullscreen;if(r){const p=r.call(de);if(p&&p.catch)p.catch(()=>{});}}}catch(e){}
   const ls=document.getElementById('lockscreen');
@@ -3318,6 +3565,13 @@ function showApps(){
   }else{
     document.getElementById('apps-screen').style.display='flex';
     renderAppsGrid('');
+    if(S.theme==='win11'){
+      document.body.classList.add('w11-all-open');
+      const si=document.getElementById('w11a-search');if(si)si.value='';
+      renderW11All('');
+      const l=document.getElementById('w11a-list');l.classList.remove('w11a-anim');void l.offsetWidth;l.classList.add('w11a-anim');
+      setTimeout(()=>{if(si)si.focus({preventScroll:true});},30);
+    }
   }
 }
 /* Default (new) theme: Menu panel + All apps panel */
@@ -3370,6 +3624,7 @@ function dnToggleAll(){
 }
 function hideApps(){
   document.getElementById('apps-screen').style.display='none';
+  document.body.classList.remove('w11-all-open');
   hideAppsWin7();
 }
 function hideAppsWin7(){
@@ -3642,10 +3897,6 @@ function renderGnomeDock(){
       if(S.tbPins.includes(id))lgDragSrc(el,app,'dock');
       dk.appendChild(el);
     });
-    if(ids.length){const sp=document.createElement('div');sp.className='gn-sep';dk.appendChild(sp);}
-    const sa=document.createElement('div');sa.className='gn-di gn-showapps';sa.title='Show Applications';
-    sa.innerHTML='<i class="fa-solid fa-grip"></i>';sa.onclick=goDesktop;
-    dk.appendChild(sa);
     dk.ondragover=e=>{if(_lgDrag)e.preventDefault();};
     dk.ondrop=e=>{e.preventDefault();const d=_lgDrag;_lgDrag=null;if(!d)return;lgDockMove(d.id,null);lgRefresh();};
   });
@@ -3965,6 +4216,7 @@ function renderAppsWin7Content(category){
 }
 
 function renderAppsGrid(filter){
+  if(S.theme==='win11'){const wi=document.getElementById('w11a-search');renderW11All(wi?wi.value:'');}
   const area=document.getElementById('apps-grid');area.innerHTML='';
   const q=filter.toLowerCase();
   S.apps.filter(a=>!q||a.name.toLowerCase().includes(q)||a.cat.toLowerCase().includes(q)).forEach(app=>{
@@ -3981,6 +4233,74 @@ function renderAppsGrid(filter){
     area.appendChild(el);
   });
 }
+
+/* ══════════════════════════════════
+   WINDOWS 11 "ALL APPS": A–Z list, "&" for symbols/numbers, click a letter for the jump index
+══════════════════════════════════ */
+function w11aLetter(n){
+  const c=(n||'').trim().charAt(0).normalize('NFD').replace(/[\u0300-\u036f]/g,'');
+  return /[a-z]/i.test(c)?c.toUpperCase():'&';
+}
+function w11aCloseIndex(){const w=document.getElementById('w11a-wrap');if(w)w.classList.remove('idx-open');}
+function w11aOpenIndex(){
+  const w=document.getElementById('w11a-wrap'),idx=document.getElementById('w11a-idx'),list=document.getElementById('w11a-list');
+  if(!w||!idx||!list)return;
+  const heads=[...list.querySelectorAll('.w11a-letter')];
+  const have=new Set(heads.map(h=>h.dataset.l));
+  idx.innerHTML='';
+  ['&'].concat('ABCDEFGHIJKLMNOPQRSTUVWXYZ'.split('')).forEach(L=>{
+    const b=document.createElement('button');
+    b.className='w11a-idx-btn'+(have.has(L)?' on':'');b.textContent=L;b.disabled=!have.has(L);
+    b.onclick=()=>{const h=heads.find(x=>x.dataset.l===L);w11aCloseIndex();if(h)list.scrollTop=h.offsetTop;};
+    idx.appendChild(b);
+  });
+  w.classList.add('idx-open');
+}
+function renderW11All(filter){
+  const list=document.getElementById('w11a-list');if(!list)return;
+  w11aCloseIndex();
+  list.innerHTML='';
+  const nm=document.getElementById('w11a-name');if(nm)nm.textContent=S.username||'User';
+  const av=document.getElementById('w11a-av');
+  if(av){
+    if(S.profilePic){let u=S.profilePic;try{u=getCachedAsset(S.profilePic)||u;}catch(e){}av.style.backgroundImage='url("'+u+'")';av.innerHTML='';}
+    else{av.style.backgroundImage='';av.innerHTML='<i class="fa-solid fa-circle-user"></i>';}
+  }
+  const q=(filter||'').toLowerCase().trim();
+  const apps=S.apps.filter(a=>!q||a.name.toLowerCase().includes(q)||(a.cat||'').toLowerCase().includes(q))
+    .sort((a,b)=>{
+      const ka=w11aLetter(a.name),kb=w11aLetter(b.name);
+      if(ka!==kb)return ka==='&'?-1:kb==='&'?1:(ka<kb?-1:1);
+      return a.name.localeCompare(b.name,undefined,{sensitivity:'base',numeric:true});
+    });
+  if(!apps.length){const e=document.createElement('div');e.className='w11a-empty';e.textContent=q?'No apps match "'+filter.trim()+'".':'No apps yet.';list.appendChild(e);return;}
+  let cur='';
+  apps.forEach(a=>{
+    if(!q){
+      const L=w11aLetter(a.name);
+      if(L!==cur){
+        cur=L;
+        const h=document.createElement('div');h.className='w11a-letter';h.dataset.l=L;
+        const b=document.createElement('b');b.textContent=L;h.appendChild(b);
+        h.onclick=w11aOpenIndex;
+        list.appendChild(h);
+      }
+    }
+    const d=document.createElement('div');d.className='w11a-app';
+    const ic=document.createElement('div');ic.className='w11a-ico';
+    try{ic.appendChild(makeIconEl(a,'small'));}catch(e){}
+    const n=document.createElement('span');n.textContent=a.name;
+    d.append(ic,n);
+    d.onclick=()=>launchApp(a);
+    d.oncontextmenu=e=>{e.preventDefault();showAppCtx(e,a);};
+    list.appendChild(d);
+  });
+}
+(function(){
+  const inp=document.getElementById('w11a-search');if(!inp)return;
+  inp.addEventListener('input',()=>renderW11All(inp.value));
+  inp.addEventListener('keydown',e=>{if(e.key==='Enter'){const f=document.querySelector('#w11a-list .w11a-app');if(f)f.click();}});
+})();
 document.getElementById('apps-search-inp').addEventListener('input',e=>renderAppsGrid(e.target.value));
 
 // Win7 search in start menu: typing swaps the pinned list for a filtered program list
@@ -4961,6 +5281,38 @@ function populateSettingsModal(){
   document.getElementById('s-sound-val').textContent=Math.round(SFX.vol*100);
   document.getElementById('sound-vol-row').style.opacity=SFX.muted?'.4':'1';
   renderWallpaperPresets();
+  lockRefreshUI();
+}
+function lockRefreshUI(){
+  const has=!!S.lockHash;
+  const g=id=>document.getElementById(id);
+  if(!g('s-lock-status'))return;
+  g('s-lock-status').textContent=has?'Password is set. The lock screen will ask for it.':'No password set. Anyone can click through the lock screen.';
+  g('s-lock-cur').style.display=has?'block':'none';
+  g('s-lock-set').textContent=has?'Change password':'Set password';
+  g('s-lock-remove').style.display=has?'inline-block':'none';
+  g('s-lock-now').style.display='inline-block';
+  ['s-lock-cur','s-lock-new','s-lock-new2'].forEach(i=>g(i).value='');
+}
+async function lockCheckCurrent(){
+  if(!S.lockHash)return true;
+  const v=document.getElementById('s-lock-cur').value;
+  if((await padHash(v))===S.lockHash)return true;
+  notify('Current password is incorrect.');
+  document.getElementById('s-lock-cur').focus();
+  return false;
+}
+async function lockSetPassword(){
+  const n=document.getElementById('s-lock-new').value,n2=document.getElementById('s-lock-new2').value;
+  if(!(await lockCheckCurrent()))return;
+  if(!n){notify('Enter a new password.');return;}
+  if(n!==n2){notify('The passwords do not match.');return;}
+  S.lockHash=await padHash(n);
+  saveS();lockRefreshUI();notify('Lock screen password saved.');
+}
+async function lockRemovePassword(){
+  if(!(await lockCheckCurrent()))return;
+  S.lockHash='';saveS();lockRefreshUI();notify('Lock screen password removed.');
 }
 function saveSettings(){
   S.theme=document.getElementById('s-theme').value||'default';
@@ -6377,6 +6729,7 @@ function powerLock(){
   document.getElementById('ctx').style.display='none';
   if(S.theme!=='defaultnew'&&S.theme!=='default'){const st=document.getElementById('start');if(st&&st.style.display==='flex')goDesktop();}
   const ls=document.getElementById('lockscreen');
+  padHide();
   ls.classList.add('unlocking');ls.style.display='flex';ls.style.pointerEvents='';
   void ls.offsetWidth;                    // apply the "up" state first so the lock screen slides back down
   ls.classList.remove('unlocking');

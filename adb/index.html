@@ -1,0 +1,238 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>ADB Console</title>
+<link href="https://fonts.googleapis.com/css?family=Roboto:400,500,700|Roboto+Mono:400" rel="stylesheet">
+<style>
+:root{--p:#3F51B5;--pd:#303F9F;--a:#FF4081;--bg:#EEEEEE;--card:#FFFFFF;--tx:rgba(0,0,0,.87);--tx2:rgba(0,0,0,.54);--div:rgba(0,0,0,.12);--term:#212121;--termtx:#B9F6CA;
+--z1:0 2px 5px 0 rgba(0,0,0,.26),0 2px 10px 0 rgba(0,0,0,.16);--z3:0 6px 10px 0 rgba(0,0,0,.3),0 2px 18px 0 rgba(0,0,0,.2);
+box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px);color-scheme:light}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--p:#3F51B5;--pd:#283593;--bg:#303030;--card:#424242;--tx:#FFFFFF;--tx2:rgba(255,255,255,.7);--div:rgba(255,255,255,.12);--term:#121212;color-scheme:dark}}
+:root[data-theme="dark"]{--pd:#283593;--bg:#303030;--card:#424242;--tx:#FFFFFF;--tx2:rgba(255,255,255,.7);--div:rgba(255,255,255,.12);--term:#121212;color-scheme:dark}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--tx);font:400 14px/20px Roboto,Helvetica,Arial,sans-serif;min-height:100vh;-webkit-tap-highlight-color:transparent}
+body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset-top,0px);background:var(--pd);z-index:10}
+header{position:sticky;top:env(safe-area-inset-top,0px);z-index:9;background:var(--p);color:#fff;box-shadow:var(--z1)}
+.bar{display:flex;align-items:center;height:56px;padding:0 16px}
+.bar h1{font:500 20px/28px Roboto,sans-serif;margin:0 0 0 24px;flex:1}
+.dot{width:10px;height:10px;border-radius:50%;background:#FF8A80;margin-right:8px}.dot.on{background:#B9F6CA}
+.st{font-size:12px;opacity:.85}
+.tabs{display:flex;overflow-x:auto;position:relative}
+.tab{flex:1 0 auto;min-width:90px;height:48px;border:0;background:none;color:rgba(255,255,255,.7);font:500 14px Roboto,sans-serif;letter-spacing:.5px;text-transform:uppercase;cursor:pointer;position:relative;overflow:hidden;padding:0 16px}
+.tab.on{color:#fff}.tab.on::after{content:"";position:absolute;left:0;right:0;bottom:0;height:2px;background:var(--a)}
+main{max-width:840px;margin:0 auto;padding:8px 8px 96px}
+section{display:none}section.on{display:block}
+.card{background:var(--card);border-radius:2px;box-shadow:var(--z1);margin:8px;overflow:hidden}
+.ch{padding:16px 16px 8px}.ch h2{font:400 20px/28px Roboto,sans-serif;margin:0}.ch p{margin:0;color:var(--tx2)}
+.cb{padding:8px 16px 16px}
+.li{display:flex;align-items:center;min-height:56px;padding:8px 16px;border-top:1px solid var(--div)}
+.li div{flex:1;min-width:0}.li b{display:block;font-weight:400;font-size:16px;overflow:hidden;text-overflow:ellipsis}.li small{color:var(--tx2);font-size:14px}
+.btn{position:relative;overflow:hidden;border:0;border-radius:2px;height:36px;min-width:88px;padding:0 16px;font:500 14px Roboto,sans-serif;text-transform:uppercase;cursor:pointer;color:var(--a);background:none;margin:4px}
+.btn.r{background:var(--p);color:#fff;box-shadow:var(--z1)}.btn.r:active{box-shadow:var(--z3)}
+.btn.f:hover{background:rgba(158,158,158,.2)}
+.grid{display:flex;flex-wrap:wrap}
+.fab{position:fixed;right:16px;bottom:calc(16px + env(safe-area-inset-bottom,0px));width:56px;height:56px;border-radius:50%;border:0;background:var(--a);color:#fff;box-shadow:var(--z3);cursor:pointer;z-index:8;overflow:hidden;display:flex;align-items:center;justify-content:center}
+.fab svg{width:24px;height:24px;fill:#fff}
+.rip{position:absolute;border-radius:50%;background:currentColor;opacity:.25;transform:scale(0);animation:rp .55s ease-out forwards;pointer-events:none}
+.r .rip,.fab .rip,.tab .rip{background:#fff}
+@keyframes rp{to{transform:scale(1);opacity:0}}
+.term{background:var(--term);color:var(--termtx);font:400 13px/18px "Roboto Mono",monospace;padding:12px 16px;height:320px;overflow:auto;white-space:pre-wrap;word-break:break-all}
+.inp{display:flex;align-items:center;padding:0 16px 16px;gap:8px}
+.inp input{flex:1;border:0;border-bottom:1px solid var(--tx2);background:none;color:var(--tx);font:400 16px "Roboto Mono",monospace;padding:8px 0;outline:0}
+.inp input:focus{border-bottom:2px solid var(--p);padding-bottom:7px}
+.shot{max-width:100%;max-height:70vh;display:block;margin:0 auto;box-shadow:var(--z1)}
+.empty{text-align:center;color:var(--tx2);padding:32px 16px}
+#snack{position:fixed;left:16px;bottom:calc(16px + env(safe-area-inset-bottom,0px));background:#323232;color:#fff;padding:14px 24px;border-radius:2px;box-shadow:var(--z3);transform:translateY(150%);transition:transform .25s;z-index:20;max-width:calc(100% - 100px)}
+#snack.on{transform:none}
+.shot{touch-action:none;cursor:crosshair;user-select:none}
+#fup,#apk{display:none}
+.li[data-n]:hover{background:rgba(158,158,158,.2)}
+.pathrow{display:flex;align-items:center;gap:8px}
+</style>
+</head>
+<body>
+<header>
+ <div class="bar"><span class="dot" id="dot"></span><h1>ADB Console</h1><span class="st" id="st">Disconnected</span></div>
+ <nav class="tabs" id="tabs">
+  <button class="tab on" data-t="dev">Device</button><button class="tab" data-t="ctl">Controls</button><button class="tab" data-t="app">Apps</button><button class="tab" data-t="fs">Files</button><button class="tab" data-t="sh">Shell</button><button class="tab" data-t="scr">Screen</button>
+ </nav>
+</header>
+<main>
+<section id="dev" class="on">
+ <div class="card"><div class="ch"><h2>Device</h2><p id="banner">Plug in an Android device with USB debugging enabled.</p></div>
+  <div id="info"><div class="empty">Press the USB button to connect.</div></div></div>
+ <div class="card"><div class="ch"><h2>Before you connect</h2></div><div class="cb" style="color:var(--tx2)">Use Chrome or Edge. If a desktop ADB server is running, run <code>adb kill-server</code> first so the browser can claim the USB interface. Accept the RSA prompt on the phone; tick “Always allow” to skip it next time.</div></div>
+</section>
+<section id="ctl">
+ <div class="card"><div class="ch"><h2>Navigation</h2></div><div class="cb grid">
+  <button class="btn r" data-k="3">Home</button><button class="btn r" data-k="4">Back</button><button class="btn r" data-k="187">Recents</button><button class="btn r" data-k="26">Power</button><button class="btn r" data-k="24">Vol +</button><button class="btn r" data-k="25">Vol −</button><button class="btn r" data-k="164">Mute</button><button class="btn r" data-k="85">Play/Pause</button></div></div>
+ <div class="card"><div class="ch"><h2>Power</h2></div><div class="cb grid">
+  <button class="btn f" data-c="reboot">Reboot</button><button class="btn f" data-c="reboot recovery">Recovery</button><button class="btn f" data-c="reboot bootloader">Bootloader</button><button class="btn f" data-c="svc wifi enable">Wi‑Fi on</button><button class="btn f" data-c="svc wifi disable">Wi‑Fi off</button></div></div>
+</section>
+<section id="app">
+ <div class="card"><div class="ch"><h2>Installed apps</h2><p>Third‑party packages</p></div><div class="cb"><button class="btn r" id="ref">Refresh</button><button class="btn r" id="inst">Install APK</button><input type="file" id="apk" accept=".apk"></div><div id="apps"></div></div>
+</section>
+<section id="fs">
+ <div class="card"><div class="ch"><h2>File browser</h2><p>Tap a folder to open it, a file to download it.</p></div>
+  <div class="cb"><div class="inp pathrow" style="padding:0"><input id="path" value="/sdcard/" spellcheck="false" autocomplete="off"><button class="btn f" id="up">Up</button></div>
+  <button class="btn r" id="go">Open</button><button class="btn r" id="upl">Upload</button><input type="file" id="fup" multiple></div>
+  <div id="files"><div class="empty">Connect a device to browse files.</div></div></div>
+</section>
+<section id="sh">
+ <div class="card"><div class="term" id="out">$ Ready.
+</div><div class="inp" style="padding-top:12px"><input id="cmd" placeholder="adb shell …" autocomplete="off" spellcheck="false"><button class="btn r" id="run">Run</button></div></div>
+</section>
+<section id="scr">
+ <div class="card"><div class="ch"><h2>Screen capture</h2></div><div class="cb"><button class="btn r" id="cap">Capture</button><button class="btn r" id="liv">Live view</button><button class="btn f" id="dl" hidden>Save PNG</button><p style="color:var(--tx2);margin:8px 4px">Click the image to tap, drag to swipe.</p><div style="margin-top:12px"><img id="img" class="shot" alt="" hidden></div></div></div>
+</section>
+</main>
+<button class="fab" id="fab" aria-label="Connect"><svg viewBox="0 0 24 24"><path d="M15 7v4h1v2h-3V5h2l-3-4-3 4h2v8H8v-2.07c.7-.37 1.2-1.08 1.2-1.93 0-1.21-.99-2.2-2.2-2.2-1.21 0-2.2.99-2.2 2.2 0 .85.5 1.56 1.2 1.93V13c0 1.11.89 2 2 2h3v3.05c-.71.37-1.2 1.1-1.2 1.95 0 1.22.99 2.2 2.2 2.2 1.21 0 2.2-.98 2.2-2.2 0-.85-.49-1.58-1.2-1.95V15h3c1.11 0 2-.89 2-2v-2h1V7h-4z"/></svg></button>
+<div id="snack"></div>
+<script>
+const $=s=>document.querySelector(s),enc=new TextEncoder(),dec=new TextDecoder();
+const C={CNXN:0x4e584e43,AUTH:0x48545541,OPEN:0x4e45504f,OKAY:0x59414b4f,WRTE:0x45545257,CLSE:0x45534c43};
+let dev,epIn,epOut,ifn,on=false,lid=1,q=Promise.resolve(),imgUrl,maxd=4096,live=false,liveId=0,lastPng,cwd='/sdcard/';
+const lock=f=>{const p=q.then(f);q=p.catch(()=>{});return p};
+function toast(t){const s=$('#snack');s.textContent=t;s.classList.add('on');clearTimeout(toast.t);toast.t=setTimeout(()=>s.classList.remove('on'),3000)}
+/* ---------- ADB protocol ---------- */
+async function send(cmd,a0,a1,data=new Uint8Array(0)){
+ const h=new DataView(new ArrayBuffer(24));let sum=0;for(const b of data)sum+=b;
+ [cmd,a0,a1,data.length,sum>>>0,(cmd^0xffffffff)>>>0].forEach((v,i)=>h.setUint32(i*4,v>>>0,true));
+ await dev.transferOut(epOut,h.buffer);if(data.length)await dev.transferOut(epOut,data)}
+async function recv(){
+ const h=(await dev.transferIn(epIn,24)).data,len=h.getUint32(12,true);
+ const m={cmd:h.getUint32(0,true),a0:h.getUint32(4,true),a1:h.getUint32(8,true),data:new Uint8Array(len)};
+ for(let got=0;got<len;){const p=(await dev.transferIn(epIn,len-got)).data;m.data.set(new Uint8Array(p.buffer,p.byteOffset,p.byteLength),got);got+=p.byteLength}
+ return m}
+function service(name){return lock(async()=>{
+ const local=lid++;await send(C.OPEN,local,0,enc.encode(name+'\0'));const ch=[];let ok=false;
+ for(;;){const m=await recv();
+  if(m.cmd===C.OKAY&&m.a1===local){ok=true}
+  else if(m.cmd===C.WRTE&&m.a1===local){ch.push(m.data);await send(C.OKAY,local,m.a0)}
+  else if(m.cmd===C.CLSE&&m.a1===local){if(!ok&&!ch.length)throw Error('Service refused');break}}
+ let n=0;ch.forEach(c=>n+=c.length);const o=new Uint8Array(n);n=0;ch.forEach(c=>{o.set(c,n);n+=c.length});return o})}
+const sh=async c=>dec.decode(await service('shell:'+c));
+/* ---------- sync protocol (files) ---------- */
+async function openS(name){const local=lid++;await send(C.OPEN,local,0,enc.encode(name+'\0'));
+ for(;;){const m=await recv();if(m.a1!==local)continue;if(m.cmd===C.OKAY)return{local,remote:m.a0};if(m.cmd===C.CLSE)throw Error('Service refused')}}
+async function put(s,d){for(let o=0;o<d.length;o+=maxd){await send(C.WRTE,s.local,s.remote,d.subarray(o,o+maxd));
+ for(;;){const m=await recv();if(m.a1!==s.local)continue;if(m.cmd===C.OKAY)break;if(m.cmd===C.WRTE)await send(C.OKAY,s.local,m.a0);else if(m.cmd===C.CLSE)throw Error('Connection closed')}}}
+const sync=fn=>lock(async()=>{const s=await openS('sync:');let acc=new Uint8Array(0);
+ const rd=async n=>{while(acc.length<n){const m=await recv();if(m.a1!==s.local)continue;
+  if(m.cmd===C.WRTE){const t=new Uint8Array(acc.length+m.data.length);t.set(acc);t.set(m.data,acc.length);acc=t;await send(C.OKAY,s.local,m.a0)}else if(m.cmd===C.CLSE)throw Error('Connection closed')}
+  const r=acc.slice(0,n);acc=acc.slice(n);return r};
+ const w=(id,n,x)=>{const b=new Uint8Array(8+(x?x.length:0));b.set(enc.encode(id));new DataView(b.buffer).setUint32(4,n,true);if(x)b.set(x,8);return put(s,b)};
+ try{return await fn(rd,w)}finally{try{await send(C.CLSE,s.local,s.remote)}catch(e){}}});
+const u32=b=>new DataView(b.buffer).getUint32(0,true);
+const ls=p=>sync(async(rd,w)=>{const P=enc.encode(p);await w('LIST',P.length,P);const o=[];
+ for(;;){const id=dec.decode(await rd(4));if(id==='DONE'){await rd(16);return o}
+  const dv=new DataView((await rd(16)).buffer),nm=dec.decode(await rd(dv.getUint32(12,true)));
+  if(nm!=='.'&&nm!=='..')o.push({n:nm,mode:dv.getUint32(0,true),size:dv.getUint32(4,true)})}});
+const pull=(p,prog)=>sync(async(rd,w)=>{const P=enc.encode(p);await w('RECV',P.length,P);const ch=[];let n=0;
+ for(;;){const id=dec.decode(await rd(4)),len=u32(await rd(4));
+  if(id==='DATA'){ch.push(await rd(len));n+=len;prog&&prog(n)}else if(id==='DONE')return new Blob(ch);else throw Error(dec.decode(await rd(len))||'Pull failed')}});
+const push=(p,file,prog)=>sync(async(rd,w)=>{const t=enc.encode(p+',33206');await w('SEND',t.length,t);
+ for(let o=0;o<file.size;o+=65536){const d=new Uint8Array(await file.slice(o,o+65536).arrayBuffer());await w('DATA',d.length,d);prog&&prog(Math.min(o+65536,file.size))}
+ await w('DONE',Math.floor(Date.now()/1000));const id=dec.decode(await rd(4)),len=u32(await rd(4));
+ if(id!=='OKAY')throw Error(dec.decode(await rd(len))||'Push failed')});
+/* ---------- RSA auth (BigInt) ---------- */
+const b2n=s=>{s=s.replace(/-/g,'+').replace(/_/g,'/');s=s.padEnd(Math.ceil(s.length/4)*4,'=');return BigInt('0x'+[...atob(s)].map(c=>c.charCodeAt(0).toString(16).padStart(2,'0')).join(''))};
+const mp=(b,e,m)=>{let r=1n;b%=m;while(e>0n){if(e&1n)r=r*b%m;b=b*b%m;e>>=1n}return r};
+const le=(x,l)=>{const o=new Uint8Array(l);for(let i=0;i<l;i++){o[i]=Number(x&255n);x>>=8n}return o};
+async function key(){let k;try{k=JSON.parse(localStorage.getItem('adbkey'))}catch(e){}
+ if(!k){const p=await crypto.subtle.generateKey({name:'RSASSA-PKCS1-v1_5',modulusLength:2048,publicExponent:new Uint8Array([1,0,1]),hash:'SHA-1'},true,['sign']);
+  k=await crypto.subtle.exportKey('jwk',p.privateKey);try{localStorage.setItem('adbkey',JSON.stringify(k))}catch(e){}}return k}
+async function sign(tok){const k=await key(),n=b2n(k.n),d=b2n(k.d);
+ const em=new Uint8Array(256).fill(255);em[0]=0;em[1]=1;em[220]=0;
+ em.set([0x30,0x21,0x30,0x09,0x06,0x05,0x2b,0x0e,0x03,0x02,0x1a,0x05,0x00,0x04,0x14],221);em.set(tok.slice(0,20),236);
+ const x=BigInt('0x'+[...em].map(b=>b.toString(16).padStart(2,'0')).join(''));return le(mp(x,d,n),256).reverse()}
+async function pubkey(){const k=await key(),n=b2n(k.n),M=1n<<32n;let x=1n;
+ for(let i=0;i<6;i++)x=(((x*(2n-n*x))%M)+M)%M;
+ const R=1n<<2048n,b=new Uint8Array(524),v=new DataView(b.buffer);
+ v.setUint32(0,64,true);v.setUint32(4,Number((M-x)%M),true);b.set(le(n,256),8);b.set(le(R*R%n,256),264);v.setUint32(520,65537,true);
+ return enc.encode(btoa(String.fromCharCode(...b))+' adb@browser\0')}
+/* ---------- connection ---------- */
+async function connect(){
+ dev=await navigator.usb.requestDevice({filters:[{classCode:0xff,subclassCode:0x42,protocolCode:1}]});
+ await dev.open();if(!dev.configuration)await dev.selectConfiguration(1);
+ for(const i of dev.configuration.interfaces)for(const a of i.alternates)if(a.interfaceClass===255&&a.interfaceSubclass===0x42&&a.interfaceProtocol===1){
+  ifn=i.interfaceNumber;for(const e of a.endpoints)e.direction==='in'?epIn=e.endpointNumber:epOut=e.endpointNumber}
+ await dev.claimInterface(ifn);
+ await send(C.CNXN,0x01000000,256*1024,enc.encode('host::web\0'));
+ let m=await recv(),tried=false;
+ while(m.cmd===C.AUTH){
+  if(!tried){tried=true;await send(C.AUTH,2,0,await sign(m.data))}
+  else{toast('Accept the prompt on your device…');await send(C.AUTH,3,0,await pubkey())}
+  m=await recv()}
+ if(m.cmd!==C.CNXN)throw Error('Handshake failed');
+ maxd=Math.min(m.a1||4096,65536);on=true;ui();$('#banner').textContent=dec.decode(m.data).replace(/\0/g,'').slice(0,90);await info()}
+async function disconnect(){try{await dev.close()}catch(e){}on=false;ui();$('#info').innerHTML='<div class="empty">Press the USB button to connect.</div>'}
+function ui(){$('#dot').classList.toggle('on',on);$('#st').textContent=on?'Connected':'Disconnected';$('#fab').setAttribute('aria-label',on?'Disconnect':'Connect')}
+navigator.usb&&navigator.usb.addEventListener('disconnect',()=>{if(on)disconnect()});
+async function info(){
+ const o=(await sh('getprop ro.product.manufacturer;getprop ro.product.model;getprop ro.build.version.release;getprop ro.build.version.sdk;getprop ro.serialno;wm size;dumpsys battery|grep level')).split('\n').map(s=>s.trim());
+ const r=[['Model',o[0]+' '+o[1]],['Android',o[2]+' (API '+o[3]+')'],['Serial',o[4]],['Display',(o[5]||'').replace(/.*: /,'')],['Battery',(o[6]||'').replace(/.*: /,'')+'%']];
+ $('#info').innerHTML=r.map(x=>`<div class="li"><div><b>${esc(x[1])}</b><small>${x[0]}</small></div></div>`).join('')}
+const esc=s=>String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+/* ---------- actions ---------- */
+async function guard(f){if(!on)return toast('Connect a device first');try{await f()}catch(e){toast(e.message||'Error')}}
+$('#fab').onclick=()=>on?disconnect():connect().catch(e=>{toast(e.name==='NotFoundError'?'No device selected':e.message);on=false;ui()});
+document.querySelectorAll('[data-k]').forEach(b=>b.onclick=()=>guard(()=>sh('input keyevent '+b.dataset.k)));
+document.querySelectorAll('[data-c]').forEach(b=>b.onclick=()=>guard(async()=>{await sh(b.dataset.c);toast('Sent: '+b.dataset.c)}));
+async function apps(){const o=await sh('pm list packages -3');const l=o.split('\n').map(s=>s.replace('package:','').trim()).filter(Boolean).sort();
+ $('#apps').innerHTML=l.length?l.map(p=>`<div class="li"><div><b>${esc(p)}</b></div><button class="btn f" data-a="open" data-p="${esc(p)}">Open</button><button class="btn f" data-a="clear" data-p="${esc(p)}">Clear</button><button class="btn f" data-a="rm" data-p="${esc(p)}">Remove</button></div>`).join(''):'<div class="empty">No third‑party apps.</div>'}
+$('#ref').onclick=()=>guard(apps);
+$('#apps').onclick=e=>{const b=e.target.closest('[data-a]');if(!b)return;const p=b.dataset.p,a=b.dataset.a;
+ guard(async()=>{if(a==='open')await sh('monkey -p '+p+' -c android.intent.category.LAUNCHER 1');
+  else if(a==='clear'){await sh('pm clear '+p);toast('Cleared '+p)}
+  else if(confirm('Uninstall '+p+'?')){toast((await sh('pm uninstall '+p)).trim());apps()}})};
+async function run(){const c=$('#cmd').value.trim();if(!c)return;$('#cmd').value='';const t=$('#out');t.textContent+='$ '+c+'\n';
+ await guard(async()=>{t.textContent+=await sh(c)+'\n'});t.scrollTop=t.scrollHeight}
+$('#run').onclick=run;$('#cmd').onkeydown=e=>{if(e.key==='Enter')run()};
+const fmt=n=>n>1048576?(n/1048576).toFixed(1)+' MB':n>1024?(n/1024).toFixed(0)+' KB':n+' B';
+const qt=s=>"'"+s.replace(/'/g,"'\\''")+"'";
+const isD=f=>{const t=f.mode&0o170000;return t===0o040000||t===0o120000};
+function save(name,data){const b=data instanceof Blob?data:new Blob([data]),u=URL.createObjectURL(b),a=document.createElement('a');
+ a.href=u;a.download=name;document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(u),10000)}
+/* file browser */
+async function browse(p){if(!p.endsWith('/'))p+='/';const l=await ls(p);cwd=p;$('#path').value=p;l.sort((a,b)=>(isD(b)-isD(a))||a.n.localeCompare(b.n));
+ $('#files').innerHTML=l.length?l.map(f=>`<div class="li" data-n="${esc(f.n)}" data-d="${isD(f)?1:0}" style="cursor:pointer"><div><b>${isD(f)?'▸ ':''}${esc(f.n)}</b><small>${isD(f)?'Folder':fmt(f.size)}</small></div>${isD(f)?'':'<button class="btn f" data-x="dl">Download</button>'}<button class="btn f" data-x="rm">Delete</button></div>`).join(''):'<div class="empty">Empty folder</div>'}
+$('#files').onclick=e=>{const r=e.target.closest('.li[data-n]');if(!r)return;const n=r.dataset.n,x=e.target.closest('[data-x]');
+ guard(async()=>{if(x&&x.dataset.x==='rm'){if(confirm('Delete '+n+'?')){await sh('rm -rf '+qt(cwd+n));await browse(cwd)}}
+  else if(x||r.dataset.d==='0'){toast('Downloading…');const b=await pull(cwd+n,k=>toast('Downloaded '+fmt(k)));await save(n,b)}
+  else await browse(cwd+n+'/')})};
+$('#go').onclick=()=>guard(()=>browse($('#path').value));
+$('#path').onkeydown=e=>{if(e.key==='Enter')$('#go').click()};
+$('#up').onclick=()=>guard(()=>browse(cwd.replace(/[^/]+\/$/,'')||'/'));
+$('#upl').onclick=()=>$('#fup').click();
+$('#fup').onchange=e=>{const fs=[...e.target.files];e.target.value='';guard(async()=>{for(const f of fs){await push(cwd+f.name,f,k=>toast('Uploading '+f.name+' '+Math.round(k/f.size*100)+'%'))}toast('Upload complete');await browse(cwd)})};
+/* APK install */
+$('#inst').onclick=()=>$('#apk').click();
+$('#apk').onchange=e=>{const f=e.target.files[0];e.target.value='';if(!f)return;guard(async()=>{const p='/data/local/tmp/_install.apk';
+ await push(p,f,k=>toast('Uploading '+Math.round(k/f.size*100)+'%'));toast('Installing…');
+ const r=await sh('pm install -r '+p+';rm '+p);toast(r.trim().split('\n').pop()||'Done');apps()})};
+/* screen: capture, live view, tap & swipe */
+function mk(d){lastPng=d;const u=URL.createObjectURL(new Blob([d],{type:'image/png'})),i=$('#img');
+ i.onload=()=>{if(imgUrl&&imgUrl!==u)URL.revokeObjectURL(imgUrl);imgUrl=u};i.src=u;i.hidden=false;$('#dl').hidden=false}
+function setLive(){$('#liv').firstChild.nodeValue=live?'Stop live':'Live view'}
+$('#cap').onclick=()=>guard(async()=>mk(await service('exec:screencap -p')));
+$('#liv').onclick=()=>guard(async()=>{live=!live;setLive();const id=++liveId;
+ while(live&&id===liveId&&on){try{mk(await service('exec:screencap -p'))}catch(e){live=false;setLive();toast(e.message)}}});
+let dn;$('#img').onpointerdown=e=>{dn={x:e.clientX,y:e.clientY,t:Date.now()};e.preventDefault()};
+$('#img').onpointerup=e=>{if(!dn)return;const i=e.target,r=i.getBoundingClientRect(),k=i.naturalWidth/r.width,a=dn;dn=null;
+ const f=(x,y)=>Math.round((x-r.left)*k)+' '+Math.round((y-r.top)*k);
+ guard(()=>sh(Math.hypot(e.clientX-a.x,e.clientY-a.y)>10?'input swipe '+f(a.x,a.y)+' '+f(e.clientX,e.clientY)+' '+Math.max(100,Date.now()-a.t):'input tap '+f(e.clientX,e.clientY)))};
+$('#dl').onclick=()=>save('screenshot.png',new Blob([lastPng],{type:'image/png'}));
+/* ---------- tabs & ripple ---------- */
+$('#tabs').onclick=e=>{const b=e.target.closest('.tab');if(!b)return;
+ document.querySelectorAll('.tab,section').forEach(x=>x.classList.remove('on'));live=false;liveId++;setLive();b.classList.add('on');$('#'+b.dataset.t).classList.add('on');if(b.dataset.t==='fs'&&on)guard(()=>browse(cwd))};
+document.addEventListener('pointerdown',e=>{const b=e.target.closest('.btn,.fab,.tab');if(!b)return;
+ const r=b.getBoundingClientRect(),s=Math.max(r.width,r.height)*2,i=document.createElement('span');i.className='rip';
+ i.style.cssText=`width:${s}px;height:${s}px;left:${e.clientX-r.left-s/2}px;top:${e.clientY-r.top-s/2}px`;b.appendChild(i);setTimeout(()=>i.remove(),600)});
+if(!navigator.usb)toast(isSecureContext?'WebUSB is not supported here — use Chrome or Edge':'WebUSB needs HTTPS or localhost');
+</script>
+</body>
+</html>
